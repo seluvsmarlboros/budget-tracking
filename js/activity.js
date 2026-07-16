@@ -228,12 +228,22 @@ function renderFeed() {
     html += `<div class="feed-date-header muted" style="font-size:12px;font-weight:600;padding:12px 0 4px;text-transform:uppercase;letter-spacing:0.3px">${fmtDate(date)}</div>`;
     html += '<div class="card" style="padding:0 16px;margin-bottom:8px">';
     groups[date].forEach(t => {
-      const icon = t.type === 'income' ? '↓' : t.tag === 'commute' ? '🚌' : t.tag === 'split' ? '↔' : '↑';
+      let iconHtml = '';
+      if (t.type === 'income') {
+        iconHtml = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--green);"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`;
+      } else if (t.tag === 'commute') {
+        iconHtml = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);"><rect x="5" y="4" width="14" height="16" rx="2"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/><path d="M12 8h.01"/><path d="M9 12h6"/></svg>`;
+      } else if (t.tag === 'split') {
+        iconHtml = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary);"><polyline points="17 11 21 7 17 3"/><line x1="21" y1="7" x2="9" y2="7"/><polyline points="7 13 3 17 7 21"/><line x1="3" y1="17" x2="15" y2="17"/></svg>`;
+      } else {
+        iconHtml = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--red);"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`;
+      }
+
       const iconCls = t.type === 'income' ? 'income' : t.tag === 'split' ? 'split' : '';
       const amtCls = t.type === 'income' ? 'pos' : 'neg';
       const sign = t.type === 'income' ? '+' : '−';
       html += `<div class="feed-item">
-        <div class="feed-icon ${iconCls}">${icon}</div>
+        <div class="feed-icon ${iconCls}">${iconHtml}</div>
         <div class="feed-body">
           <div class="feed-desc">${t.description}</div>
           <div class="feed-meta">${t.category || ''}${t.paymentMethod ? ' · ' + t.paymentMethod : ''}</div>

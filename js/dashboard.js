@@ -207,12 +207,22 @@ function render() {
 }
 
 function feedItem(t, sym) {
-  const icon = t.type === 'income' ? '↓' : t.category === 'Travel' ? '🚌' : t.type === 'expense' ? '↑' : '↔';
+  let iconHtml = '';
+  if (t.type === 'income') {
+    iconHtml = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--green);"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`;
+  } else if (t.category === 'Travel') {
+    iconHtml = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);"><rect x="5" y="4" width="14" height="16" rx="2"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/><path d="M12 8h.01"/><path d="M9 12h6"/></svg>`;
+  } else if (t.type === 'expense') {
+    iconHtml = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--red);"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`;
+  } else {
+    iconHtml = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary);"><polyline points="17 11 21 7 17 3"/><line x1="21" y1="7" x2="9" y2="7"/><polyline points="7 13 3 17 7 21"/><line x1="3" y1="17" x2="15" y2="17"/></svg>`;
+  }
+
   const cls = t.type === 'income' ? 'income' : t.category === 'Travel' ? '' : '';
   const amtCls = t.type === 'income' ? 'pos' : 'neg';
   const sign = t.type === 'income' ? '+' : '−';
   return `<div class="feed-item">
-    <div class="feed-icon ${cls}">${icon}</div>
+    <div class="feed-icon ${cls}">${iconHtml}</div>
     <div class="feed-body">
       <div class="feed-desc">${t.description}</div>
       <div class="feed-meta">${fmtDate(t.date)}</div>

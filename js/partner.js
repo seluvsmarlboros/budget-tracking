@@ -619,7 +619,7 @@ function renderRecurringTemplates(templates) {
     // Icon
     const icon = document.createElement('div');
     icon.className = 'feed-icon';
-    icon.textContent = '🔁';
+    icon.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`;
     item.appendChild(icon);
 
     // Body
@@ -757,7 +757,11 @@ function renderActivityLog(expenses, ledger) {
 
     const icon = document.createElement('div');
     icon.className = 'feed-icon';
-    icon.textContent = item.type === 'expense' ? '🧾' : '💸';
+    if (item.type === 'expense') {
+      icon.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><path d="M16 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>`;
+    } else {
+      icon.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--green);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+    }
     el.appendChild(icon);
 
     const body = document.createElement('div');
