@@ -93,6 +93,24 @@ export async function initOnboarding() {
     });
   }
 
+  // Google Sign-In Button handler
+  const googleBtn = document.getElementById('onb-google-btn');
+  if (googleBtn) {
+    googleBtn.addEventListener('click', async () => {
+      googleBtn.disabled = true;
+      const originalHtml = googleBtn.innerHTML;
+      googleBtn.textContent = 'Connecting to Google...';
+      try {
+        await SupabaseService.signInWithGoogle();
+      } catch (err) {
+        console.error(err);
+        toast(`Google Login Failed: ${err.message}`);
+        googleBtn.disabled = false;
+        googleBtn.innerHTML = originalHtml;
+      }
+    });
+  }
+
   // 4. Profile Setup Form Submit handler
   const profileForm = document.getElementById('onboard-form');
   if (profileForm) {

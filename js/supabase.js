@@ -20,6 +20,18 @@ export const SupabaseService = {
     if (error) throw error;
   },
 
+  async signInWithGoogle() {
+    if (!supabase) throw new Error("Supabase is not initialized");
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+    if (error) throw error;
+    return data;
+  },
+
   async verifyOTP(email, token) {
     if (!supabase) throw new Error("Supabase is not initialized");
     const { data, error } = await supabase.auth.verifyOtp({
