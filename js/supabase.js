@@ -51,8 +51,8 @@ export const SupabaseService = {
 
   async getProfile(userId) {
     if (!supabase) return null;
-    const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
-    if (error && error.code !== "PGRST116") throw error;
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+    if (error) throw error;
     return data;
   },
 
@@ -101,9 +101,9 @@ export const SupabaseService = {
       .eq("user_a", user.id)
       .eq("status", "pending")
       .gt("invite_exp", new Date().toISOString())
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== "PGRST116") throw error;
+    if (error) throw error;
     return data;
   },
 
@@ -129,7 +129,7 @@ export const SupabaseService = {
         invite_exp: expiry.toISOString()
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data;
@@ -147,9 +147,10 @@ export const SupabaseService = {
       .eq("invite_code", code.trim().toUpperCase())
       .eq("status", "pending")
       .gt("invite_exp", new Date().toISOString())
-      .single();
+      .maybeSingle();
 
-    if (fetchErr) throw new Error("Invalid or expired invite code");
+    if (fetchErr) throw fetchErr;
+    if (!p) throw new Error("Invalid or expired invite code");
 
     // 2. Prevent self-pairing
     if (p.user_a === user.id) throw new Error("You cannot redeem your own invite code!");
@@ -165,7 +166,7 @@ export const SupabaseService = {
       })
       .eq("id", p.id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (updateErr) throw updateErr;
 
@@ -238,9 +239,9 @@ export const SupabaseService = {
       .from("v_partnership_balance")
       .select("*")
       .eq("partnership_id", partnershipId)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== "PGRST116") throw error;
+    if (error) throw error;
     if (!data) return { balance: 0, debtor: null, creditor: null };
 
     return {
