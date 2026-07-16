@@ -4,11 +4,23 @@ const SUPABASE_URL = "https://rzqwybcxxduvlntkittv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_svAhbKhIH8dBnwFvs_IcfQ_tnZ05pPQ";
 
 // Initialize Supabase Client
-export const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+export let supabase = null;
+
+export function initSupabaseClient() {
+  if (supabase) return supabase;
+  if (window.supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+  return supabase;
+}
+
+// Auto-run on load
+initSupabaseClient();
 
 export const SupabaseService = {
   // ─── Authentication & Profile ──────────────────────────────────────
   async sendMagicLink(email, displayName) {
+    initSupabaseClient();
     if (!supabase) throw new Error("Supabase is not initialized");
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -21,6 +33,7 @@ export const SupabaseService = {
   },
 
   async signInWithGoogle() {
+    initSupabaseClient();
     if (!supabase) throw new Error("Supabase is not initialized");
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -33,6 +46,7 @@ export const SupabaseService = {
   },
 
   async verifyOTP(email, token) {
+    initSupabaseClient();
     if (!supabase) throw new Error("Supabase is not initialized");
     const { data, error } = await supabase.auth.verifyOtp({
       email,
@@ -44,12 +58,14 @@ export const SupabaseService = {
   },
 
   async getCurrentUser() {
+    initSupabaseClient();
     if (!supabase) return null;
     const { data: { user } } = await supabase.auth.getUser();
     return user;
   },
 
   async getProfile(userId) {
+    initSupabaseClient();
     if (!supabase) return null;
     const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
     if (error) throw error;
@@ -57,6 +73,7 @@ export const SupabaseService = {
   },
 
   async updateProfile(profile) {
+    initSupabaseClient();
     if (!supabase) return null;
     const user = await this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
@@ -69,12 +86,14 @@ export const SupabaseService = {
   },
 
   async signOut() {
+    initSupabaseClient();
     if (!supabase) return;
     await supabase.auth.signOut();
   },
 
   // ─── Partnership Invite / Join / Leave ──────────────────────────────
   async checkPartnerships() {
+    initSupabaseClient();
     if (!supabase) return [];
     const user = await this.getCurrentUser();
     if (!user) return [];
@@ -91,6 +110,7 @@ export const SupabaseService = {
   },
 
   async checkPendingInvite() {
+    initSupabaseClient();
     if (!supabase) return null;
     const user = await this.getCurrentUser();
     if (!user) return null;
@@ -108,6 +128,7 @@ export const SupabaseService = {
   },
 
   async generateInvite() {
+    initSupabaseClient();
     if (!supabase) return null;
     const user = await this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
