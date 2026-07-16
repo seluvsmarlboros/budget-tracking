@@ -11,10 +11,20 @@ let splitType = 'equal';
 let itemizedCount = 0;
 let balanceInfo = { balance: 0, rawBalance: 0 };
 let realtimeSubscription = null;
+let unlinkedSubscription = null;
 
 export async function initPartner() {
   console.log('UniSpend: initPartner() triggered');
   
+  // Wire Celebration Overlay Close button
+  const celebBtn = document.getElementById('celebration-close-btn');
+  if (celebBtn) {
+    celebBtn.addEventListener('click', async () => {
+      document.getElementById('celebration-overlay').style.display = 'none';
+      await checkAuthState();
+    });
+  }
+
   // Wire Auth forms
   const loginForm = document.getElementById('partner-login-form');
   if (loginForm) {
@@ -140,6 +150,10 @@ export async function checkAuthState() {
   activePartnership = await SupabaseService.checkPartnership();
   
   if (activePartnership) {
+    if (unlinkedSubscription) {
+      unlinkedSubscription.unsubscribe();
+      unlinkedSubscription = null;
+    }
     const isUserA = activePartnership.user_a.id === currentUserId;
     partnerProfile = isUserA ? activePartnership.user_b : activePartnership.user_a;
     showState('dashboard');
@@ -147,6 +161,7 @@ export async function checkAuthState() {
     await refreshDashboard();
   } else {
     showState('unlinked');
+    setupUnlinkedRealtimeSubscription();
     // Check if user already has an active pending code
     const pending = await SupabaseService.checkPendingInvite();
     if (pending) {
@@ -192,9 +207,20 @@ async function handleLoginSubmit(e) {
 
 async function handleLogout() {
   try {
+    if (partnerProfile) {
+      const partnerName = partnerProfile.display_name || 'Partner';
+      if (State.data.friends.balances[partnerName] !== undefined) {
+        State.data.friends.balances[partnerName] = 0;
+        State.saveState();
+      }
+    }
     if (realtimeSubscription) {
       realtimeSubscription.unsubscribe();
       realtimeSubscription = null;
+    }
+    if (unlinkedSubscription) {
+      unlinkedSubscription.unsubscribe();
+      unlinkedSubscription = null;
     }
     await SupabaseService.signOut();
     activePartnership = null;
@@ -262,6 +288,13 @@ async function handleLeavePartnership() {
   if (!confirm('Are you sure you want to disconnect from your partner? This ends the sync.')) return;
 
   try {
+    if (partnerProfile) {
+      const partnerName = partnerProfile.display_name || 'Partner';
+      if (State.data.friends.balances[partnerName] !== undefined) {
+        State.data.friends.balances[partnerName] = 0;
+        State.saveState();
+      }
+    }
     await SupabaseService.leavePartnership(activePartnership.id);
     if (realtimeSubscription) {
       realtimeSubscription.unsubscribe();
@@ -277,6 +310,54 @@ async function handleLeavePartnership() {
 }
 
 // ─── Realtime Subscriptions ────────────────────────────────────────
+function setupUnlinkedRealtimeSubscription() {
+  if (unlinkedSubscription) {
+    unlinkedSubscription.unsubscribe();
+  }
+
+  unlinkedSubscription = supabase
+    .channel('unlinked-partnership')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'partnerships' },
+      async (payload) => {
+        console.log('Realtime change in partnerships table while unlinked:', payload);
+        const p = payload.new;
+        if (p && (p.user_a === currentUserId || p.user_b === currentUserId)) {
+          if (p.status === 'active') {
+            if (unlinkedSubscription) {
+              unlinkedSubscription.unsubscribe();
+              unlinkedSubscription = null;
+            }
+            
+            // Get partner details
+            let partnerName = 'Partner';
+            try {
+              const otherUserId = p.user_a === currentUserId ? p.user_b : p.user_a;
+              const pProfile = await SupabaseService.getProfile(otherUserId);
+              if (pProfile) partnerName = pProfile.display_name || partnerName;
+            } catch (e) {
+              console.error(e);
+            }
+            
+            triggerCelebration(partnerName);
+          }
+        }
+      }
+    )
+    .subscribe();
+}
+
+function triggerCelebration(partnerName) {
+  const overlay = document.getElementById('celebration-overlay');
+  const nameSpan = document.getElementById('celebrated-partner-name');
+  if (overlay && nameSpan) {
+    nameSpan.textContent = partnerName;
+    overlay.style.display = 'flex';
+  }
+  toast(`🎉 Connected with ${partnerName}!`);
+}
+
 function setupRealtimeSubscription(partnershipId) {
   if (realtimeSubscription) {
     realtimeSubscription.unsubscribe();
@@ -326,6 +407,20 @@ async function refreshDashboard() {
   // 2. Fetch running net balance
   balanceInfo = await SupabaseService.getNetBalance(activePartnership.id);
   renderBalanceCard();
+
+  // Sync to local Friends state to update Dashboard and Friends dropdown dynamically
+  if (partnerProfile) {
+    const partnerName = partnerProfile.display_name || 'Partner';
+    if (!State.data.friends.list.includes(partnerName)) {
+      // Add friend silently without full onboarding triggers
+      State.data.friends.list.push(partnerName);
+    }
+    const isUserA = activePartnership.user_a.id === currentUserId;
+    const localBalance = isUserA ? -balanceInfo.rawBalance : balanceInfo.rawBalance;
+    
+    State.data.friends.balances[partnerName] = localBalance;
+    State.saveState();
+  }
 
   // 3. Fetch recurring templates
   const templates = await SupabaseService.getRecurringTemplates(activePartnership.id);
