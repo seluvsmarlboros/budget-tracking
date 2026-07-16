@@ -1,0 +1,192 @@
+/* Progressive Web App Client Logic (js/pwa.js) */
+
+import { toast } from './app.js';
+
+// VAPID Public Key — Generate this using `npx web-push generate-vapid-keys`
+// This key will be replaced by the user's generated key, providing a fallback default.
+const VAPID_PUBLIC_KEY = "BD7p1qT2S_s4C7C3T5d7Lz8O9c_2e_H2a-vT4lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8w";
+const SUBSCRIBE_ENDPOINT = "/api/subscribe";
+
+export async function initPWA() {
+  console.log("PWA: Initializing client service worker...");
+  
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.register('./sw.js');
+      console.log('PWA: Service Worker registered successfully, scope:', reg.scope);
+      
+      // Auto check active subscription state to align toggle states
+      await checkSubscriptionState();
+    } catch (err) {
+      console.error('PWA: Service Worker registration failed:', err);
+    }
+  }
+
+  // Bind settings panel click handlers
+  const pushToggle = document.getElementById('settings-push-toggle');
+  if (pushToggle) {
+    pushToggle.addEventListener('change', handlePushToggleChange);
+  }
+}
+
+// Check if user is already subscribed and check toggle state in Settings
+async function checkSubscriptionState() {
+  const toggle = document.getElementById('settings-push-toggle');
+  if (!toggle) return;
+
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    toggle.disabled = true;
+    const label = document.getElementById('settings-push-label');
+    if (label) label.textContent = "Push Alerts (Unsupported on this browser)";
+    return;
+  }
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    toggle.checked = !!sub;
+    
+    // Update text label to match state
+    const label = document.getElementById('settings-push-label');
+    if (label) {
+      label.textContent = sub ? "Push Alerts Enabled" : "Enable Push Alerts";
+    }
+  } catch (err) {
+    console.error("PWA: Error checking push subscription status:", err);
+  }
+}
+
+// Toggle handler triggered by user gesture
+async function handlePushToggleChange(e) {
+  const toggle = e.target;
+  const label = document.getElementById('settings-push-label');
+
+  if (toggle.checked) {
+    toggle.disabled = true;
+    if (label) label.textContent = "Requesting permission...";
+    
+    try {
+      const success = await requestPushSubscription();
+      if (success) {
+        if (label) label.textContent = "Push Alerts Enabled";
+        toast("Web Push notifications enabled successfully! 🔔");
+      } else {
+        toggle.checked = false;
+        if (label) label.textContent = "Enable Push Alerts";
+        toast("Failed to enable notifications.");
+      }
+    } catch (err) {
+      console.error(err);
+      toggle.checked = false;
+      if (label) label.textContent = "Enable Push Alerts";
+      toast(`Alert setup error: ${err.message}`);
+    } finally {
+      toggle.disabled = false;
+    }
+  } else {
+    toggle.disabled = true;
+    if (label) label.textContent = "Disabling alerts...";
+    try {
+      const success = await unsubscribePush();
+      if (success) {
+        if (label) label.textContent = "Enable Push Alerts";
+        toast("Unsubscribed from notifications.");
+      } else {
+        toggle.checked = true;
+        if (label) label.textContent = "Push Alerts Enabled";
+      }
+    } catch (err) {
+      console.error(err);
+      toggle.checked = true;
+      if (label) label.textContent = "Push Alerts Enabled";
+      toast(`Error unsubscribing: ${err.message}`);
+    } finally {
+      toggle.disabled = false;
+    }
+  }
+}
+
+// Request permission and create subscription payload
+async function requestPushSubscription() {
+  if (!('Notification' in window)) {
+    throw new Error("This browser does not support desktop notifications.");
+  }
+
+  // iOS 16.4+ standalone requirement check
+  const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isIOS && !isStandalone) {
+    throw new Error("iOS Web Push requires this app to be installed. Please add it to your Home Screen first.");
+  }
+
+  // 1. Request permission
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    throw new Error("Notification permission denied.");
+  }
+
+  // 2. Register subscription
+  const reg = await navigator.serviceWorker.ready;
+  
+  // Clean up any old subscription first
+  const existingSub = await reg.pushManager.getSubscription();
+  if (existingSub) {
+    await existingSub.unsubscribe();
+  }
+
+  // Subscribe using converted VAPID key
+  const subscription = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+  });
+
+  console.log("PWA: Web Push Subscription created:", JSON.stringify(subscription));
+
+  // 3. Send subscription object to the Node.js backend
+  const response = await fetch(SUBSCRIBE_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(subscription)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Server subscription registration failed: ${response.statusText}`);
+  }
+
+  return true;
+}
+
+// Unsubscribe helper
+async function unsubscribePush() {
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  if (sub) {
+    const success = await sub.unsubscribe();
+    if (success) {
+      // Send unsubscribe notification to backend if needed
+      await fetch('/api/unsubscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: sub.endpoint })
+      }).catch(err => console.warn("PWA: Offline warning while reporting unsubscribe:", err));
+      return true;
+    }
+  }
+  return false;
+}
+
+// VAPID base64 key converter helper
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}

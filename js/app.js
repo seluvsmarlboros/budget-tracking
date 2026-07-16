@@ -8,9 +8,11 @@ import { initActivity } from './activity.js';
 import { initInsights } from './insights.js';
 import { initSettings } from './settings.js';
 import { initPartner } from './partner.js';
+import { initPWA } from './pwa.js';
 
 function boot() {
   console.log('UniSpend: boot() triggered');
+  initPWA();
   try {
     State.loadState();
     console.log('UniSpend: State loaded successfully:', State.data);

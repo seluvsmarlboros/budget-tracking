@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA Standalone Mode settings for iOS and Android -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="UniSpend">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/10121/10121175.png">
   <title>UniSpend — Student Money Tracker</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -630,6 +636,18 @@
             </div>
             <button type="submit" class="btn-primary">Save</button>
           </form>
+        </div>
+
+        <!-- PWA Push Alerts Card -->
+        <div class="card">
+          <h3>Push Notifications</h3>
+          <p class="muted" style="font-size: 13px; margin-bottom: 16px;">
+            Get real-time push alerts on your lock screen for shared bills, settlements, and reminders.
+          </p>
+          <div class="check-row" style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="settings-push-toggle" style="width: 20px; height: 20px; cursor: pointer;">
+            <label for="settings-push-toggle" id="settings-push-label" style="font-weight: 500; cursor: pointer;">Enable Push Alerts</label>
+          </div>
         </div>
 
         <!-- AI Settings -->
