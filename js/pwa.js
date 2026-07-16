@@ -4,7 +4,7 @@ import { toast } from './app.js';
 
 // VAPID Public Key — Generate this using `npx web-push generate-vapid-keys`
 // This key will be replaced by the user's generated key, providing a fallback default.
-const VAPID_PUBLIC_KEY = "BD7p1qT2S_s4C7C3T5d7Lz8O9c_2e_H2a-vT4lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8w";
+const VAPID_PUBLIC_KEY = "BF7IgezFiN_M2HBCufmwj2yionG4AbT91NDwBZj5tqmrLK5U7pnL-de7DrPiFYZIW5FgFfzSvyQTGZGd5s2bdeQ";
 const SUBSCRIBE_ENDPOINT = "/api/subscribe";
 
 export async function initPWA() {

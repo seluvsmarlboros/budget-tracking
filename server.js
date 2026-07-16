@@ -22,8 +22,8 @@ let subscriptions = [];
 // ─── VAPID CONFIGURATION ────────────────────────────────────────────
 // Generate your own keys using: npx web-push generate-vapid-keys
 const VAPID_KEYS = {
-  publicKey: process.env.VAPID_PUBLIC_KEY || 'BD7p1qT2S_s4C7C3T5d7Lz8O9c_2e_H2a-vT4lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8lT8w',
-  privateKey: process.env.VAPID_PRIVATE_KEY || 'YOUR_PRIVATE_KEY_HERE'
+  publicKey: process.env.VAPID_PUBLIC_KEY || 'BF7IgezFiN_M2HBCufmwj2yionG4AbT91NDwBZj5tqmrLK5U7pnL-de7DrPiFYZIW5FgFfzSvyQTGZGd5s2bdeQ',
+  privateKey: process.env.VAPID_PRIVATE_KEY || '3OFFjZPnQvqOXYwPGtyhd_5d8xEQt7_KtyLImNcNVzk'
 };
 
 // Set VAPID Details
