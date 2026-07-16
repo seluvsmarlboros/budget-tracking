@@ -611,7 +611,8 @@ function renderRecurringTemplates(templates) {
 
     const meta = document.createElement('div');
     meta.className = 'feed-meta';
-    meta.textContent = `Total: ₹${t.total_amount} | Split: ${t.split_type} | Due: Day ${t.day_of_month} monthly`;
+    const freqLabel = t.frequency === 'daily' ? 'Daily' : `Day ${t.day_of_month} Monthly`;
+    meta.textContent = `Total: ₹${t.total_amount} | Split: ${t.split_type} | Repeat: ${freqLabel}`;
     body.appendChild(meta);
     item.appendChild(body);
 
@@ -897,7 +898,8 @@ async function handleSharedExpenseSubmit(e) {
   const totalAmount = parseFloat(document.getElementById('shared-exp-amount').value);
   const dueDate = document.getElementById('shared-exp-due').value || null;
   const category = document.getElementById('shared-exp-cat').value;
-  const isRecurring = document.getElementById('shared-exp-recurring').checked;
+  const recurringVal = document.getElementById('shared-exp-recurring').value;
+  const isRecurring = recurringVal === 'daily' || recurringVal === 'monthly';
 
   let userAOwes = 0;
   let userBOwes = 0;
@@ -965,9 +967,10 @@ async function handleSharedExpenseSubmit(e) {
         splitType,
         splitDetail: JSON.stringify({ splitType, userAOwes, userBOwes }),
         dayOfMonth: day,
-        category
+        category,
+        frequency: recurringVal
       });
-      toast('Shared bill + recurring template added!');
+      toast(`Shared bill + ${recurringVal} recurring template added!`);
     } else {
       toast('Shared bill added successfully!');
     }

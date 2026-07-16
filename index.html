@@ -391,10 +391,14 @@
                 </div>
               </div>
 
-              <!-- Recurring Toggle -->
-              <div class="check-row">
-                <input type="checkbox" id="shared-exp-recurring">
-                <label for="shared-exp-recurring">Save as recurring template (Monthly)</label>
+              <!-- Recurring Options Selector -->
+              <div class="field">
+                <label for="shared-exp-recurring">Recurring Option</label>
+                <select id="shared-exp-recurring" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text-primary); outline: none;">
+                  <option value="none">Single Bill (No repeat)</option>
+                  <option value="daily">Daily Recurring Template</option>
+                  <option value="monthly">Monthly Recurring Template</option>
+                </select>
               </div>
 
               <button type="submit" class="btn-primary">Add Shared Bill</button>

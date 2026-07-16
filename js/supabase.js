@@ -345,6 +345,7 @@ export const SupabaseService = {
   },
 
   async addRecurringTemplate(template) {
+    initSupabaseClient();
     if (!supabase) return null;
     const user = await this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
@@ -359,10 +360,11 @@ export const SupabaseService = {
         split_detail: template.splitDetail,
         day_of_month: template.dayOfMonth,
         category: template.category || "Shared",
-        created_by: user.id
+        created_by: user.id,
+        frequency: template.frequency || "monthly"
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data;
