@@ -683,17 +683,100 @@ body.dark .commute-check-in {
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .nav-links { display: none; }
-  .bottom-nav { display: flex; }
-  .main { padding-bottom: calc(var(--bnav-h) + 16px); }
-  /* Keep stats horizontal on mobile — 3 tight columns */
-  .stat-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .stat-card { text-align: center; padding: 10px 4px; }
-  .stat-label { font-size: 10px; }
-  .stat-value { font-size: 16px; }
-  .field-row { grid-template-columns: 1fr; gap: 0; }
-  h1 { font-size: 20px; }
-  .amount-field .currency { font-size: 24px; }
-  .amount-field input { font-size: 32px; }
+  
+  /* Floating App-Store inspired glass bottom navigation */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
+    z-index: 100;
+  }
+  body.dark .bottom-nav {
+    background: rgba(28, 25, 23, 0.75);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+  }
+  .bnav {
+    position: relative;
+    padding: 8px;
+  }
+  .bnav span {
+    display: none; /* Hide labels to focus on icons and avoid horizontal clipping */
+  }
+  .bnav svg {
+    width: 22px;
+    height: 22px;
+  }
+  .bnav.active::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    width: 4px;
+    height: 4px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .main {
+    padding: 16px 16px 108px; /* Leave breathing room for the floating dock */
+    overflow-x: hidden;
+  }
+
+  /* Keep stats horizontal on mobile — 3 tight columns, no overflow */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    width: 100%;
+  }
+  .stat-card {
+    text-align: center;
+    padding: 12px 4px;
+    min-width: 0;
+  }
+  .stat-label {
+    font-size: 8.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+  .stat-value {
+    font-size: 15px;
+  }
+
+  /* Fix AI form and general inputs from blowing out screen width */
+  .ai-form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    width: 100%;
+  }
+  .ai-form input {
+    min-width: 0;
+    width: 100%;
+  }
+  .field-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  h1 {
+    font-size: 20px;
+  }
+  .amount-field .currency {
+    font-size: 24px;
+  }
+  .amount-field input {
+    font-size: 32px;
+  }
 }
 
 /* ── Partner Split Extras ── */
