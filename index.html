@@ -26,7 +26,7 @@
         <div class="nav-links" id="nav-links">
           <a href="#home" class="nav-link active" data-view="home">Overview</a>
           <a href="#add" class="nav-link" data-view="add">Log</a>
-          <a href="#partner" class="nav-link" data-view="partner">Partner</a>
+          <a href="#partner" class="nav-link" data-view="partner">Friends</a>
           <a href="#activity" class="nav-link" data-view="activity">Activity</a>
           <a href="#insights" class="nav-link" data-view="insights">Insights</a>
           <a href="#settings" class="nav-link" data-view="settings">Settings</a>
@@ -46,7 +46,7 @@
       </a>
       <a href="#partner" class="bnav" data-view="partner">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span>Partner</span>
+        <span>Friends</span>
       </a>
       <a href="#activity" class="bnav" data-view="activity">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -206,13 +206,13 @@
         </form>
       </section>
 
-      <!-- ── VIEW: PARTNER ── -->
+      <!-- ── VIEW: FRIENDS SYNC ── -->
       <section id="view-partner" class="view">
-        <h1>Partner Split</h1>
+        <h1>Friends Sync</h1>
 
         <!-- STATE A: User NOT Authenticated with Supabase -->
         <div id="partner-auth" class="card">
-          <h3>Sign in to Sync with Partner</h3>
+          <h3>Sign in to Sync with Friends</h3>
           <p class="muted" style="font-size: 13px; margin-bottom: 16px;">
             To split bills and get live notifications, connect using your email magic link.
           </p>
@@ -230,47 +230,60 @@
           <div id="partner-auth-msg" class="hint" style="display:none; color: var(--green); margin-top: 12px; font-weight: 500;"></div>
         </div>
 
-        <!-- STATE B: Authenticated but NO Partner Link -->
-        <div id="partner-unlinked" class="card" style="display:none;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <!-- STATE B: Authenticated & Connected Friends Directory -->
+        <div id="partner-unlinked" style="display:none;">
+          <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <h3>Welcome, <span id="partner-unlinked-name">...</span></h3>
             <button type="button" class="btn-ghost btn-sm" id="partner-logout-btn">Sign Out</button>
           </div>
-          
-          <div style="border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 20px;">
-            <h4>1. Generate an Invite Code</h4>
-            <p class="muted" style="font-size: 13.5px; margin-bottom: 12px;">Invite your roommate or partner to link budgets.</p>
-            <button type="button" class="btn-primary" id="gen-invite-btn" style="width: auto;">Generate Code</button>
-            <div id="invite-code-display" style="display:none; margin-top: 12px; padding: 12px; background: var(--accent-light); border: 1px dashed var(--border); border-radius: var(--radius-sm); text-align: center;">
-              <span class="muted" style="font-size: 11px; text-transform: uppercase;">Your invite code (expires in 48h):</span>
-              <div id="invite-code-val" style="font-size: 24px; font-weight: 700; letter-spacing: 2px; margin: 4px 0;">...</div>
-              <button type="button" class="btn-ghost btn-sm" id="copy-invite-link">Copy Invite Link</button>
+
+          <!-- Connected Friends Directory List Card -->
+          <div class="card">
+            <h3>Connected Friends</h3>
+            <p class="muted" style="font-size: 13px; margin-bottom: 12px;">Tap any friend to manage shared bills and reminders.</p>
+            <div id="friends-directory-list" class="activity-feed">
+              <div class="empty-state">No synced friends yet. Share a code below to connect!</div>
             </div>
           </div>
+          
+          <!-- Add Friends Box -->
+          <div class="card">
+            <h3 style="margin-bottom: 12px;">Add a New Friend</h3>
+            <div style="border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 20px;">
+              <h4>1. Generate an Invite Code</h4>
+              <p class="muted" style="font-size: 13.5px; margin-bottom: 12px;">Invite your roommate or friend to sync balances.</p>
+              <button type="button" class="btn-primary" id="gen-invite-btn" style="width: auto;">Generate Code</button>
+              <div id="invite-code-display" style="display:none; margin-top: 12px; padding: 12px; background: var(--accent-light); border: 1px dashed var(--border); border-radius: var(--radius-sm); text-align: center;">
+                <span class="muted" style="font-size: 11px; text-transform: uppercase;">Your invite code (expires in 48h):</span>
+                <div id="invite-code-val" style="font-size: 24px; font-weight: 700; letter-spacing: 2px; margin: 4px 0;">...</div>
+                <button type="button" class="btn-ghost btn-sm" id="copy-invite-link">Copy Invite Link</button>
+              </div>
+            </div>
 
-          <div>
-            <h4>2. Redeem Partner's Invite Code</h4>
-            <p class="muted" style="font-size: 13.5px; margin-bottom: 12px;">Enter the 6-character code your partner shared with you.</p>
-            <form id="redeem-invite-form" style="display: flex; gap: 8px;">
-              <input type="text" id="redeem-code-input" placeholder="ABC123" required style="flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; outline: none;" maxlength="6">
-              <button type="submit" class="btn-primary" style="width: auto;">Connect</button>
-            </form>
+            <div>
+              <h4>2. Redeem Friend's Invite Code</h4>
+              <p class="muted" style="font-size: 13.5px; margin-bottom: 12px;">Enter the 6-character code your friend shared with you.</p>
+              <form id="redeem-invite-form" style="display: flex; gap: 8px;">
+                <input type="text" id="redeem-code-input" placeholder="ABC123" required style="flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; outline: none;" maxlength="6">
+                <button type="submit" class="btn-primary" style="width: auto;">Connect</button>
+              </form>
+            </div>
           </div>
         </div>
 
-        <!-- STATE C: Active Partnership Dashboard -->
+        <!-- STATE C: Active Friend Details Dashboard -->
         <div id="partner-dashboard" style="display:none;">
           
-          <!-- Partnership Header Card -->
+          <!-- Back & Friend Header Card -->
           <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <span class="muted" style="font-size: 11px; text-transform: uppercase;">Partnership Active</span>
-              <h3 style="margin-top: 2px;">Syncing with: <span id="partner-display-name">...</span></h3>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <button type="button" class="btn-ghost btn-sm" id="friend-back-btn" style="width: auto; padding: 6px 12px;">← Back</button>
+              <div>
+                <span class="muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Friend Sync Active</span>
+                <h3 style="margin-top: 2px; margin-bottom: 0;">Syncing with: <span id="partner-display-name">...</span></h3>
+              </div>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <button type="button" class="btn-ghost btn-sm" id="partner-dash-logout">Sign Out</button>
-              <button type="button" class="btn-danger btn-sm" id="leave-partner-btn" style="width: auto;">Disconnect</button>
-            </div>
+            <button type="button" class="btn-danger btn-sm" id="leave-partner-btn" style="width: auto;">Disconnect</button>
           </div>
 
           <!-- Running Net Balance Card -->

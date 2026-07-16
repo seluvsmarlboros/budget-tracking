@@ -3,6 +3,7 @@ import { SupabaseService, supabase } from './supabase.js';
 import { State } from './state.js';
 import { toast } from './app.js';
 
+let activePartnerships = [];
 let activePartnership = null;
 let profile = null;
 let partnerProfile = null;
@@ -21,6 +22,20 @@ export async function initPartner() {
   if (celebBtn) {
     celebBtn.addEventListener('click', async () => {
       document.getElementById('celebration-overlay').style.display = 'none';
+      await checkAuthState();
+    });
+  }
+
+  // Wire back button
+  const backBtn = document.getElementById('friend-back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', async () => {
+      if (realtimeSubscription) {
+        realtimeSubscription.unsubscribe();
+        realtimeSubscription = null;
+      }
+      activePartnership = null;
+      partnerProfile = null;
       await checkAuthState();
     });
   }
@@ -149,27 +164,117 @@ export async function checkAuthState() {
   currentUserId = user.id;
   profile = await SupabaseService.getProfile(user.id);
 
-  // Check partnership status
-  activePartnership = await SupabaseService.checkPartnership();
-  
+  // If we are actively viewing a specific partnership details screen, refresh and keep it open
   if (activePartnership) {
-    if (unlinkedSubscription) {
-      unlinkedSubscription.unsubscribe();
-      unlinkedSubscription = null;
+    const freshPartnerships = await SupabaseService.checkPartnerships();
+    const updatedP = freshPartnerships.find(p => p.id === activePartnership.id);
+    if (updatedP) {
+      activePartnership = updatedP;
+      const isUserA = activePartnership.user_a.id === currentUserId;
+      partnerProfile = isUserA ? activePartnership.user_b : activePartnership.user_a;
+      showState('dashboard');
+      setupRealtimeSubscription(activePartnership.id);
+      await refreshDashboard();
+      return;
+    } else {
+      activePartnership = null;
+      partnerProfile = null;
     }
-    const isUserA = activePartnership.user_a.id === currentUserId;
-    partnerProfile = isUserA ? activePartnership.user_b : activePartnership.user_a;
-    showState('dashboard');
-    setupRealtimeSubscription(activePartnership.id);
-    await refreshDashboard();
+  }
+
+  // Load all active partnerships and show directory list
+  activePartnerships = await SupabaseService.checkPartnerships();
+  showState('unlinked');
+  setupUnlinkedRealtimeSubscription();
+  
+  await renderFriendsDirectory();
+
+  // Check if user already has an active pending code
+  const pending = await SupabaseService.checkPendingInvite();
+  if (pending) {
+    displayInviteCode(pending.invite_code);
   } else {
-    showState('unlinked');
-    setupUnlinkedRealtimeSubscription();
-    // Check if user already has an active pending code
-    const pending = await SupabaseService.checkPendingInvite();
-    if (pending) {
-      displayInviteCode(pending.invite_code);
+    const inviteEl = document.getElementById('invite-code-display');
+    if (inviteEl) inviteEl.style.display = 'none';
+  }
+}
+
+async function renderFriendsDirectory() {
+  const container = document.getElementById('friends-directory-list');
+  if (!container) return;
+
+  if (activePartnerships.length === 0) {
+    container.innerHTML = '<div class="empty-state">No synced friends yet. Share a code below to connect!</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  for (const p of activePartnerships) {
+    const isUserA = p.user_a.id === currentUserId;
+    const friend = isUserA ? p.user_b : p.user_a;
+    const friendName = friend.display_name || friend.id.substring(0, 6);
+
+    const balInfo = await SupabaseService.getNetBalance(p.id);
+    const isDebtor = (balInfo.rawBalance > 0 && isUserA) || (balInfo.rawBalance < 0 && !isUserA);
+
+    const item = document.createElement('div');
+    item.className = 'feed-item card';
+    item.style.cursor = 'pointer';
+    item.style.margin = '8px 0';
+    item.style.display = 'flex';
+    item.style.justifyContent = 'space-between';
+    item.style.alignItems = 'center';
+    item.style.padding = '12px';
+
+    item.addEventListener('click', async () => {
+      activePartnership = p;
+      partnerProfile = friend;
+      showState('dashboard');
+      setupRealtimeSubscription(p.id);
+      await refreshDashboard();
+    });
+
+    const left = document.createElement('div');
+    left.style.display = 'flex';
+    left.style.alignItems = 'center';
+    left.style.gap = '12px';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'feed-icon';
+    avatar.textContent = '👤';
+
+    const details = document.createElement('div');
+    const nameEl = document.createElement('div');
+    nameEl.style.fontWeight = '600';
+    nameEl.textContent = friendName;
+
+    const statusEl = document.createElement('div');
+    statusEl.className = 'feed-meta';
+    
+    if (balInfo.balance === 0) {
+      statusEl.textContent = 'Settled';
+    } else if (isDebtor) {
+      statusEl.textContent = `you owe ₹${balInfo.balance.toFixed(2)}`;
+      statusEl.style.color = 'var(--red)';
+    } else {
+      statusEl.textContent = `owes you ₹${balInfo.balance.toFixed(2)}`;
+      statusEl.style.color = 'var(--green)';
     }
+
+    details.appendChild(nameEl);
+    details.appendChild(statusEl);
+    left.appendChild(avatar);
+    left.appendChild(details);
+
+    const right = document.createElement('div');
+    const manageBtn = document.createElement('button');
+    manageBtn.className = 'btn-ghost btn-sm';
+    manageBtn.textContent = 'Manage ➔';
+    right.appendChild(manageBtn);
+
+    item.appendChild(left);
+    item.appendChild(right);
+    container.appendChild(item);
   }
 }
 
@@ -179,7 +284,7 @@ function showState(state) {
   document.getElementById('partner-dashboard').style.display = state === 'dashboard' ? '' : 'none';
 
   if (state === 'unlinked' && profile) {
-    document.getElementById('partner-unlinked-name').textContent = profile.display_name || 'Partner';
+    document.getElementById('partner-unlinked-name').textContent = profile.display_name || 'Friend';
   }
 }
 
@@ -510,10 +615,44 @@ function renderRecurringTemplates(templates) {
     body.appendChild(meta);
     item.appendChild(body);
 
-    // Action button
+    // Action buttons container
     const actionContainer = document.createElement('div');
     actionContainer.style.display = 'flex';
     actionContainer.style.gap = '4px';
+
+    // Log Template instance button
+    const logBtn = document.createElement('button');
+    logBtn.className = 'btn-ghost btn-sm';
+    logBtn.textContent = '⚡ Log';
+    logBtn.style.padding = '4px 8px';
+    logBtn.style.width = 'auto';
+    logBtn.style.fontWeight = 'bold';
+    logBtn.addEventListener('click', async () => {
+      logBtn.disabled = true;
+      logBtn.textContent = 'Logging...';
+      try {
+        const detail = JSON.parse(t.split_detail);
+        const expenseData = {
+          partnershipId: activePartnership.id,
+          title: t.title,
+          totalAmount: parseFloat(t.total_amount),
+          splitType: t.split_type,
+          splitDetail: t.split_detail,
+          userAOwes: parseFloat(detail.userAOwes),
+          userBOwes: parseFloat(detail.userBOwes),
+          dueDate: new Date().toISOString().split('T')[0],
+          category: t.category || "Shared",
+          isRecurring: false
+        };
+        await SupabaseService.addSharedExpense(expenseData);
+        toast(`Logged shared bill: ${t.title}!`);
+        await refreshDashboard();
+      } catch (err) {
+        toast(`Failed to log: ${err.message}`);
+        logBtn.disabled = false;
+        logBtn.textContent = '⚡ Log';
+      }
+    });
 
     const delBtn = document.createElement('button');
     delBtn.className = 'btn-danger btn-sm';
@@ -527,6 +666,8 @@ function renderRecurringTemplates(templates) {
         await refreshDashboard();
       }
     });
+    
+    actionContainer.appendChild(logBtn);
     actionContainer.appendChild(delBtn);
     item.appendChild(actionContainer);
 

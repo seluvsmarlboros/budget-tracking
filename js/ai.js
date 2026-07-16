@@ -1,5 +1,6 @@
 /* AI Assistant Service Module */
 import { State } from './state.js';
+import { SupabaseService } from './supabase.js';
 
 // Universal fallback key — works out of the box for all users (Groq/Llama)
 const UNIVERSAL_KEY = ["gsk", "XvTW2HftoIAi0QOv8kETWGdyb3FYOq9lJm4DU2FR8S7IerDaJ9wn"].join("_");
@@ -53,16 +54,19 @@ Available Actions inside the "actions" array:
    - friend: Name of the friend. If the friend is not in the existing friends list, we will automatically add them.
    - splitHalf: true if we split a bill 50/50 (e.g., "split canteen bill of 400 with Priya" -> amount 400, splitHalf: true). false if it's a direct loan/borrow where the friend owes the full amount.
 
-3. { "action": "add_spike", "title": string, "amount": number, "date": "YYYY-MM-DD" }
+3. { "action": "add_shared_bill", "friend": string, "amount": number, "description": string, "splitType": "equal" }
+   - For real-time database-synced splits with a connected friend. Use this when the user explicitly mentions splitting or billing with a "partner", "synced friend", or a friend name that is connected in the live database sync.
+
+4. { "action": "add_spike", "title": string, "amount": number, "date": "YYYY-MM-DD" }
    - For upcoming future expenses (fees, fests, tickets). Make sure to extract or estimate a future date.
 
-4. { "action": "add_savings_goal", "name": string, "target": number, "saved": number }
+5. { "action": "add_savings_goal", "name": string, "target": number, "saved": number }
    - For savings goals.
 
-5. { "action": "update_settings", "name": string (optional), "currency": string (optional), "weeklyPocketMoney": number (optional), "commuteType": "metro"|"bus"|"petrol"|"cab"|"none" (optional) }
+6. { "action": "update_settings", "name": string (optional), "currency": string (optional), "weeklyPocketMoney": number (optional), "commuteType": "metro"|"bus"|"petrol"|"cab"|"none" (optional) }
    - For changing profile/budget settings.
 
-6. { "action": "add_friend", "name": string }
+7. { "action": "add_friend", "name": string }
    - Adds a new friend.
 
 Examples:
@@ -74,6 +78,9 @@ Output: {"actions": [], "message": "Hello! How can I help you manage your colleg
 
 User: "I split a 500 bill with Rohan for pizza"
 Output: {"actions": [{"action": "add_split", "direction": "lent", "friend": "Rohan", "amount": 500, "description": "Pizza", "splitHalf": true, "date": "${today}"}], "message": "Logged the pizza bill. Rohan owes you ₹250."}
+
+User: "split shared bill of 1000 for electricity with my partner Priya"
+Output: {"actions": [{"action": "add_shared_bill", "friend": "Priya", "amount": 1000, "description": "Electricity", "splitType": "equal"}], "message": "Logged the shared bill of ₹1000 for Electricity. Priya owes you ₹500."}
 
 User: "change my weekly budget to 2000"
 Output: {"actions": [{"action": "update_settings", "weeklyPocketMoney": 2000}], "message": "Budget updated to ₹2000 per week."}
@@ -210,6 +217,58 @@ function executeAction(act) {
         description: act.description
       });
       return `Added ${act.type}: "${act.description}" (${sym}${act.amount}) in ${cat}`;
+    }
+
+    case 'add_shared_bill': {
+      const friend = act.friend;
+      const amount = act.amount;
+      const description = act.description;
+
+      (async () => {
+        try {
+          const partnerships = await SupabaseService.checkPartnerships();
+          const user = await SupabaseService.getCurrentUser();
+          if (!user) return;
+
+          const match = partnerships.find(p => {
+            const uAName = p.user_a.display_name || '';
+            const uBName = p.user_b.display_name || '';
+            return uAName.toLowerCase() === friend.toLowerCase() || uBName.toLowerCase() === friend.toLowerCase();
+          });
+
+          if (match) {
+            const splitDetail = JSON.stringify({
+              splitType: 'equal',
+              userAOwes: amount / 2,
+              userBOwes: amount / 2
+            });
+            await SupabaseService.addSharedExpense({
+              partnershipId: match.id,
+              title: description,
+              totalAmount: amount,
+              splitType: 'equal',
+              splitDetail: splitDetail,
+              userAOwes: amount / 2,
+              userBOwes: amount / 2,
+              dueDate: new Date().toISOString().split('T')[0],
+              category: 'Shared',
+              isRecurring: false
+            });
+            const { checkAuthState } = await import('./partner.js');
+            if (checkAuthState) checkAuthState();
+          } else {
+            // Local fallback
+            if (!State.data.friends.list.includes(friend)) {
+              State.addFriend(friend);
+            }
+            State.addSplitIOU('lent', friend, amount, description, true);
+          }
+        } catch (e) {
+          console.error("AI shared expense save failed:", e);
+        }
+      })();
+
+      return `Processing shared bill: splitting ${sym}${amount} with ${friend} for "${description}"`;
     }
 
     case 'add_split': {

@@ -74,12 +74,12 @@ export const SupabaseService = {
   },
 
   // ─── Partnership Invite / Join / Leave ──────────────────────────────
-  async checkPartnership() {
-    if (!supabase) return null;
+  async checkPartnerships() {
+    if (!supabase) return [];
     const user = await this.getCurrentUser();
-    if (!user) return null;
+    if (!user) return [];
 
-    // Check for an active partnership
+    // Check for active partnerships
     const { data, error } = await supabase
       .from("partnerships")
       .select("*, user_a:profiles!partnerships_user_a_fkey(*), user_b:profiles!partnerships_user_b_fkey(*)")
@@ -87,7 +87,7 @@ export const SupabaseService = {
       .eq("status", "active");
 
     if (error) throw error;
-    return data && data.length > 0 ? data[0] : null;
+    return data || [];
   },
 
   async checkPendingInvite() {
