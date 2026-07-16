@@ -303,19 +303,18 @@ export const SupabaseService = {
   },
 
   async sendReminderNotification(partnershipId, partnerId, amount, senderName) {
+    initSupabaseClient();
     if (!supabase) return null;
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("notifications")
       .insert({
         user_id: partnerId,
         type: "reminder",
         message: `🔔 Friendly reminder from ${senderName}: You owe them ₹${amount.toFixed(2)}.`
-      })
-      .select()
-      .maybeSingle();
+      });
 
     if (error) throw error;
-    return data;
+    return true;
   },
 
   // ─── Ledger Entries & Activity Feed ──────────────────────────────────
