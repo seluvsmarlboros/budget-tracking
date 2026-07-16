@@ -1,0 +1,8 @@
+.DS_Store
+*.log
+.gemini/
+node_modules/
+dist/
+.env
+.env.local
+.vercel

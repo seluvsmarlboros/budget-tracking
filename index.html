@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniSpend — Student Money Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- QR Code Scanner & Generator Libraries -->
+  <script src="https://unpkg.com/html5-qrcode" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <!-- Supabase JS Client Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- ═══ APP SHELL ═══ -->
+  <div id="app" class="app hidden">
+
+    <!-- Top Nav -->
+    <nav class="top-nav">
+      <div class="nav-inner">
+        <span class="brand">UniSpend</span>
+        <div class="nav-links" id="nav-links">
+          <a href="#home" class="nav-link active" data-view="home">Overview</a>
+          <a href="#add" class="nav-link" data-view="add">Log</a>
+          <a href="#partner" class="nav-link" data-view="partner">Partner</a>
+          <a href="#activity" class="nav-link" data-view="activity">Activity</a>
+          <a href="#insights" class="nav-link" data-view="insights">Insights</a>
+          <a href="#settings" class="nav-link" data-view="settings">Settings</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="bottom-nav">
+      <a href="#home" class="bnav active" data-view="home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Overview</span>
+      </a>
+      <a href="#add" class="bnav" data-view="add">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <span>Log</span>
+      </a>
+      <a href="#partner" class="bnav" data-view="partner">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Partner</span>
+      </a>
+      <a href="#activity" class="bnav" data-view="activity">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>Activity</span>
+      </a>
+      <a href="#insights" class="bnav" data-view="insights">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Insights</span>
+      </a>
+      <a href="#settings" class="bnav" data-view="settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <main class="main">
+
+      <!-- ── VIEW: OVERVIEW ── -->
+      <section id="view-home" class="view active">
+        <h1 class="greeting" id="greeting">Good afternoon</h1>
+
+        <!-- AI Command Bar -->
+        <div class="card ai-card">
+          <form id="ai-command-form" class="ai-form">
+            <input type="text" id="ai-input" placeholder="Ask AI: 'add 120 for lunch' or 'change my budget to 2000'..." required autocomplete="off">
+            <button type="submit" class="btn-primary" id="ai-submit">Ask AI</button>
+          </form>
+          <div id="ai-response" class="ai-response" style="display:none"></div>
+        </div>
+
+
+        <!-- Weekly Budget -->
+        <div class="card budget-card">
+          <div class="budget-header">
+            <span class="budget-label" id="budget-period-label">This week</span>
+            <span class="budget-remaining" id="budget-remaining">₹0 left</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="budget-bar" style="width:0%"></div>
+          </div>
+          <div class="budget-footer">
+            <span><strong id="budget-spent">0</strong> spent</span>
+            <span id="budget-safe-wrapper" style="display:none; color:var(--accent); font-weight:600;"><span id="budget-safe">0</span> safe discretionary</span>
+            <span class="muted">of <span id="budget-limit">0</span></span>
+          </div>
+
+          <!-- AI Advisor Panel -->
+          <div class="ai-advisor-panel" id="ai-advisor-panel" style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border);">
+            <div class="ai-advisor-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <span style="font-size: 13px; font-weight: 600; color: var(--accent); display: flex; align-items: center; gap: 4px;">
+                ✨ AI Budget Advisor
+              </span>
+              <span id="ai-advisor-loader" style="display:none; font-size: 11px; color: var(--text-secondary);">thinking...</span>
+            </div>
+            <div id="ai-advisor-meta" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;"></div>
+            <p id="ai-advisor-text" class="muted" style="font-size: 12.5px; margin: 0; line-height: 1.5; font-style: italic;">
+              Set a savings target in settings to get automated AI coaching.
+            </p>
+          </div>
+        </div>
+
+        <!-- Quick Stats Row -->
+        <div class="stat-row">
+          <div class="card stat-card">
+            <span class="stat-label">Commute this month</span>
+            <span class="stat-value" id="home-commute">₹0</span>
+          </div>
+          <div class="card stat-card clickable" onclick="location.hash='#activity'">
+            <span class="stat-label">Friends owe you</span>
+            <span class="stat-value green" id="home-owed">₹0</span>
+          </div>
+          <div class="card stat-card clickable" onclick="location.hash='#activity'">
+            <span class="stat-label">You owe</span>
+            <span class="stat-value red" id="home-owe">₹0</span>
+          </div>
+        </div>
+
+        <!-- Recent -->
+        <div class="section-head">
+          <h2>Recent</h2>
+          <a href="#activity" class="link">View all →</a>
+        </div>
+        <div class="card" id="home-recent">
+          <p class="empty-state">No entries yet</p>
+        </div>
+      </section>
+
+      <!-- ── VIEW: LOG (Add) ── -->
+      <section id="view-add" class="view">
+        <h1>Log entry</h1>
+
+        <form id="log-form" class="card log-form">
+          <!-- Amount -->
+          <div class="amount-field">
+            <span class="currency" id="log-currency">₹</span>
+            <input type="number" id="log-amount" placeholder="0" step="any" min="0.01" inputmode="decimal" autocomplete="off">
+            <button type="button" class="btn-scan-trigger" id="btn-scan-qr" title="Scan UPI QR Code">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </button>
+          </div>
+
+          <!-- Type pills -->
+          <div class="pill-row" id="type-pills">
+            <button type="button" class="pill active" data-type="expense">Expense</button>
+            <button type="button" class="pill" data-type="income">Income</button>
+            <button type="button" class="pill" data-type="split">Split</button>
+          </div>
+
+          <!-- Category pills (for expenses) -->
+          <div class="pill-row wrap" id="cat-pills">
+            <!-- populated by JS -->
+          </div>
+
+          <!-- Split controls (hidden by default) -->
+          <div id="split-controls" class="split-controls" style="display:none">
+            <div class="field">
+              <label>Friend</label>
+              <div class="friend-row">
+                <select id="split-friend">
+                  <option value="" disabled selected>Choose…</option>
+                </select>
+                <button type="button" class="btn-ghost btn-sm" id="btn-new-friend">+ New</button>
+              </div>
+            </div>
+            <div class="pill-row">
+              <button type="button" class="pill small active" data-dir="lent">They owe me</button>
+              <button type="button" class="pill small" data-dir="borrowed">I owe them</button>
+            </div>
+            <div class="pill-row">
+              <button type="button" class="pill small active" data-split="half">Split 50/50</button>
+              <button type="button" class="pill small" data-split="full">Full amount</button>
+            </div>
+            <p class="hint" id="split-hint"></p>
+          </div>
+
+          <!-- Date & Description -->
+          <div class="field">
+            <label for="log-desc">Description</label>
+            <input type="text" id="log-desc" placeholder="What was this for?">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="log-date">Date</label>
+              <input type="date" id="log-date">
+            </div>
+            <div class="field">
+              <label for="log-method">Paid with</label>
+              <div class="pill-row">
+                <button type="button" class="pill small active" data-method="UPI">UPI</button>
+                <button type="button" class="pill small" data-method="Cash">Cash</button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="log-submit">Log expense</button>
+        </form>
+      </section>
+
+      <!-- ── VIEW: PARTNER ── -->
+      <section id="view-partner" class="view">
+        <h1>Partner Split</h1>
+
+        <!-- STATE A: User NOT Authenticated with Supabase -->
+        <div id="partner-auth" class="card">
+          <h3>Sign in to Sync with Partner</h3>
+          <p class="muted" style="font-size: 13px; margin-bottom: 16px;">
+            To split bills and get live notifications, connect using your email magic link.
+          </p>
+          <form id="partner-login-form">
+            <div class="field">
+              <label for="partner-auth-name">Your Display Name</label>
+              <input type="text" id="partner-auth-name" placeholder="e.g. Alex" required>
+            </div>
+            <div class="field">
+              <label for="partner-auth-email">Your Email Address</label>
+              <input type="email" id="partner-auth-email" placeholder="alex@college.edu" required>
+            </div>
+            <button type="submit" class="btn-primary" id="partner-auth-submit">Send Magic Link</button>
+          </form>
+          <div id="partner-auth-msg" class="hint" style="display:none; color: var(--green); margin-top: 12px; font-weight: 500;"></div>
+        </div>
+
+        <!-- STATE B: Authenticated but NO Partner Link -->
+        <div id="partner-unlinked" class="card" style="display:none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3>Welcome, <span id="partner-unlinked-name">...</span></h3>
+            <button type="button" class="btn-ghost btn-sm" id="partner-logout-btn">Sign Out</button>
+          </div>
+          
+          <div style="border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 20px;">
+            <h4>1. Generate an Invite Code</h4>
+            <p class="muted" style="font-size: 13.5px; margin-bottom: 12px;">Invite your roommate or partner to link budgets.</p>
+            <button type="button" class="btn-primary" id="gen-invite-btn" style="width: auto;">Generate Code</button>
+            <div id="invite-code-display" style="display:none; margin-top: 12px; padding: 12px; background: var(--accent-light); border: 1px dashed var(--border); border-radius: var(--radius-sm); text-align: center;">
+              <span class="muted" style="font-size: 11px; text-transform: uppercase;">Your invite code (expires in 48h):</span>
+              <div id="invite-code-val" style="font-size: 24px; font-weight: 700; letter-spacing: 2px; margin: 4px 0;">...</div>
+              <button type="button" class="btn-ghost btn-sm" id="copy-invite-link">Copy Invite Link</button>
+            </div>
+          </div>
+
+          <div>
+            <h4>2. Redeem Partner's Invite Code</h4>
+            <p class="muted" style="font-size: 13.5px; margin-bottom: 12px;">Enter the 6-character code your partner shared with you.</p>
+            <form id="redeem-invite-form" style="display: flex; gap: 8px;">
+              <input type="text" id="redeem-code-input" placeholder="ABC123" required style="flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; outline: none;" maxlength="6">
+              <button type="submit" class="btn-primary" style="width: auto;">Connect</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- STATE C: Active Partnership Dashboard -->
+        <div id="partner-dashboard" style="display:none;">
+          
+          <!-- Partnership Header Card -->
+          <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span class="muted" style="font-size: 11px; text-transform: uppercase;">Partnership Active</span>
+              <h3 style="margin-top: 2px;">Syncing with: <span id="partner-display-name">...</span></h3>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-ghost btn-sm" id="partner-dash-logout">Sign Out</button>
+              <button type="button" class="btn-danger btn-sm" id="leave-partner-btn" style="width: auto;">Disconnect</button>
+            </div>
+          </div>
+
+          <!-- Running Net Balance Card -->
+          <div class="card" style="text-align: center; padding: 24px 16px;">
+            <span class="muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Ledger Summary</span>
+            <div id="partner-balance-val" style="font-size: 32px; font-weight: 700; margin: 8px 0;">₹0</div>
+            <p id="partner-balance-desc" class="muted" style="font-size: 13.5px; margin-bottom: 16px;">All settled up!</p>
+            <button type="button" class="btn-primary" id="settle-up-btn" style="width: auto; padding: 10px 24px;">Settle Up</button>
+          </div>
+
+          <!-- Add Shared Expense Section -->
+          <div class="card">
+            <h3>Add Shared Expense</h3>
+            <form id="shared-expense-form" style="margin-top: 12px;">
+              <div class="field-row">
+                <div class="field">
+                  <label for="shared-exp-title">Description</label>
+                  <input type="text" id="shared-exp-title" placeholder="e.g. WiFi Bill" required>
+                </div>
+                <div class="field">
+                  <label for="shared-exp-amount">Total Amount (₹)</label>
+                  <input type="number" id="shared-exp-amount" placeholder="1000" min="1" step="any" required>
+                </div>
+              </div>
+
+              <!-- Split Type Selector -->
+              <div class="field">
+                <label>Split Method</label>
+                <div class="pill-row wrap" id="split-type-pills">
+                  <button type="button" class="pill active" data-split="equal">Equal (50/50)</button>
+                  <button type="button" class="pill" data-split="percent">Percentage</button>
+                  <button type="button" class="pill" data-split="fixed">Custom Amount</button>
+                  <button type="button" class="pill" data-split="itemized">Itemized Items</button>
+                </div>
+              </div>
+
+              <!-- Split Details Inputs (Dynamic) -->
+              <div id="split-details-container" style="margin-bottom: 16px; padding: 12px; background: var(--accent-light); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                <!-- Equal Split Info -->
+                <div id="split-info-equal" class="split-info-block">
+                  <p class="muted" style="font-size: 13px;">Split equally: you and your partner pay exactly half.</p>
+                </div>
+                
+                <!-- Percent Split Slider -->
+                <div id="split-info-percent" class="split-info-block" style="display:none;">
+                  <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; margin-bottom: 8px;">
+                    <span>Your Share: <span id="split-pct-my-val">50</span>%</span>
+                    <span>Partner's Share: <span id="split-pct-partner-val">50</span>%</span>
+                  </div>
+                  <input type="range" id="split-pct-slider" min="0" max="100" value="50" style="width: 100%; accent-color: var(--accent);">
+                </div>
+
+                <!-- Custom Fixed Amount -->
+                <div id="split-info-fixed" class="split-info-block" style="display:none;">
+                  <div class="field-row">
+                    <div class="field">
+                      <label for="split-fixed-me">Your Share (₹)</label>
+                      <input type="number" id="split-fixed-me" placeholder="0" min="0" step="any">
+                    </div>
+                    <div class="field">
+                      <label for="split-fixed-partner">Partner's Share (₹)</label>
+                      <input type="number" id="split-fixed-partner" placeholder="0" min="0" step="any">
+                    </div>
+                  </div>
+                  <div id="split-fixed-warn" style="color: var(--red); font-size: 12px; display:none; margin-top:-8px;">Amounts must sum to total!</div>
+                </div>
+
+                <!-- Itemized Split -->
+                <div id="split-info-itemized" class="split-info-block" style="display:none;">
+                  <div id="itemized-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                    <!-- item rows go here -->
+                  </div>
+                  <button type="button" class="btn-ghost btn-sm" id="add-itemized-row">+ Add Item</button>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px;">
+                    <span>You: ₹<span id="itemized-total-me">0</span></span>
+                    <span>Partner: ₹<span id="itemized-total-partner">0</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Extra Meta Info -->
+              <div class="field-row">
+                <div class="field">
+                  <label for="shared-exp-due">Due Date</label>
+                  <input type="date" id="shared-exp-due">
+                </div>
+                <div class="field">
+                  <label for="shared-exp-cat">Category</label>
+                  <select id="shared-exp-cat">
+                    <option value="Shared">Shared</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Groceries">Groceries</option>
+                    <option value="Canteen">Canteen</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Recurring Toggle -->
+              <div class="check-row">
+                <input type="checkbox" id="shared-exp-recurring">
+                <label for="shared-exp-recurring">Save as recurring template (Monthly)</label>
+              </div>
+
+              <button type="submit" class="btn-primary">Add Shared Bill</button>
+            </form>
+          </div>
+
+          <!-- Recurring Bill Templates Card -->
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <h3>Recurring Templates</h3>
+              <span class="badge" style="font-size:10px;">Monthly Auto-Split</span>
+            </div>
+            <div id="partner-recurring-list" class="activity-feed" style="margin-top: 8px;">
+              <!-- recurring templates go here -->
+              <div class="empty-state">No recurring bill templates active.</div>
+            </div>
+          </div>
+
+          <!-- Shared Activity & History List -->
+          <div class="card">
+            <h3>Partner Activity Log</h3>
+            <div id="partner-activity-list" class="activity-feed" style="margin-top: 12px;">
+              <!-- history items go here -->
+              <div class="empty-state">No shared activity yet.</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── VIEW: ACTIVITY ── -->
+      <section id="view-activity" class="view">
+        <h1>Activity</h1>
+
+        <!-- Friend Balances (collapsible) -->
+        <details class="card balances-card" id="balances-section">
+          <summary class="balances-summary">
+            <span>Friend balances</span>
+            <span class="badge" id="balance-count">0</span>
+          </summary>
+          <div class="balances-list" id="balances-list">
+            <!-- populated by JS -->
+          </div>
+          <div class="balances-actions">
+            <button class="btn-ghost btn-sm" id="btn-add-friend-activity">+ Add friend</button>
+            <button class="btn-ghost btn-sm" id="btn-group-split">Group split</button>
+            <button class="btn-ghost btn-sm" id="btn-equalize" style="color:var(--accent)">Equalize debts</button>
+          </div>
+        </details>
+
+        <!-- Upcoming spike (pinned) -->
+        <div class="card spike-banner pinned" id="activity-spike" style="display:none">
+          <div class="spike-left">
+            <span class="spike-title" id="act-spike-title">—</span>
+            <span class="spike-date muted" id="act-spike-meta">—</span>
+          </div>
+          <div class="spike-right">
+            <span class="spike-amount" id="act-spike-amount">₹0</span>
+            <button class="btn-ghost btn-sm" id="btn-add-spike">+ Add spike</button>
+          </div>
+        </div>
+        <!-- Show add spike button when no spikes -->
+        <div id="no-spike-row" class="no-spike-row">
+          <button class="btn-ghost btn-sm" id="btn-add-spike-empty">+ Add upcoming expense</button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-row" id="filter-row">
+          <button class="pill small active" data-filter="all">All</button>
+          <button class="pill small" data-filter="expense">Expenses</button>
+          <button class="pill small" data-filter="commute">Travel</button>
+          <button class="pill small" data-filter="split">Splits</button>
+          <button class="pill small" data-filter="income">Income</button>
+        </div>
+
+        <!-- Feed -->
+        <div id="activity-feed" class="activity-feed">
+          <p class="empty-state">No activity yet</p>
+        </div>
+      </section>
+
+      <!-- ── VIEW: INSIGHTS ── -->
+      <section id="view-insights" class="view">
+        <h1>Insights</h1>
+
+        <!-- Month comparison -->
+        <div class="stat-row">
+          <div class="card stat-card">
+            <span class="stat-label">This month</span>
+            <span class="stat-value" id="ins-this-month">₹0</span>
+          </div>
+          <div class="card stat-card">
+            <span class="stat-label">Last month</span>
+            <span class="stat-value muted" id="ins-last-month">₹0</span>
+          </div>
+          <div class="card stat-card">
+            <span class="stat-label">Change</span>
+            <span class="stat-value" id="ins-delta">—</span>
+          </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div class="card">
+          <h3>Spending by category</h3>
+          <div class="bar-stack" id="cat-bar"></div>
+          <div class="bar-legend" id="cat-legend"></div>
+        </div>
+
+        <!-- Payment split -->
+        <div class="card">
+          <h3>Payment method</h3>
+          <div class="method-row">
+            <div class="method-stat">
+              <span class="method-label">UPI / Online</span>
+              <span class="method-value" id="ins-upi">₹0 (0%)</span>
+            </div>
+            <div class="method-stat">
+              <span class="method-label">Cash</span>
+              <span class="method-value" id="ins-cash">₹0 (0%)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Commute breakdown -->
+        <div class="card">
+          <h3>Travel breakdown</h3>
+          <div class="method-row" id="ins-travel-row">
+            <div class="method-stat">
+              <span class="method-label">Fares & passes</span>
+              <span class="method-value" id="ins-fares">₹0</span>
+            </div>
+            <div class="method-stat">
+              <span class="method-label">Fuel</span>
+              <span class="method-value" id="ins-fuel">₹0</span>
+            </div>
+            <div class="method-stat">
+              <span class="method-label">Maintenance</span>
+              <span class="method-value" id="ins-repair">₹0</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-ghost full" id="btn-export-summary">Export summary</button>
+      </section>
+
+      <!-- ── VIEW: SETTINGS ── -->
+      <section id="view-settings" class="view">
+        <h1>Settings</h1>
+
+        <!-- Streak -->
+        <div class="card streak-line">
+          <span>🔥 <strong id="set-streak">0</strong>-day streak</span>
+          <span class="muted"><span id="set-active-days">0</span> days tracked total</span>
+        </div>
+
+        <!-- Budget & Profile -->
+        <div class="card">
+          <h3>Budget</h3>
+          <form id="settings-form">
+            <div class="field-row">
+              <div class="field">
+                <label for="set-name">Name</label>
+                <input type="text" id="set-name" required>
+              </div>
+              <div class="field">
+                <label for="set-currency">Currency</label>
+                <select id="set-currency">
+                  <option value="₹">₹ INR</option>
+                  <option value="$">$ USD</option>
+                  <option value="€">€ EUR</option>
+                  <option value="£">£ GBP</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="set-budget">Budget limit</label>
+                <input type="number" id="set-budget" min="1" required>
+              </div>
+              <div class="field">
+                <label for="set-period">Budget period</label>
+                <select id="set-period">
+                  <option value="week">Weekly</option>
+                  <option value="month">Monthly</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="set-commute">Commute mode</label>
+                <select id="set-commute">
+                  <option value="metro">Metro</option>
+                  <option value="bus">Bus</option>
+                  <option value="petrol">Bike/Scooter</option>
+                  <option value="cab">Cab/Auto</option>
+                  <option value="none">Walk/Hostel</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="set-upi">UPI ID (for splits/IOUs)</label>
+                <input type="text" id="set-upi" placeholder="alex@upi">
+              </div>
+            </div>
+             <div class="field-row">
+              <div class="field">
+                <label for="set-target-goal">Savings Target Goal</label>
+                <input type="text" id="set-target-goal" placeholder="e.g. Save ₹3000 for a laptop">
+              </div>
+              <div class="field">
+                <label for="set-cutback-category">Cutback Focus Area</label>
+                <select id="set-cutback-category">
+                  <option value="Canteen">Canteen</option>
+                  <option value="Food">Food</option>
+                  <option value="Travel">Travel</option>
+                  <option value="Hangout">Hangout</option>
+                  <option value="Stationery">Stationery</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary">Save</button>
+          </form>
+        </div>
+
+        <!-- AI Settings -->
+        <div class="card">
+          <h3>AI Assistant Settings</h3>
+          <form id="ai-settings-form">
+            <div class="field">
+              <label for="set-ai-provider">AI Provider</label>
+              <select id="set-ai-provider">
+                <option value="openrouter">OpenRouter</option>
+                <option value="gemini">Google Gemini (AI Studio)</option>
+                <option value="groq">Groq</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="set-ai-key" id="ai-key-label">API Key</label>
+              <input type="password" id="set-ai-key" placeholder="API Key">
+            </div>
+            <div class="field">
+              <label for="set-ai-model">Model</label>
+              <select id="set-ai-model">
+                <!-- populated by JS -->
+              </select>
+            </div>
+            <button type="submit" class="btn-primary">Save AI Settings</button>
+          </form>
+        </div>
+
+
+        <!-- Categories -->
+        <div class="card">
+          <div class="card-head">
+            <h3>Categories</h3>
+            <button class="btn-ghost btn-sm" id="btn-add-cat">+ Add</button>
+          </div>
+          <div class="tag-list" id="cat-tags">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <!-- Savings Goals -->
+        <div class="card">
+          <div class="card-head">
+            <h3>Savings goals</h3>
+            <button class="btn-ghost btn-sm" id="btn-add-goal">+ Add</button>
+          </div>
+          <div id="goals-list">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+        <!-- Data -->
+        <div class="card">
+          <h3>Data</h3>
+          <div class="btn-stack">
+            <button class="btn-ghost full" id="btn-export">Export backup (JSON)</button>
+            <label class="btn-ghost full" for="btn-import">Import backup</label>
+            <input type="file" id="btn-import" accept=".json" hidden>
+            <button class="btn-danger full" id="btn-reset">Reset all data</button>
+          </div>
+        </div>
+
+        <!-- Theme -->
+        <div class="card">
+          <div class="toggle-row">
+            <span>Dark mode</span>
+            <label class="toggle">
+              <input type="checkbox" id="toggle-dark">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ═══ ONBOARDING ═══ -->
+  <div id="onboarding" class="onboarding">
+    <div class="onboard-card">
+      <h1>UniSpend</h1>
+      <p class="muted">Track your college money in 10 seconds.</p>
+      <form id="onboard-form">
+        <div class="field">
+          <label for="onb-name">Your name</label>
+          <input type="text" id="onb-name" placeholder="Alex" required>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="onb-currency">Currency</label>
+            <select id="onb-currency">
+              <option value="₹">₹ Rupees</option>
+              <option value="$">$ Dollars</option>
+              <option value="€">€ Euros</option>
+              <option value="£">£ Pounds</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="onb-budget">Monthly budget</label>
+            <input type="number" id="onb-budget" placeholder="5000" required min="1">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="onb-goal">Savings target goal (Optional)</label>
+            <input type="text" id="onb-goal" placeholder="e.g. Save for a Laptop">
+          </div>
+          <div class="field">
+            <label for="onb-cutback">Target Cutback Category</label>
+            <select id="onb-cutback">
+              <option value="Canteen">Canteen</option>
+              <option value="Food">Food</option>
+              <option value="Travel">Travel</option>
+              <option value="Hangout">Hangout</option>
+              <option value="Stationery">Stationery</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="onb-seed" checked>
+          <span>Load sample data so I can explore first</span>
+        </label>
+        <button type="submit" class="btn-primary">Start tracking →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══ DIALOGS ═══ -->
+  <dialog id="dialog-friend" class="dialog">
+    <h3>Add friend</h3>
+    <form id="form-friend" method="dialog">
+      <div class="field">
+        <label for="inp-friend-name">Name</label>
+        <input type="text" id="inp-friend-name" required placeholder="Rohan">
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn-ghost" id="close-friend-dialog">Cancel</button>
+        <button type="submit" class="btn-primary">Add</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dialog-settle" class="dialog">
+    <h3>Settle up</h3>
+    <p class="muted" id="settle-desc"></p>
+    <form id="form-settle" method="dialog">
+      <input type="hidden" id="settle-friend">
+      <div class="field">
+        <label for="settle-amount">Amount</label>
+        <input type="number" id="settle-amount" required step="any" min="0.01">
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn-ghost" id="close-settle-dialog">Cancel</button>
+        <button type="submit" class="btn-primary">Settle</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dialog-spike" class="dialog">
+    <h3>Add upcoming expense</h3>
+    <form id="form-spike" method="dialog">
+      <div class="field">
+        <label for="spk-title">What is it?</label>
+        <input type="text" id="spk-title" required placeholder="Exam fee, fest tickets…">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="spk-amount">Amount</label>
+          <input type="number" id="spk-amount" required min="1">
+        </div>
+        <div class="field">
+          <label for="spk-date">Due date</label>
+          <input type="date" id="spk-date" required>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn-ghost" id="close-spike-dialog">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dialog-group" class="dialog">
+    <h3>Group split</h3>
+    <form id="form-group" method="dialog">
+      <div class="field">
+        <label for="grp-amount">Total bill</label>
+        <input type="number" id="grp-amount" required step="any" min="1" placeholder="0">
+      </div>
+      <div class="field">
+        <label for="grp-desc">Description</label>
+        <input type="text" id="grp-desc" required placeholder="Canteen lunch…">
+      </div>
+      <div class="field">
+        <label>Split with</label>
+        <div class="check-grid" id="grp-members"></div>
+      </div>
+      <p class="hint" id="grp-hint"></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn-ghost" id="close-group-dialog">Cancel</button>
+        <button type="submit" class="btn-primary">Split evenly</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dialog-cat" class="dialog">
+    <h3>Add category</h3>
+    <form id="form-cat" method="dialog">
+      <div class="field">
+        <label for="inp-cat-name">Name</label>
+        <input type="text" id="inp-cat-name" required placeholder="Coffee, Gym…">
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn-ghost" id="close-cat-dialog">Cancel</button>
+        <button type="submit" class="btn-primary">Add</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dialog-goal" class="dialog">
+    <h3>New savings goal</h3>
+    <form id="form-goal" method="dialog">
+      <div class="field">
+        <label for="goal-name">Goal name</label>
+        <input type="text" id="goal-name" required placeholder="Fest fund, new headphones…">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="goal-target">Target</label>
+          <input type="number" id="goal-target" required min="1">
+        </div>
+        <div class="field">
+          <label for="goal-saved">Already saved</label>
+          <input type="number" id="goal-saved" value="0" min="0">
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn-ghost" id="close-goal-dialog">Cancel</button>
+        <button type="submit" class="btn-primary">Create</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- UPI Scan Dialog -->
+  <dialog id="dialog-scan" class="dialog" style="max-width: 450px;">
+    <h3>Scan UPI QR Code</h3>
+    <div id="reader" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 8px; overflow: hidden; background: #000;"></div>
+    <div class="dialog-actions" style="margin-top: 16px;">
+      <button type="button" class="btn-ghost" id="close-scan-dialog">Cancel</button>
+    </div>
+  </dialog>
+
+  <!-- QR Code Display Dialog -->
+  <dialog id="dialog-qr-show" class="dialog" style="max-width: 320px; text-align: center;">
+    <h3 id="qr-title">Scan to Pay</h3>
+    <p class="muted" id="qr-desc" style="font-size: 13px; margin-bottom: 16px;"></p>
+    <div id="qrcode-container" style="display: inline-block; padding: 16px; background: #fff; border-radius: 8px; margin-bottom: 16px;">
+      <div id="qrcode"></div>
+    </div>
+    <div class="dialog-actions" style="justify-content: center;">
+      <button type="button" class="btn-ghost" id="close-qr-dialog">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Equalize Debts Dialog -->
+  <dialog id="dialog-equalize" class="dialog" style="max-width: 400px;">
+    <h3>Simplified settlements</h3>
+    <p class="muted" style="font-size: 13px; margin-bottom: 16px;">We netted out all mutual balances. Rohan paying Alex and Alex paying Priya becomes Rohan paying Priya directly. Here is the minimum set of payments to settle everyone:</p>
+    <div id="equalize-list" style="margin-bottom: 20px;">
+      <!-- populated by JS -->
+    </div>
+    <div class="dialog-actions" style="justify-content: center;">
+      <button type="button" class="btn-primary" id="close-equalize-dialog">Done</button>
+    </div>
+  </dialog>
+
+  <!-- Settle Up Dialog -->
+  <dialog id="dialog-settle-up" class="dialog" style="max-width: 400px;">
+    <h3>Settle Up Running Balance</h3>
+    <form id="form-settle-up" method="dialog">
+      <div id="settle-up-info" style="font-size: 14px; margin-bottom: 12px; font-weight: 500;">
+        <!-- Filled dynamically -->
+      </div>
+      <div class="field">
+        <label for="settle-amount">Amount to Settle (₹)</label>
+        <input type="number" id="settle-amount" placeholder="0" min="0.01" step="any" required>
+      </div>
+      <div class="field">
+        <label for="settle-method">Payment Method</label>
+        <select id="settle-method">
+          <option value="Cash">Cash / Other offline</option>
+          <option value="UPI">UPI Payment Shortcut</option>
+          <option value="PayPal">PayPal</option>
+        </select>
+      </div>
+      <div id="settle-pay-btn-container" style="margin-bottom: 16px; display: none;">
+        <a href="#" id="settle-pay-link" class="btn-primary" style="text-align: center; text-decoration: none; display: block;">Open Payment App</a>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn-ghost" id="close-settle-dialog">Cancel</button>
+        <button type="submit" class="btn-primary">Record Payment</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Toast -->
+  <div id="toasts" class="toasts"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
