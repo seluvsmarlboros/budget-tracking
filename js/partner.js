@@ -218,13 +218,12 @@ async function renderFriendsDirectory() {
     const isDebtor = (balInfo.rawBalance > 0 && isUserA) || (balInfo.rawBalance < 0 && !isUserA);
 
     const item = document.createElement('div');
-    item.className = 'feed-item card';
+    item.className = 'friend-directory-item';
     item.style.cursor = 'pointer';
-    item.style.margin = '8px 0';
     item.style.display = 'flex';
     item.style.justifyContent = 'space-between';
     item.style.alignItems = 'center';
-    item.style.padding = '12px';
+    item.style.padding = '16px';
 
     item.addEventListener('click', async () => {
       activePartnership = p;
@@ -237,26 +236,31 @@ async function renderFriendsDirectory() {
     const left = document.createElement('div');
     left.style.display = 'flex';
     left.style.alignItems = 'center';
-    left.style.gap = '12px';
+    left.style.gap = '14px';
 
     const avatar = document.createElement('div');
-    avatar.className = 'feed-icon';
-    avatar.textContent = '👤';
+    avatar.textContent = friendName.charAt(0).toUpperCase();
 
     const details = document.createElement('div');
     const nameEl = document.createElement('div');
     nameEl.style.fontWeight = '600';
+    nameEl.style.fontSize = '15px';
     nameEl.textContent = friendName;
 
     const statusEl = document.createElement('div');
     statusEl.className = 'feed-meta';
+    statusEl.style.fontSize = '12px';
+    statusEl.style.marginTop = '2px';
     
     if (balInfo.balance === 0) {
+      avatar.className = 'friend-avatar-circle settled';
       statusEl.textContent = 'Settled';
     } else if (isDebtor) {
+      avatar.className = 'friend-avatar-circle owe';
       statusEl.textContent = `you owe ₹${balInfo.balance.toFixed(2)}`;
       statusEl.style.color = 'var(--red)';
     } else {
+      avatar.className = 'friend-avatar-circle owed';
       statusEl.textContent = `owes you ₹${balInfo.balance.toFixed(2)}`;
       statusEl.style.color = 'var(--green)';
     }
@@ -270,6 +274,8 @@ async function renderFriendsDirectory() {
     const manageBtn = document.createElement('button');
     manageBtn.className = 'btn-ghost btn-sm';
     manageBtn.textContent = 'Manage ➔';
+    manageBtn.style.padding = '6px 12px';
+    manageBtn.style.width = 'auto';
     right.appendChild(manageBtn);
 
     item.appendChild(left);

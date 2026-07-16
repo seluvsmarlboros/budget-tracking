@@ -125,13 +125,28 @@ function render() {
     .reduce((s, t) => s + t.amount, 0);
 
   const budget = user.weeklyPocketMoney || 0;
-  const left = budget - periodExpenses;
   
+  // Calculate friend debts to deduct from main pocket money
+  let netFriendDebt = 0;
+  if (friends && friends.balances) {
+    Object.values(friends.balances).forEach(b => {
+      if (b < 0) {
+        netFriendDebt += Math.abs(b);
+      }
+    });
+  }
 
+  const left = budget - periodExpenses - netFriendDebt;
+  const totalConsumed = periodExpenses + netFriendDebt;
+  const pct = budget > 0 ? Math.min((totalConsumed / budget) * 100, 100) : 0;
 
-  const pct = budget > 0 ? Math.min((periodExpenses / budget) * 100, 100) : 0;
+  // Toggle warning banner
+  const warningEl = el('over-budget-warning');
+  if (warningEl) {
+    warningEl.style.display = left < 0 ? 'flex' : 'none';
+  }
 
-  el('budget-spent').textContent = sym + Math.round(periodExpenses);
+  el('budget-spent').textContent = sym + Math.round(totalConsumed);
   el('budget-limit').textContent = sym + budget;
   el('budget-remaining').textContent = left >= 0 ? `${sym}${Math.round(left)} left` : `${sym}${Math.round(Math.abs(left))} over`;
   el('budget-remaining').className = 'budget-remaining ' + (left >= 0 ? 'ok' : 'over');
