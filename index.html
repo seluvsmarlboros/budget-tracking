@@ -674,8 +674,23 @@
 
   <!-- ═══ ONBOARDING ═══ -->
   <div id="onboarding" class="onboarding">
-    <div class="onboard-card">
+    <!-- Onboarding Step 1: Authentication -->
+    <div class="onboard-card" id="onb-auth-card">
       <h1>UniSpend</h1>
+      <p class="muted" style="margin-bottom: 20px;">Connect your email first to sync and split bills in real time.</p>
+      <form id="onb-auth-form">
+        <div class="field">
+          <label for="onb-email">Email address</label>
+          <input type="email" id="onb-email" placeholder="alex@college.edu" required>
+        </div>
+        <button type="submit" class="btn-primary" id="onb-auth-btn">Send Magic Link →</button>
+      </form>
+      <div id="onb-auth-msg" class="hint" style="display:none; color: var(--green); margin-top: 12px; font-weight: 500; text-align: center;"></div>
+    </div>
+
+    <!-- Onboarding Step 2: Profile Settings (Shown after auth) -->
+    <div class="onboard-card" id="onb-profile-card" style="display:none;">
+      <h1>Setup Profile</h1>
       <p class="muted">Track your college money in 10 seconds.</p>
       <form id="onboard-form">
         <div class="field">
