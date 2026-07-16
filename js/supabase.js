@@ -10,7 +10,6 @@ export const SupabaseService = {
   // ─── Authentication & Profile ──────────────────────────────────────
   async sendMagicLink(email, displayName) {
     if (!supabase) throw new Error("Supabase is not initialized");
-    // We pass the display name inside options.data so handle_new_user() trigger picks it up
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -19,6 +18,17 @@ export const SupabaseService = {
       }
     });
     if (error) throw error;
+  },
+
+  async verifyOTP(email, token) {
+    if (!supabase) throw new Error("Supabase is not initialized");
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email'
+    });
+    if (error) throw error;
+    return data;
   },
 
   async getCurrentUser() {

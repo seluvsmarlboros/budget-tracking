@@ -8,6 +8,9 @@ export async function initOnboarding() {
 
   const authCard = document.getElementById('onb-auth-card');
   const profileCard = document.getElementById('onb-profile-card');
+  const otpForm = document.getElementById('onb-otp-form');
+
+  let activeEmail = '';
 
   // 1. Initial State Check
   if (supabase) {
@@ -29,7 +32,7 @@ export async function initOnboarding() {
     });
   }
 
-  // 2. Auth Form Submit handler
+  // 2. Auth Form Submit handler (Magic Link)
   const authForm = document.getElementById('onb-auth-form');
   if (authForm) {
     authForm.addEventListener('submit', async (e) => {
@@ -43,19 +46,54 @@ export async function initOnboarding() {
 
       try {
         await SupabaseService.sendMagicLink(email, email.split('@')[0]);
-        msg.textContent = `Magic link sent to ${email}! Click it to complete sign-in.`;
+        activeEmail = email;
+        msg.textContent = `Magic link sent to ${email}! Click it to login, or enter the 6-digit code below.`;
         msg.style.display = '';
+        
+        // Show OTP code entry fallback
+        if (otpForm) otpForm.style.display = '';
         toast('Sign in link sent!');
       } catch (err) {
         console.error(err);
         toast(`Error: ${err.message}`);
+      } finally {
         btn.disabled = false;
         btn.textContent = 'Send Magic Link →';
       }
     });
   }
 
-  // 3. Profile Setup Form Submit handler
+  // 3. OTP Verification Form handler
+  if (otpForm) {
+    otpForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = document.getElementById('onb-otp').value.trim();
+      const btn = document.getElementById('onb-otp-btn');
+
+      if (!activeEmail) {
+        toast('Please submit your email first.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+
+      try {
+        await SupabaseService.verifyOTP(activeEmail, token);
+        toast('Code verified!');
+        authCard.style.display = 'none';
+        profileCard.style.display = '';
+      } catch (err) {
+        console.error(err);
+        toast(`Verification failed: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verify Code →';
+      }
+    });
+  }
+
+  // 4. Profile Setup Form Submit handler
   const profileForm = document.getElementById('onboard-form');
   if (profileForm) {
     profileForm.addEventListener('submit', async (e) => {
