@@ -281,6 +281,22 @@ export const SupabaseService = {
     return data;
   },
 
+  async sendReminderNotification(partnershipId, partnerId, amount, senderName) {
+    if (!supabase) return null;
+    const { data, error } = await supabase
+      .from("notifications")
+      .insert({
+        user_id: partnerId,
+        type: "reminder",
+        message: `🔔 Friendly reminder from ${senderName}: You owe them ₹${amount.toFixed(2)}.`
+      })
+      .select()
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  },
+
   // ─── Ledger Entries & Activity Feed ──────────────────────────────────
   async getLedgerEntries(partnershipId) {
     if (!supabase) return [];

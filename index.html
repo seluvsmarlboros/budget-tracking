@@ -278,7 +278,10 @@
             <span class="muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Ledger Summary</span>
             <div id="partner-balance-val" style="font-size: 32px; font-weight: 700; margin: 8px 0;">₹0</div>
             <p id="partner-balance-desc" class="muted" style="font-size: 13.5px; margin-bottom: 16px;">All settled up!</p>
-            <button type="button" class="btn-primary" id="settle-up-btn" style="width: auto; padding: 10px 24px;">Settle Up</button>
+            <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn-primary" id="settle-up-btn" style="width: auto; padding: 10px 24px;">Settle Up</button>
+              <button type="button" class="btn-ghost" id="send-reminder-btn" style="display: none; width: auto; padding: 10px 20px; align-items: center; justify-content: center; gap: 6px;">🔔 Send Reminder</button>
+            </div>
           </div>
 
           <!-- Add Shared Expense Section -->

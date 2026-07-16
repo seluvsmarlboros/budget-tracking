@@ -44,6 +44,9 @@ export async function initPartner() {
   const redeemForm = document.getElementById('redeem-invite-form');
   if (redeemForm) redeemForm.addEventListener('submit', handleRedeemInvite);
 
+  const reminderBtn = document.getElementById('send-reminder-btn');
+  if (reminderBtn) reminderBtn.addEventListener('click', handleSendReminder);
+
   const leaveBtn = document.getElementById('leave-partner-btn');
   if (leaveBtn) leaveBtn.addEventListener('click', handleLeavePartnership);
 
@@ -435,11 +438,13 @@ async function refreshDashboard() {
 function renderBalanceCard() {
   const valEl = document.getElementById('partner-balance-val');
   const descEl = document.getElementById('partner-balance-desc');
+  const reminderBtn = document.getElementById('send-reminder-btn');
 
   if (balanceInfo.balance === 0) {
     valEl.textContent = '₹0';
     valEl.className = 'stat-value';
     descEl.textContent = 'You are all settled up!';
+    if (reminderBtn) reminderBtn.style.display = 'none';
   } else {
     // Determine who owes whom
     // net_balance is positive: user_a owes user_b
@@ -452,9 +457,11 @@ function renderBalanceCard() {
     if (isDebtor) {
       valEl.className = 'stat-value red';
       descEl.textContent = `You owe ${partnerProfile.display_name}`;
+      if (reminderBtn) reminderBtn.style.display = 'none';
     } else {
       valEl.className = 'stat-value green';
       descEl.textContent = `${partnerProfile.display_name} owes you`;
+      if (reminderBtn) reminderBtn.style.display = 'inline-flex';
     }
   }
 }
@@ -917,5 +924,31 @@ async function handleSettleUpSubmit(e) {
     await refreshDashboard();
   } catch (err) {
     toast(`Failed to settle: ${err.message}`);
+  }
+}
+
+async function handleSendReminder() {
+  if (!activePartnership || !partnerProfile || balanceInfo.balance === 0) return;
+
+  const btn = document.getElementById('send-reminder-btn');
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Sending...';
+
+  try {
+    const senderName = profile.display_name || 'Your partner';
+    await SupabaseService.sendReminderNotification(
+      activePartnership.id,
+      partnerProfile.id,
+      balanceInfo.balance,
+      senderName
+    );
+    toast('Reminder sent to partner! 🔔');
+  } catch (err) {
+    console.error(err);
+    toast(`Failed to send reminder: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 }
