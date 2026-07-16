@@ -26,6 +26,14 @@ export async function initPartner() {
     });
   }
 
+  // Wire Reminder Overlay Close button
+  const reminderCloseBtn = document.getElementById('reminder-overlay-close-btn');
+  if (reminderCloseBtn) {
+    reminderCloseBtn.addEventListener('click', () => {
+      document.getElementById('reminder-overlay').style.display = 'none';
+    });
+  }
+
   // Wire back button
   const backBtn = document.getElementById('friend-back-btn');
   if (backBtn) {
@@ -481,6 +489,15 @@ function triggerCelebration(partnerName) {
   toast(`🎉 Connected with ${partnerName}!`);
 }
 
+function showFullscreenReminder(message) {
+  const overlay = document.getElementById('reminder-overlay');
+  const msgEl = document.getElementById('reminder-overlay-message');
+  if (overlay && msgEl) {
+    msgEl.textContent = message;
+    overlay.style.display = 'flex';
+  }
+}
+
 function setupRealtimeSubscription(partnershipId) {
   if (realtimeSubscription) {
     realtimeSubscription.unsubscribe();
@@ -501,7 +518,7 @@ function setupRealtimeSubscription(partnershipId) {
       { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${currentUserId}` },
       (payload) => {
         console.log('Realtime notification received:', payload);
-        toast(`📢 ${payload.new.message}`);
+        showFullscreenReminder(payload.new.message);
         refreshDashboard();
       }
     )
@@ -652,6 +669,19 @@ function renderRecurringTemplates(templates) {
           isRecurring: false
         };
         await SupabaseService.addSharedExpense(expenseData);
+
+        // Log personal transaction portion of the shared bill
+        const isUserA = activePartnership.user_a.id === currentUserId;
+        const myShare = isUserA ? parseFloat(detail.userAOwes) : parseFloat(detail.userBOwes);
+        State.addTransaction({
+          type: 'expense',
+          category: t.category || 'Shared',
+          amount: myShare,
+          paymentMethod: 'UPI',
+          date: new Date().toISOString().split('T')[0],
+          description: `[Shared with ${partnerProfile.display_name || 'Friend'}] ${t.title}`
+        });
+
         toast(`Logged shared bill: ${t.title}!`);
         await refreshDashboard();
       } catch (err) {
@@ -962,6 +992,19 @@ async function handleSharedExpenseSubmit(e) {
   try {
     // 1. Submit shared expense to DB
     const res = await SupabaseService.addSharedExpense(expenseData);
+
+    if (res) {
+      // Log personal transaction portion of the shared bill
+      const myShare = isUserA ? userAOwes : userBOwes;
+      State.addTransaction({
+        type: 'expense',
+        category: category || 'Shared',
+        amount: myShare,
+        paymentMethod: 'UPI',
+        date: dueDate || new Date().toISOString().split('T')[0],
+        description: `[Shared with ${partnerProfile.display_name || 'Friend'}] ${title}`
+      });
+    }
     
     // 2. If it's recurring, save a recurring template
     if (isRecurring && res) {
@@ -1078,6 +1121,19 @@ async function handleSettleUpSubmit(e) {
 
   try {
     await SupabaseService.settleBalance(activePartnership.id, ledgerAmount, details);
+    
+    // Log personal transaction corresponding to the settlement
+    State.addTransaction({
+      type: isDebtor ? 'expense' : 'income',
+      category: 'Other',
+      amount: amount,
+      paymentMethod: method || 'UPI',
+      date: new Date().toISOString().split('T')[0],
+      description: isDebtor
+        ? `[Settled] Paid ${partnerProfile.display_name || 'Friend'} ₹${amount.toFixed(2)}`
+        : `[Settled] Received from ${partnerProfile.display_name || 'Friend'} ₹${amount.toFixed(2)}`
+    });
+
     toast('Settlement payment recorded successfully!');
     document.getElementById('dialog-settle-up').close();
     await refreshDashboard();

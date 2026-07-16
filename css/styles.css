@@ -985,7 +985,14 @@ body.dark .commute-check-in {
 .friend-avatar-circle.owe {
   background: linear-gradient(135deg, #ef4444, #dc2626);
 }
-
+@keyframes wobble-bell {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(-15deg); }
+  30% { transform: rotate(10deg); }
+  45% { transform: rotate(-10deg); }
+  60% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
 /* ── Print ── */
 @media print {
   .top-nav, .bottom-nav, .toasts, dialog, .btn-primary, .btn-ghost, .btn-danger, .filter-row, .no-spike-row, .balances-actions { display: none !important; }

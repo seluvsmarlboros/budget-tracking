@@ -986,6 +986,15 @@
       <button class="btn-primary" id="celebration-close-btn">Let's Split! ➔</button>
     </div>
   </div>
+  <!-- Reminder Fullscreen Overlay -->
+  <div id="reminder-overlay" class="celebration-overlay" style="display:none; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
+    <div class="celebration-card" style="border: 1px solid var(--accent); box-shadow: 0 0 30px rgba(99, 102, 241, 0.2);">
+      <div class="celebration-icon" style="font-size: 56px; animation: wobble-bell 1s infinite alternate; display: inline-block;">🔔</div>
+      <h2 id="reminder-overlay-title" style="margin-top: 10px;">Reminder Alert!</h2>
+      <p id="reminder-overlay-message" style="margin: 15px 0 25px; font-size: 15px; color: var(--text-primary); line-height: 1.5; font-weight: 500;"></p>
+      <button class="btn-primary" id="reminder-overlay-close-btn" style="width: 100%;">Got it! ➔</button>
+    </div>
+  </div>
 
   <!-- Toast -->
   <div id="toasts" class="toasts"></div>
