@@ -279,8 +279,17 @@ async function handleRedeemInvite(e) {
   try {
     const result = await SupabaseService.redeemInvite(code);
     input.value = '';
-    toast('Partnership linked successfully!');
-    await checkAuthState();
+    
+    // Fetch partner display name for celebration overlay
+    let partnerName = 'Partner';
+    try {
+      const pProfile = await SupabaseService.getProfile(result.user_a);
+      if (pProfile) partnerName = pProfile.display_name || partnerName;
+    } catch (e) {
+      console.error(e);
+    }
+    
+    triggerCelebration(partnerName);
   } catch (err) {
     toast(err.message);
   }
