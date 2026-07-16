@@ -111,15 +111,15 @@
 
         <!-- Quick Stats Row -->
         <div class="stat-row">
-          <div class="card stat-card">
+          <div class="card stat-card stat-commute">
             <span class="stat-label">Commute this month</span>
             <span class="stat-value" id="home-commute">₹0</span>
           </div>
-          <div class="card stat-card clickable" onclick="location.hash='#activity'">
+          <div class="card stat-card clickable stat-owed" onclick="location.hash='#activity'">
             <span class="stat-label">Friends owe you</span>
             <span class="stat-value green" id="home-owed">₹0</span>
           </div>
-          <div class="card stat-card clickable" onclick="location.hash='#activity'">
+          <div class="card stat-card clickable stat-owe" onclick="location.hash='#activity'">
             <span class="stat-label">You owe</span>
             <span class="stat-value red" id="home-owe">₹0</span>
           </div>
@@ -131,7 +131,7 @@
           <a href="#activity" class="link">View all →</a>
         </div>
         <div class="card" id="home-recent">
-          <p class="empty-state">No entries yet</p>
+          <p class="empty-state">No entries yet. Ask AI or tap Log below!</p>
         </div>
       </section>
 

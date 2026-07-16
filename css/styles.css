@@ -681,76 +681,164 @@ body.dark .commute-check-in {
 .muted { color: var(--text-muted); }
 
 /* ── Responsive ── */
+/* ── Responsive ── */
 @media (max-width: 640px) {
   .nav-links { display: none; }
   
+  /* Sticky Glass Header */
+  .top-nav {
+    background: rgba(250, 250, 249, 0.72) !important;
+    backdrop-filter: blur(40px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+    border-bottom: none !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.05) !important;
+  }
+  body.dark .top-nav {
+    background: rgba(12, 10, 9, 0.72) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -0.5px 0 0 rgba(255, 255, 255, 0.05) !important;
+  }
+
   /* Floating App-Store inspired glass bottom navigation */
   .bottom-nav {
     display: flex;
     position: fixed;
-    bottom: 20px;
+    bottom: 24px;
     left: 20px;
     right: 20px;
-    height: 64px;
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    height: 68px;
+    padding: 0 8px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
     border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
+    border-radius: 22px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), inset 0 0.5px 0 0 rgba(255, 255, 255, 0.5);
     z-index: 100;
   }
   body.dark .bottom-nav {
-    background: rgba(28, 25, 23, 0.75);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+    background: rgba(28, 25, 23, 0.65);
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
   }
   .bnav {
     position: relative;
-    padding: 8px;
+    padding: 6px 0;
+    gap: 3px;
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+    transition: color 150ms ease, transform 150ms ease;
   }
   .bnav span {
-    display: none; /* Hide labels to focus on icons and avoid horizontal clipping */
+    display: block !important;
+    font-size: 9px;
+    margin-top: 1px;
+    opacity: 0.85;
   }
   .bnav svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.2px;
+    transition: transform 150ms ease, color 150ms ease;
+  }
+  .bnav.active {
+    color: var(--text);
+  }
+  .bnav.active svg {
+    transform: translateY(-1px);
+    color: var(--text);
   }
   .bnav.active::after {
     content: '';
     position: absolute;
-    bottom: 8px;
+    bottom: 2px;
     width: 4px;
     height: 4px;
-    background: var(--accent);
+    background: var(--text);
     border-radius: 50%;
   }
 
   .main {
-    padding: 16px 16px 108px; /* Leave breathing room for the floating dock */
+    padding: 16px 16px 116px; /* Leave breathing room for the floating dock */
     overflow-x: hidden;
   }
 
-  /* Keep stats horizontal on mobile — 3 tight columns, no overflow */
+  /* Cards - iOS Card overhaul */
+  .card {
+    border: none !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.01), 0 4px 16px rgba(0,0,0,0.035) !important;
+    border-radius: 16px;
+    padding: 14px;
+  }
+  body.dark .card {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+  }
+
+  /* Stat cards color-coded layouts */
   .stat-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    gap: 8px;
     width: 100%;
   }
   .stat-card {
     text-align: center;
-    padding: 12px 4px;
+    padding: 14px 6px;
     min-width: 0;
+    border-radius: 14px;
   }
+  .stat-commute {
+    background: rgba(24, 24, 27, 0.02) !important;
+  }
+  body.dark .stat-commute {
+    background: rgba(250, 250, 249, 0.03) !important;
+  }
+  .stat-owed {
+    background: rgba(21, 128, 61, 0.03) !important;
+  }
+  body.dark .stat-owed {
+    background: rgba(22, 163, 74, 0.05) !important;
+  }
+  .stat-owe {
+    background: rgba(185, 28, 28, 0.03) !important;
+  }
+  body.dark .stat-owe {
+    background: rgba(185, 28, 28, 0.05) !important;
+  }
+
   .stat-label {
     font-size: 8.5px;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.2;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
+    letter-spacing: 0.3px;
   }
   .stat-value {
-    font-size: 15px;
+    font-size: 16px;
+  }
+
+  /* AI Card Glass Style */
+  .ai-card {
+    background: linear-gradient(135deg, rgba(24, 24, 27, 0.01), rgba(24, 24, 27, 0.03));
+    border: 1px dashed var(--border) !important;
+  }
+  body.dark .ai-card {
+    background: linear-gradient(135deg, rgba(250, 250, 249, 0.01), rgba(250, 250, 249, 0.03));
+  }
+
+  /* Premium Progress Bar */
+  .progress-track {
+    height: 10px;
+    border-radius: 5px;
+    background: var(--border);
+  }
+  .progress-fill {
+    border-radius: 5px;
+    background: linear-gradient(90deg, var(--text) 0%, #52525b 100%) !important;
+  }
+  body.dark .progress-fill {
+    background: linear-gradient(90deg, #d4d4d8 0%, var(--text) 100%) !important;
   }
 
   /* Fix AI form and general inputs from blowing out screen width */
@@ -763,13 +851,20 @@ body.dark .commute-check-in {
   .ai-form input {
     min-width: 0;
     width: 100%;
+    font-size: 13px;
+  }
+  .ai-form button {
+    padding: 8px 14px;
+    font-size: 13px;
   }
   .field-row {
     grid-template-columns: 1fr;
     gap: 0;
   }
   h1 {
-    font-size: 20px;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
   }
   .amount-field .currency {
     font-size: 24px;
