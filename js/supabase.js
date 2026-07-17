@@ -418,19 +418,43 @@ export const SupabaseService = {
 
   // ─── Web Push Notification Subscription ────────────────────────────
   async savePushSubscription(subscription) {
-    if (!supabase) return;
+    initSupabaseClient();
+    if (!supabase) throw new Error("Supabase is not initialized");
     const user = await this.getCurrentUser();
-    if (!user) return;
+    if (!user) throw new Error("Not authenticated with Supabase");
+
+    // Serialize subscription properly to pure JSON object matching JSONB column requirements
+    const subscriptionJson = JSON.parse(JSON.stringify(subscription));
 
     const { error } = await supabase
-      .from("push_subscriptions")
-      .upsert({
-        user_id: user.id,
-        endpoint: subscription.endpoint,
-        p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey("p256dh")))),
-        auth_key: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey("auth"))))
-      });
+      .from("profiles")
+      .update({
+        push_subscription: subscriptionJson
+      })
+      .eq("id", user.id);
 
-    if (error) console.error("Failed to save push subscription to Supabase:", error);
+    if (error) {
+      throw new Error(`Supabase save error: ${error.message}`);
+    }
+    return true;
+  },
+
+  async removePushSubscription() {
+    initSupabaseClient();
+    if (!supabase) throw new Error("Supabase is not initialized");
+    const user = await this.getCurrentUser();
+    if (!user) throw new Error("Not authenticated with Supabase");
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        push_subscription: null
+      })
+      .eq("id", user.id);
+
+    if (error) {
+      throw new Error(`Supabase unsubscribe error: ${error.message}`);
+    }
+    return true;
   }
 };

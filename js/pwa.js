@@ -1,6 +1,7 @@
 /* Progressive Web App Client Logic (js/pwa.js) */
 
 import { toast } from './app.js';
+import { SupabaseService } from './supabase.js';
 
 // VAPID Public Key — Generate this using `npx web-push generate-vapid-keys`
 // This key will be replaced by the user's generated key, providing a fallback default.
@@ -142,16 +143,8 @@ async function requestPushSubscription() {
 
   console.log("PWA: Web Push Subscription created:", JSON.stringify(subscription));
 
-  // 3. Send subscription object to the Node.js backend
-  const response = await fetch(SUBSCRIBE_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(subscription)
-  });
-
-  if (!response.ok) {
-    throw new Error(`Server subscription registration failed: ${response.statusText}`);
-  }
+  // 3. Save subscription payload to Supabase
+  await SupabaseService.savePushSubscription(subscription);
 
   return true;
 }
@@ -163,12 +156,8 @@ async function unsubscribePush() {
   if (sub) {
     const success = await sub.unsubscribe();
     if (success) {
-      // Send unsubscribe notification to backend if needed
-      await fetch('/api/unsubscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ endpoint: sub.endpoint })
-      }).catch(err => console.warn("PWA: Offline warning while reporting unsubscribe:", err));
+      // Remove subscription from Supabase
+      await SupabaseService.removePushSubscription();
       return true;
     }
   }
