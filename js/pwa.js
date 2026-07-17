@@ -16,6 +16,20 @@ export async function initPWA() {
       const reg = await navigator.serviceWorker.register('./sw.js');
       console.log('PWA: Service Worker registered successfully, scope:', reg.scope);
       
+      // Notify user when a new service worker is installing/installed
+      reg.onupdatefound = () => {
+        const installingWorker = reg.installing;
+        if (installingWorker) {
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                toast('Update downloaded! Please close and reopen the app to apply changes.');
+              }
+            }
+          };
+        }
+      };
+
       // Auto check active subscription state to align toggle states
       await checkSubscriptionState();
     } catch (err) {
