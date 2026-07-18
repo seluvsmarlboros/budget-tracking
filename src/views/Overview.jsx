@@ -318,11 +318,11 @@ export default function Overview() {
       {/* iOS Background Sync Promotion Widget */}
       {showIosPromo && (
         <div id="widget-ios-promo" className="card" style={{ background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(6, 182, 212, 0.05) 100%)', borderLeft: '4px solid var(--accent)', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', align-items: 'flex-start', gap: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '4px', letter-spacing: '0.5px;' }}>iOS Feature</div>
+              <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '4px', letterSpacing: '0.5px' }}>iOS Feature</div>
               <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 600 }}>Background Auto-Logging for iPhone</h4>
-              <p className="muted" style={{ margin: 0, fontSize: '12px', line-height: '1.45' }}>Log expenses automatically in the background when you receive bank SMS notifications.</p>
+              <p className="muted" style={{ margin: 0, fontSize: '12px', lineHeight: '1.45' }}>Log expenses automatically in the background when you receive bank SMS notifications.</p>
             </div>
             <button type="button" className="btn-ghost" onClick={handleDismissIosPromo} style={{ padding: '2px 6px', height: 'auto', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '16px' }}>&times;</button>
           </div>
@@ -334,7 +334,7 @@ export default function Overview() {
 
       {/* Today's Spending Summary Card */}
       <div className="card" id="widget-daily-summary" style={{ marginBottom: '16px' }}>
-        <div style={{ display: 'flex', justifycontent: 'space-between', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, letterSpacing: '-0.2px' }}>Today's Spending</h3>
