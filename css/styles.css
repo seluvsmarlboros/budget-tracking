@@ -321,10 +321,6 @@ body.dark .bottom-nav {
 
 @media (max-width: 767px) {
   .top-nav {
-    height: 56px;
-  }
-  
-  .top-nav .nav-links {
     display: none !important;
   }
 
