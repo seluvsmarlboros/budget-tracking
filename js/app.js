@@ -40,6 +40,7 @@ function boot() {
     initPartner();
     initOCR();
     processPendingSmsTransactions();
+    setupGlobalNotificationsSubscription();
   }
 
   // Handle shared target text from PWA
@@ -98,6 +99,9 @@ export function fmtDate(dateStr) {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
+let pendingNotificationQueue = [];
+let isProcessingPendingQueue = false;
+
 async function processPendingSmsTransactions() {
   try {
     const user = await SupabaseService.getCurrentUser();
@@ -108,34 +112,136 @@ async function processPendingSmsTransactions() {
       .from('notifications')
       .select('*')
       .eq('user_id', user.id)
-      .eq('type', 'pending_transaction');
+      .eq('type', 'pending_transaction')
+      .order('created_at', { ascending: true });
 
     if (fetchErr) throw fetchErr;
     if (!notifications || notifications.length === 0) return;
 
-    console.log(`[PWA Background Sync] Processing ${notifications.length} queued SMS payments`);
+    console.log(`[PWA Background Sync] Found ${notifications.length} queued SMS payments`);
 
-    for (const notif of notifications) {
-      try {
-        const txn = JSON.parse(notif.message);
-        State.addTransaction(txn);
-        toast(`Auto-logged ₹${txn.amount} for ${txn.description} from iOS SMS! 📲`);
-      } catch (parseErr) {
-        console.error('Failed to parse queued SMS transaction payload:', parseErr);
+    // Add to local memory queue, filtering out duplicates
+    notifications.forEach(notif => {
+      if (!pendingNotificationQueue.some(q => q.id === notif.id)) {
+        pendingNotificationQueue.push(notif);
       }
+    });
+
+    // Start processing queue if not already active
+    if (!isProcessingPendingQueue) {
+      processNextPendingNotification();
     }
-
-    // Flush processed items
-    const { error: delErr } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('type', 'pending_transaction');
-
-    if (delErr) throw delErr;
 
   } catch (err) {
     console.error('Failed to sync background SMS transactions:', err);
+  }
+}
+
+function processNextPendingNotification() {
+  if (pendingNotificationQueue.length === 0) {
+    isProcessingPendingQueue = false;
+    return;
+  }
+
+  isProcessingPendingQueue = true;
+  const currentNotif = pendingNotificationQueue[0];
+  let txn;
+  try {
+    txn = JSON.parse(currentNotif.message);
+  } catch (err) {
+    console.error('Failed to parse notification payload', err);
+    // Remove invalid from queue and continue
+    pendingNotificationQueue.shift();
+    // Delete from DB to prevent loops
+    supabase.from('notifications').delete().eq('id', currentNotif.id).then(() => {
+      processNextPendingNotification();
+    });
+    return;
+  }
+
+  // Populate dialog details
+  const dialog = document.getElementById('dialog-pending-transaction');
+  const amountEl = document.getElementById('pending-txn-amount');
+  const descEl = document.getElementById('pending-txn-desc');
+  const typeEl = document.getElementById('pending-txn-type');
+
+  if (dialog && amountEl && descEl && typeEl) {
+    amountEl.textContent = `₹${parseFloat(txn.amount).toFixed(2)}`;
+    descEl.textContent = txn.description || 'UPI Transaction';
+    typeEl.textContent = txn.type || 'Expense';
+    typeEl.style.color = txn.type === 'income' ? 'var(--green)' : 'var(--accent)';
+
+    // Wire dialog buttons (removing old listeners first to avoid memory leaks)
+    const approveBtn = document.getElementById('pending-txn-approve-btn');
+    const rejectBtn = document.getElementById('pending-txn-reject-btn');
+
+    // Clone button elements to wipe existing event listeners cleanly
+    const newApproveBtn = approveBtn.cloneNode(true);
+    const newRejectBtn = rejectBtn.cloneNode(true);
+    approveBtn.parentNode.replaceChild(newApproveBtn, approveBtn);
+    rejectBtn.parentNode.replaceChild(newRejectBtn, rejectBtn);
+
+    newApproveBtn.addEventListener('click', async () => {
+      try {
+        State.addTransaction(txn);
+        toast(`Logged ₹${txn.amount} for ${txn.description}! 📲`);
+        // Delete notification from DB
+        await supabase.from('notifications').delete().eq('id', currentNotif.id);
+        dialog.close();
+        pendingNotificationQueue.shift();
+        processNextPendingNotification();
+      } catch (err) {
+        toast(`Error saving: ${err.message}`);
+      }
+    });
+
+    newRejectBtn.addEventListener('click', async () => {
+      try {
+        // Delete notification from DB
+        await supabase.from('notifications').delete().eq('id', currentNotif.id);
+        dialog.close();
+        pendingNotificationQueue.shift();
+        processNextPendingNotification();
+      } catch (err) {
+        toast(`Error ignoring: ${err.message}`);
+      }
+    });
+
+    dialog.showModal();
+  } else {
+    // If layout missing, fallback to auto log
+    State.addTransaction(txn);
+    supabase.from('notifications').delete().eq('id', currentNotif.id).then(() => {
+      pendingNotificationQueue.shift();
+      processNextPendingNotification();
+    });
+  }
+}
+
+async function setupGlobalNotificationsSubscription() {
+  try {
+    const user = await SupabaseService.getCurrentUser();
+    if (!user) return;
+
+    supabase
+      .channel(`user-notifications:${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          if (payload.new && payload.new.type === 'pending_transaction') {
+            console.log('[Realtime SMS] New pending transaction received:', payload.new);
+            // Append to memory queue and trigger processing
+            pendingNotificationQueue.push(payload.new);
+            if (!isProcessingPendingQueue) {
+              processNextPendingNotification();
+            }
+          }
+        }
+      )
+      .subscribe();
+  } catch (err) {
+    console.error('Failed to setup global notifications subscriber:', err);
   }
 }
 

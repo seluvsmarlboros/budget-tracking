@@ -234,9 +234,7 @@ function render() {
     el('budget-period-label').textContent = 'This month';
   } else {
     const dayOfWeek = now.getDay() || 7;
-    periodStart = new Date(now);
-    periodStart.setDate(now.getDate() - dayOfWeek + 1);
-    periodStart.setHours(0,0,0,0);
+    periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1, 0, 0, 0, 0);
     el('budget-period-label').textContent = 'This week';
   }
 
@@ -279,6 +277,93 @@ function render() {
   const bar = el('budget-bar');
   bar.style.width = pct + '%';
   bar.className = 'progress-fill' + (pct >= 100 ? ' over' : '');
+
+  // --- Burn Rate & Runout Forecast Calculations ---
+  const burnCard = el('widget-burn-rate');
+  if (burnCard) {
+    const showBurn = ws.showBurnRate !== false;
+    burnCard.style.display = showBurn ? '' : 'none';
+
+    if (showBurn) {
+      const msElapsed = now - periodStart;
+      const daysElapsed = Math.max(1, Math.ceil(msElapsed / (1000 * 60 * 60 * 24)));
+      const dailyBurnRate = periodExpenses / daysElapsed;
+      
+      const totalDaysInPeriod = period === 'month' 
+        ? new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+        : 7;
+      
+      const msInPeriod = totalDaysInPeriod * 24 * 60 * 60 * 1000;
+      const periodEnd = new Date(periodStart.getTime() + msInPeriod);
+      const msRemaining = periodEnd - now;
+      const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+      
+      const statusBadge = el('burn-status-badge');
+      const forecastText = el('burn-forecast-text');
+      const dailyAvgEl = el('burn-rate-daily-avg');
+      const runoutEstEl = el('burn-rate-runout-est');
+      const progressBar = el('burn-progress-bar');
+      
+      dailyAvgEl.textContent = `Daily Spend: ${sym}${dailyBurnRate.toFixed(2)}`;
+      
+      if (left <= 0) {
+        statusBadge.textContent = 'Critical';
+        statusBadge.style.background = 'rgba(239, 68, 68, 0.1)';
+        statusBadge.style.color = 'var(--red)';
+        
+        forecastText.innerHTML = `You have already <strong>exhausted</strong> your budget for this ${period}! You are operating on a deficit of <strong>${sym}${Math.abs(left).toFixed(2)}</strong>. Avoid all non-essential purchases.`;
+        
+        runoutEstEl.textContent = 'Est. Runout: Empty';
+        progressBar.style.width = '0%';
+        progressBar.style.background = 'var(--red)';
+      } else if (periodExpenses === 0) {
+        statusBadge.textContent = 'Perfect';
+        statusBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+        statusBadge.style.color = 'var(--green)';
+        
+        forecastText.innerHTML = `No expenses logged this ${period} yet! Your entire budget of <strong>${sym}${adjustedBudget.toFixed(2)}</strong> is fully intact.`;
+        
+        runoutEstEl.textContent = 'Est. Runout: Healthy';
+        progressBar.style.width = '100%';
+        progressBar.style.background = 'var(--green)';
+      } else {
+        const daysLeftOfFunds = left / dailyBurnRate;
+        
+        if (daysLeftOfFunds >= daysRemaining) {
+          statusBadge.textContent = 'Healthy';
+          statusBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+          statusBadge.style.color = 'var(--green)';
+          
+          const endSavings = left - dailyBurnRate * daysRemaining;
+          forecastText.innerHTML = `At your current spending rate of <strong>${sym}${dailyBurnRate.toFixed(2)}/day</strong>, your funds are projected to last the entire ${period}. You will have about <strong>${sym}${Math.round(endSavings)}</strong> left.`;
+          
+          runoutEstEl.textContent = 'Est. Runout: Safe';
+          
+          const pctLeft = Math.min(100, (daysLeftOfFunds / daysRemaining) * 100);
+          progressBar.style.width = `${pctLeft}%`;
+          progressBar.style.background = 'var(--green)';
+        } else {
+          statusBadge.textContent = 'Warning';
+          statusBadge.style.background = 'rgba(245, 158, 11, 0.1)';
+          statusBadge.style.color = 'var(--accent)';
+          
+          const runoutTime = now.getTime() + daysLeftOfFunds * 24 * 60 * 60 * 1000;
+          const runoutDate = new Date(runoutTime);
+          const runoutDayName = runoutDate.toLocaleDateString(undefined, { weekday: 'long' });
+          const runoutDateString = runoutDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          
+          forecastText.innerHTML = `At your current spending rate of <strong>${sym}${dailyBurnRate.toFixed(2)}/day</strong>, you are projected to exhaust your budget by <strong>${runoutDayName} (${runoutDateString})</strong>, which is <strong>${Math.ceil(daysRemaining - daysLeftOfFunds)} days</strong> before the period ends.`;
+          
+          runoutEstEl.textContent = `Est. Runout: ${runoutDayName.substring(0, 3)} (${runoutDateString})`;
+          
+          const pctLeft = Math.min(100, (daysLeftOfFunds / daysRemaining) * 100);
+          progressBar.style.width = `${pctLeft}%`;
+          progressBar.style.background = 'var(--accent)';
+        }
+      }
+    }
+  }
+
   // Render AI Advisor static / cached suggestion
   const advicePanel = el('ai-advisor-panel');
   if (user.targetGoal) {
@@ -358,8 +443,9 @@ function feedItem(t, sym) {
 
 export function updateDashboardWidgets() {
   const el = id => document.getElementById(id);
-  const ws = State.data.widgetSettings || { showBudget: true, showAiBar: true, showStats: true, showRecent: true };
+  const ws = State.data.widgetSettings || { showBudget: true, showBurnRate: true, showAiBar: true, showStats: true, showRecent: true };
   if (el('widget-budget')) el('widget-budget').style.display = ws.showBudget !== false ? '' : 'none';
+  if (el('widget-burn-rate')) el('widget-burn-rate').style.display = ws.showBurnRate !== false ? '' : 'none';
   if (el('widget-aibar')) el('widget-aibar').style.display = ws.showAiBar !== false ? '' : 'none';
   if (el('widget-stats')) el('widget-stats').style.display = ws.showStats !== false ? 'flex' : 'none';
   if (el('widget-recent')) el('widget-recent').style.display = ws.showRecent !== false ? '' : 'none';

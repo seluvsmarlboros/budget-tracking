@@ -34,6 +34,7 @@ const emptyState = {
   rules: [],
   widgetSettings: {
     showBudget: true,
+    showBurnRate: true,
     showAiBar: true,
     showStats: true,
     showRecent: true
@@ -70,10 +71,14 @@ export const State = {
         if (!this.data.widgetSettings) {
           this.data.widgetSettings = {
             showBudget: true,
+            showBurnRate: true,
             showAiBar: true,
             showStats: true,
             showRecent: true
           };
+          migrated = true;
+        } else if (this.data.widgetSettings.showBurnRate === undefined) {
+          this.data.widgetSettings.showBurnRate = true;
           migrated = true;
         }
 
@@ -111,6 +116,12 @@ export const State = {
         if (migrated) this.saveState();
       } catch (err) {
         console.error('UniSpend: Error parsing or migrating state, resetting to emptyState:', err);
+        try {
+          localStorage.setItem('unispend_app_state_backup_' + Date.now(), saved);
+          console.warn('UniSpend: Corrupted state backed up to localStorage successfully');
+        } catch (backupErr) {
+          console.error('UniSpend: Backup failed:', backupErr);
+        }
         this.data = JSON.parse(JSON.stringify(emptyState));
       }
     } else {
@@ -156,6 +167,13 @@ export const State = {
 
   /* Transactions */
   addTransaction(txn) {
+    if (txn.remoteId) {
+      const exists = this.data.transactions.find(t => t.remoteId === txn.remoteId);
+      if (exists) {
+        console.log(`[State] Transaction with remoteId ${txn.remoteId} already exists. Skipping duplicate.`);
+        return exists;
+      }
+    }
     let category = txn.category;
     // Apply automated categorization rules if category is default or not explicitly overridden by split
     if (txn.type === 'expense' && this.data.rules && this.data.rules.length > 0) {

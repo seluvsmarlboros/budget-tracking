@@ -15,11 +15,28 @@ export async function askAI(command) {
   const effectiveProvider = (ai.apiKey && ai.apiKey.length > 10) ? (ai.provider || 'groq') : UNIVERSAL_PROVIDER;
   const effectiveModel = (ai.apiKey && ai.apiKey.length > 10) ? (ai.model || UNIVERSAL_MODEL) : UNIVERSAL_MODEL;
 
-  const today = new Date().toISOString().split('T')[0];
+  const todayDate = new Date();
+  const today = todayDate.toISOString().split('T')[0];
+  
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(todayDate.getDate() - 1);
+  const yesterday = yesterdayDate.toISOString().split('T')[0];
+  
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(todayDate.getDate() + 1);
+  const tomorrow = tomorrowDate.toISOString().split('T')[0];
+
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const todayDayName = days[todayDate.getDay()];
+  const yesterdayDayName = days[yesterdayDate.getDay()];
 
   // Context to help the model make smart matches
   const context = {
     today,
+    todayDayOfWeek: todayDayName,
+    yesterday,
+    yesterdayDayOfWeek: yesterdayDayName,
+    tomorrow,
     userName: user.name,
     userCurrency: user.currency,
     weeklyBudget: user.weeklyPocketMoney,
@@ -47,7 +64,7 @@ Available Actions inside the "actions" array:
 
 1. { "action": "add_transaction", "type": "expense"|"income", "category": string, "amount": number, "description": string, "paymentMethod": "UPI"|"Cash", "date": "YYYY-MM-DD" }
    - Note: Match the category to one of the existing categories if possible. If the user mentions a category that doesn't exist, provide that new category string, and we will automatically create it.
-   - Note: Payment method defaults to "UPI". Date defaults to today (${today}).
+   - Note: Payment method defaults to "UPI". Date defaults to today (${today}). If the user specifies relative dates like "yesterday", "tomorrow", or "last Wednesday", resolve the correct date string from the provided application context parameters.
 
 2. { "action": "add_split", "direction": "lent"|"borrowed", "friend": string, "amount": number, "description": string, "splitHalf": boolean, "date": "YYYY-MM-DD" }
    - direction: "lent" (they owe me) or "borrowed" (I owe them).
@@ -158,10 +175,11 @@ ${JSON.stringify(context, null, 2)}
     const json = await res.json();
     let text = json.choices?.[0]?.message?.content || '';
 
-    // Strip markdown code block wrappers if model ignores instructions
+    // Extract JSON block strictly using regex to prevent markdown conversational wrappers crashing parsing
     text = text.trim();
-    if (text.startsWith('```')) {
-      text = text.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      text = jsonMatch[0];
     }
 
     const responseData = JSON.parse(text);
@@ -357,13 +375,43 @@ export async function askForBudgetAdvice() {
     periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
   } else {
     const dayOfWeek = now.getDay() || 7;
-    periodStart = new Date(now);
-    periodStart.setDate(now.getDate() - dayOfWeek + 1);
-    periodStart.setHours(0,0,0,0);
+    periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1, 0, 0, 0, 0);
   }
   const periodIncome = transactions
     .filter(t => t.type === 'income' && new Date(t.date + 'T00:00:00') >= periodStart)
     .reduce((s, t) => s + t.amount, 0);
+  
+  const periodExpenses = transactions
+    .filter(t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= periodStart)
+    .reduce((s, t) => s + t.amount, 0);
+
+  const msElapsed = now - periodStart;
+  const daysElapsed = Math.max(1, Math.ceil(msElapsed / (1000 * 60 * 60 * 24)));
+  const dailyBurnRate = periodExpenses / daysElapsed;
+  
+  const totalDaysInPeriod = period === 'month' 
+    ? new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    : 7;
+  
+  const msInPeriod = totalDaysInPeriod * 24 * 60 * 60 * 1000;
+  const periodEnd = new Date(periodStart.getTime() + msInPeriod);
+  const msRemaining = periodEnd - now;
+  const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+  
+  const left = (limit + periodIncome) - periodExpenses;
+  const daysLeftOfFunds = dailyBurnRate > 0 ? (left / dailyBurnRate) : 999;
+  
+  let runoutProjected = '';
+  if (left <= 0) {
+    runoutProjected = `already run out of funds (Deficit of ${sym}${Math.abs(left).toFixed(2)})`;
+  } else if (daysLeftOfFunds < daysRemaining) {
+    const runoutDate = new Date(now.getTime() + daysLeftOfFunds * 24 * 60 * 60 * 1000);
+    const runoutDayName = runoutDate.toLocaleDateString(undefined, { weekday: 'long' });
+    const runoutDateString = runoutDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    runoutProjected = `projected to exhaust funds by ${runoutDayName} (${runoutDateString}), which is ${Math.ceil(daysRemaining - daysLeftOfFunds)} days before the period ends. Action required to save money.`;
+  } else {
+    runoutProjected = `healthy spend velocity. Funds are projected to last the entire period.`;
+  }
   
   const today = new Date().toISOString().split('T')[0];
   const recentTransactions = transactions.slice(0, 10).map(t => 
@@ -377,9 +425,12 @@ export async function askForBudgetAdvice() {
   const prompt = `
 I have a base ${period}ly budget limit of ${sym}${limit}.
 During this current ${period}, I have also received ${sym}${periodIncome} in extra income (making my total available budget pool ${sym}${limit + periodIncome}).
+Today's date is: ${today}.
+I have spent ${sym}${periodExpenses} so far, meaning I have ${sym}${left.toFixed(2)} left.
+Based on current elapsed time, my daily burn rate is ${sym}${dailyBurnRate.toFixed(2)}/day, and my runout status is: ${runoutProjected}.
+
 My current saving/spending goal is: "${user.targetGoal}".
 I have targeted cutting back specifically on the category: "${user.cutbackCategory || 'Canteen'}".
-Today's date is: ${today}.
 
 Here are my recent transactions:
 ${recentTransactions || 'None'}
@@ -387,9 +438,7 @@ ${recentTransactions || 'None'}
 Here are my upcoming large expenses (spikes):
 ${upcomingSpikes || 'None'}
 
-Please give me exactly ONE short, actionable, conversational tip (max 2 sentences) advising me on how to hit my target savings goal. Please base your advice specifically around reducing spending in my focus cutback area ("${user.cutbackCategory || 'Canteen'}"), referencing my recent purchases or upcoming spikes if applicable.
-For example: "If you skip Canteen snacks tomorrow, you will save ${sym}150 to reach your laptop goal faster." or "You spent ${sym}200 on Canteen lunch recently. Skipping it today keeps your weekly budget perfectly on track."
-Make it feel extremely direct, practical, and specific to my purchases. Speak directly to me.
+Please give me exactly ONE short, actionable, conversational tip (max 2 sentences) advising me on how to adjust my spending velocity to stay on track. If my status shows a Warning (projected to run out early) or Critical (already out), offer specific suggestions on how I can save money to defer or extend my runout projection (e.g. by cooking at home to save ₹200). Reference my recent purchases or upcoming spikes if relevant. Speak directly to me.
 `;
 
   const systemInstructions = "You are a direct, pragmatic, and friendly college financial advisor. You give extremely short, contextual savings advice (maximum 2 sentences) based on the user's spending habits and target goals. Keep it concise, motivational, and tailored to students.";

@@ -10,9 +10,11 @@ export function parseUPIAndSMS(text) {
   let type = 'expense'; // Default to expense
 
   // 1. Extract Amount
-  // Matches "Rs. 150.00", "Rs 150", "INR 150", "Rs.150", "150.00 INR"
-  const amtMatch = textClean.match(/(?:Rs\.?|INR)\s*(\d+(?:\.\d{2})?)/i) || 
-                   textClean.match(/(\d+(?:\.\d{2})?)\s*(?:Rs\.?|INR)/i);
+  // Matches "Rs. 150.00", "Rs 150", "INR 150", "Rs.150", "150.00 INR", "₹150", "150 ₹"
+  const patternBefore = /(?:Rs\.?|INR|₹)\s*(\d+(?:\.\d{2})?)/i;
+  const patternAfter = /(\d+(?:\.\d{2})?)\s*(?:Rs\.?|INR|₹)/i;
+
+  const amtMatch = textClean.match(patternBefore) || textClean.match(patternAfter);
   if (amtMatch) {
     amount = parseFloat(amtMatch[1]);
   }

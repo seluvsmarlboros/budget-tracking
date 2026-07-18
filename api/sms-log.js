@@ -9,8 +9,10 @@ function parseUPIAndSMS(text) {
   let description = '';
   let type = 'expense';
 
-  const amtMatch = textClean.match(/(?:Rs\.?|INR)\s*(\d+(?:\.\d{2})?)/i) || 
-                   textClean.match(/(\d+(?:\.\d{2})?)\s*(?:Rs\.?|INR)/i);
+  const patternBefore = /(?:Rs\.?|INR|₹)\s*(\d+(?:\.\d{2})?)/i;
+  const patternAfter = /(\d+(?:\.\d{2})?)\s*(?:Rs\.?|INR|₹)/i;
+
+  const amtMatch = textClean.match(patternBefore) || textClean.match(patternAfter);
   if (amtMatch) {
     amount = parseFloat(amtMatch[1]);
   }

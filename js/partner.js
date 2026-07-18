@@ -214,16 +214,6 @@ export async function initPartner() {
       try {
         const res = await SupabaseService.addSharedExpense(expenseData);
         if (res) {
-          State.addTransaction({
-            type: currentLoanDir === 'lend' ? 'expense' : 'income',
-            category: 'Loan',
-            amount: amount,
-            paymentMethod: 'UPI',
-            date: dueDate || new Date().toISOString().split('T')[0],
-            description: currentLoanDir === 'lend'
-              ? `[Lent to ${partnerProfile.display_name || 'Friend'}] ${title}`
-              : `[Borrowed from ${partnerProfile.display_name || 'Friend'}] ${title}`
-          });
           toast('Loan logged successfully!');
         }
         document.getElementById('shared-loan-form').reset();
@@ -637,6 +627,16 @@ function setupRealtimeSubscription(partnershipId) {
     realtimeSubscription.unsubscribe();
   }
 
+  if (realtimeSubscription) {
+    console.log('Cleaning up existing realtime subscription...');
+    try {
+      supabase.removeChannel(realtimeSubscription);
+    } catch (err) {
+      console.error('Error removing channel:', err);
+    }
+    realtimeSubscription = null;
+  }
+
   realtimeSubscription = supabase
     .channel(`partnership:${partnershipId}`)
     .on(
@@ -644,6 +644,14 @@ function setupRealtimeSubscription(partnershipId) {
       { event: '*', schema: 'public', table: 'ledger_entries', filter: `partnership_id=eq.${partnershipId}` },
       async () => {
         console.log('Realtime ledger update detected');
+        await refreshDashboard();
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'shared_expenses', filter: `partnership_id=eq.${partnershipId}` },
+      async () => {
+        console.log('Realtime shared expense update detected');
         await refreshDashboard();
       }
     )
@@ -708,6 +716,71 @@ async function refreshDashboard() {
   const expenses = await SupabaseService.getSharedExpenses(activePartnership.id);
   const ledger = await SupabaseService.getLedgerEntries(activePartnership.id);
   renderActivityLog(expenses, ledger);
+
+  // Synchronize remote transactions (expenses and settlements) to local State
+  if (partnerProfile) {
+    const isUserA = activePartnership.user_a.id === currentUserId;
+    const partnerName = partnerProfile.display_name || 'Partner';
+
+    // 1. Sync shared expenses
+    expenses.forEach(e => {
+      // Check if it's a loan or standard expense
+      const detail = JSON.parse(e.split_detail || '{}');
+      if (detail.isLoan) {
+        // Find direction relative to logged-in user
+        let myDirection = 'lend';
+        if (e.added_by === currentUserId) {
+          myDirection = detail.direction || 'lend';
+        } else {
+          // If added by partner, direction is inverted
+          myDirection = (detail.direction === 'lend') ? 'borrow' : 'lend';
+        }
+        
+        State.addTransaction({
+          remoteId: 'shared_exp_' + e.id,
+          type: myDirection === 'lend' ? 'expense' : 'income',
+          category: 'Loan',
+          amount: parseFloat(e.total_amount),
+          paymentMethod: 'UPI',
+          date: e.due_date || e.created_at.split('T')[0],
+          description: myDirection === 'lend'
+            ? `[Lent to ${partnerName}] ${e.title}`
+            : `[Borrowed from ${partnerName}] ${e.title}`
+        });
+      } else {
+        // Standard expense: user AOwes and user BOwes
+        const myShare = isUserA ? parseFloat(e.user_a_owes) : parseFloat(e.user_b_owes);
+        if (myShare > 0) {
+          State.addTransaction({
+            remoteId: 'shared_exp_' + e.id,
+            type: 'expense',
+            category: e.category || 'Shared',
+            amount: myShare,
+            paymentMethod: 'UPI',
+            date: e.due_date || e.created_at.split('T')[0],
+            description: `[Shared with ${partnerName}] ${e.title}`
+          });
+        }
+      }
+    });
+
+    // 2. Sync settlements
+    ledger.filter(l => l.type === 'settlement').forEach(s => {
+      const isPayer = s.recorded_by === currentUserId;
+      const amt = Math.abs(parseFloat(s.amount));
+      State.addTransaction({
+        remoteId: 'ledger_settle_' + s.id,
+        type: isPayer ? 'expense' : 'income',
+        category: 'Other',
+        amount: amt,
+        paymentMethod: 'UPI',
+        date: s.created_at.split('T')[0],
+        description: isPayer
+          ? `[Settled] Paid ${partnerName} ₹${amt.toFixed(2)}`
+          : `[Settled] Received from ${partnerName} ₹${amt.toFixed(2)}`
+      });
+    });
+  }
 }
 
 function renderBalanceCard() {
@@ -807,18 +880,6 @@ function renderRecurringTemplates(templates) {
           isRecurring: false
         };
         await SupabaseService.addSharedExpense(expenseData);
-
-        // Log personal transaction portion of the shared bill
-        const isUserA = activePartnership.user_a.id === currentUserId;
-        const myShare = isUserA ? parseFloat(detail.userAOwes) : parseFloat(detail.userBOwes);
-        State.addTransaction({
-          type: 'expense',
-          category: t.category || 'Shared',
-          amount: myShare,
-          paymentMethod: 'UPI',
-          date: new Date().toISOString().split('T')[0],
-          description: `[Shared with ${partnerProfile.display_name || 'Friend'}] ${t.title}`
-        });
 
         toast(`Logged shared bill: ${t.title}!`);
         await refreshDashboard();
@@ -930,17 +991,28 @@ function renderActivityLog(expenses, ledger) {
         val.textContent = `-₹${Math.abs(item.total).toFixed(2)}`;
       }
     } else {
-      desc.textContent = item.title;
-      val.textContent = `₹${item.total.toFixed(2)}`;
+      const isPayer = item.recorded_by === currentUserId;
+      const partnerName = partnerProfile ? (partnerProfile.display_name || 'Partner') : 'Partner';
+      if (isPayer) {
+        desc.textContent = `You paid ${partnerName}: Settle Up`;
+        val.style.color = 'var(--red)';
+        val.textContent = `-₹${Math.abs(item.total).toFixed(2)}`;
+      } else {
+        desc.textContent = `${partnerName} paid You: Settle Up`;
+        val.style.color = 'var(--green)';
+        val.textContent = `+₹${Math.abs(item.total).toFixed(2)}`;
+      }
     }
     body.appendChild(desc);
 
     const meta = document.createElement('div');
     meta.className = 'feed-meta';
     
-    const adderName = item.added_by === currentUserId ? 'You' : (partnerProfile ? (partnerProfile.display_name || 'Partner') : 'Partner');
+    const payerName = item.type === 'settlement'
+      ? (item.recorded_by === currentUserId ? 'You' : (partnerProfile ? (partnerProfile.display_name || 'Partner') : 'Partner'))
+      : (item.added_by === currentUserId ? 'You' : (partnerProfile ? (partnerProfile.display_name || 'Partner') : 'Partner'));
     const formattedDate = item.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    meta.textContent = `${adderName} on ${formattedDate}`;
+    meta.textContent = `${payerName} on ${formattedDate}`;
     body.appendChild(meta);
     el.appendChild(body);
     el.appendChild(val);
@@ -1137,13 +1209,29 @@ async function handleSharedExpenseSubmit(e) {
     userBOwes = isUserA ? partnerOwes : myOwes;
   }
 
+  let items = [];
+  if (splitType === 'itemized') {
+    const rows = document.querySelectorAll('#itemized-list .feed-item');
+    rows.forEach(row => {
+      const name = row.querySelector('.itemized-desc').value.trim() || 'Item';
+      const amt = parseFloat(row.querySelector('.itemized-amount').value) || 0;
+      const split = row.querySelector('.itemized-split').value;
+      items.push({ name, amount: amt, split });
+    });
+  }
+
   // Create submission object
   const expenseData = {
     partnershipId: activePartnership.id,
     title,
     totalAmount,
     splitType,
-    splitDetail: JSON.stringify({ splitType, userAOwes, userBOwes }),
+    splitDetail: JSON.stringify({
+      splitType,
+      userAOwes,
+      userBOwes,
+      items: items.length > 0 ? items : undefined
+    }),
     userAOwes,
     userBOwes,
     dueDate,
@@ -1154,19 +1242,6 @@ async function handleSharedExpenseSubmit(e) {
   try {
     // 1. Submit shared expense to DB
     const res = await SupabaseService.addSharedExpense(expenseData);
-
-    if (res) {
-      // Log personal transaction portion of the shared bill
-      const myShare = isUserA ? userAOwes : userBOwes;
-      State.addTransaction({
-        type: 'expense',
-        category: category || 'Shared',
-        amount: myShare,
-        paymentMethod: 'UPI',
-        date: dueDate || new Date().toISOString().split('T')[0],
-        description: `[Shared with ${partnerProfile.display_name || 'Friend'}] ${title}`
-      });
-    }
     
     // 2. If it's recurring, save a recurring template
     if (isRecurring && res) {
@@ -1176,7 +1251,12 @@ async function handleSharedExpenseSubmit(e) {
         title,
         totalAmount,
         splitType,
-        splitDetail: JSON.stringify({ splitType, userAOwes, userBOwes }),
+        splitDetail: JSON.stringify({
+          splitType,
+          userAOwes,
+          userBOwes,
+          items: items.length > 0 ? items : undefined
+        }),
         dayOfMonth: day,
         category,
         frequency: recurringVal
@@ -1265,15 +1345,9 @@ async function handleSettleUpSubmit(e) {
   const isUserA = activePartnership.user_a.id === currentUserId;
   const isDebtor = (balanceInfo.rawBalance > 0 && isUserA) || (balanceInfo.rawBalance < 0 && !isUserA);
 
-  // Settlement amount direction
-  // If user_a is debtor (user_a owes user_b): we need a NEGATIVE ledger entry to bring the positive balance down to 0
-  // If user_a is creditor (user_b owes user_a): we need a POSITIVE entry (positive amount represents payment from user_b)
-  let ledgerAmount = 0;
-  if (isUserA) {
-    ledgerAmount = isDebtor ? -amount : amount;
-  } else {
-    ledgerAmount = isDebtor ? amount : -amount;
-  }
+  // Settlement amount direction is standardized at database layer using recorded_by.
+  // We always write the positive absolute value of the payment to the database.
+  const ledgerAmount = amount;
 
   const details = {
     description: `Settled ₹${amount.toFixed(2)} via ${method}`,
@@ -1283,18 +1357,6 @@ async function handleSettleUpSubmit(e) {
 
   try {
     await SupabaseService.settleBalance(activePartnership.id, ledgerAmount, details);
-    
-    // Log personal transaction corresponding to the settlement
-    State.addTransaction({
-      type: isDebtor ? 'expense' : 'income',
-      category: 'Other',
-      amount: amount,
-      paymentMethod: method || 'UPI',
-      date: new Date().toISOString().split('T')[0],
-      description: isDebtor
-        ? `[Settled] Paid ${partnerProfile.display_name || 'Friend'} ₹${amount.toFixed(2)}`
-        : `[Settled] Received from ${partnerProfile.display_name || 'Friend'} ₹${amount.toFixed(2)}`
-    });
 
     toast('Settlement payment recorded successfully!');
     document.getElementById('dialog-settle-up').close();

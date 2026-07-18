@@ -162,6 +162,7 @@ export function initSettings() {
   // Dashboard Widget Toggles
   const toggles = {
     showBudget: document.getElementById('widget-toggle-budget'),
+    showBurnRate: document.getElementById('widget-toggle-burnrate'),
     showAiBar: document.getElementById('widget-toggle-aibar'),
     showStats: document.getElementById('widget-toggle-stats'),
     showRecent: document.getElementById('widget-toggle-recent')
@@ -280,8 +281,9 @@ function render() {
   }
 
   // Widget Checkboxes Sync
-  const settings = State.data.widgetSettings || { showBudget: true, showAiBar: true, showStats: true, showRecent: true };
+  const settings = State.data.widgetSettings || { showBudget: true, showBurnRate: true, showAiBar: true, showStats: true, showRecent: true };
   if (document.getElementById('widget-toggle-budget')) document.getElementById('widget-toggle-budget').checked = settings.showBudget !== false;
+  if (document.getElementById('widget-toggle-burnrate')) document.getElementById('widget-toggle-burnrate').checked = settings.showBurnRate !== false;
   if (document.getElementById('widget-toggle-aibar')) document.getElementById('widget-toggle-aibar').checked = settings.showAiBar !== false;
   if (document.getElementById('widget-toggle-stats')) document.getElementById('widget-toggle-stats').checked = settings.showStats !== false;
   if (document.getElementById('widget-toggle-recent')) document.getElementById('widget-toggle-recent').checked = settings.showRecent !== false;

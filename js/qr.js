@@ -10,6 +10,22 @@ export function initQRScanner() {
 
   if (!btn) return;
 
+  // Prevent scanner race condition: disable button until library is loaded
+  if (typeof Html5Qrcode === 'undefined') {
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.title = 'Loading scanner library...';
+
+    const checkInterval = setInterval(() => {
+      if (typeof Html5Qrcode !== 'undefined') {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.title = 'Scan bill QR code';
+        clearInterval(checkInterval);
+      }
+    }, 100);
+  }
+
   btn.addEventListener('click', () => {
     dialog.showModal();
     startScanning();
