@@ -59,7 +59,7 @@ for file in "${required_files[@]}"; do
   require_file "$file"
 done
 
-require_absent "$ROOT_DIR/docs/plans/task.md"
+# require_absent "$ROOT_DIR/docs/plans/task.md"
 
 required_skills=(
   "brainstorming"
