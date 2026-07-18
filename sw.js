@@ -1,6 +1,6 @@
 /* Progressive Web App Service Worker (sw.js) */
 
-const CACHE_NAME = 'unispend-cache-v12';
+const CACHE_NAME = 'unispend-cache-v13';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -79,8 +79,8 @@ self.addEventListener('push', (e) => {
 
   const options = {
     body: data.body,
-    icon: 'https://cdn-icons-png.flaticon.com/512/10121/10121175.png',
-    badge: 'https://cdn-icons-png.flaticon.com/512/10121/10121175.png',
+    icon: './assets/icon-192.png',
+    badge: './assets/icon-192.png',
     vibrate: [100, 50, 100],
     data: {
       url: data.url || '/'
