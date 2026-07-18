@@ -126,6 +126,21 @@
           </div>
         </div>
 
+        <!-- iOS Shortcut Promotion Callout -->
+        <div id="widget-ios-promo" class="card" style="display:none; background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-body) 100%); border-left: 3px solid var(--accent); margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+            <div>
+              <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; letter-spacing: 0.5px;">New Feature</div>
+              <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600;">Background Auto-Logging for iPhone</h4>
+              <p class="muted" style="margin: 0; font-size: 12px; line-height: 1.45;">Log expenses automatically in the background when you receive bank SMS notifications.</p>
+            </div>
+            <button type="button" class="btn-ghost btn-sm" id="btn-dismiss-ios-promo" style="padding: 2px 6px; font-size: 14px; font-weight: bold; border: none; background: transparent; cursor: pointer; color: var(--text-secondary);">&times;</button>
+          </div>
+          <div style="margin-top: 12px; display: flex; gap: 8px;">
+            <button type="button" class="btn-primary btn-sm" id="btn-setup-ios-promo" style="width: auto; padding: 6px 12px; font-size: 12.5px;">Setup Shortcut</button>
+          </div>
+        </div>
+
         <!-- Weekly Budget -->
         <div class="card budget-card" id="widget-budget">
           <div class="budget-header">
@@ -1049,6 +1064,35 @@
     </div>
     <div class="dialog-actions" style="justify-content: center;">
       <button type="button" class="btn-primary" id="close-equalize-dialog">Done</button>
+    </div>
+  </dialog>
+
+  <!-- iOS Shortcut Onboarding Dialog -->
+  <dialog id="dialog-ios-shortcut" class="dialog" style="max-width: 420px; padding: 24px;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div style="font-size: 40px; margin-bottom: 8px;">⚡</div>
+      <h3 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">Setup iOS Auto-Logging</h3>
+      <p class="muted" style="font-size: 13px; margin: 6px 0 0 0;">Log expenses instantly from your bank SMS texts in the background.</p>
+    </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+      <!-- Step 1 -->
+      <div style="background: var(--bg-body); border: 1px solid var(--border); padding: 14px; border-radius: var(--radius); display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--accent); letter-spacing: 0.5px;">Step 1: Copy Webhook URL</span>
+        <div id="ios-dialog-webhook-display" style="font-size: 11.5px; font-family: monospace; word-break: break-all; padding: 6px 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary);">...</div>
+        <button type="button" class="btn-ghost btn-sm" id="btn-dialog-copy-webhook" style="width: auto;">Copy URL</button>
+      </div>
+
+      <!-- Step 2 -->
+      <div style="background: var(--bg-body); border: 1px solid var(--border); padding: 14px; border-radius: var(--radius); display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--accent); letter-spacing: 0.5px;">Step 2: Get Pre-saved Shortcut</span>
+        <p class="muted" style="margin: 0; font-size: 12px; line-height: 1.4;">When adding the Shortcut to your iPhone, it will ask for your webhook URL. Simply paste the link you copied in Step 1!</p>
+        <a href="https://www.icloud.com/shortcuts/f01bc7d8c0604b90a618d3618df20b41" target="_blank" class="btn-primary" style="text-decoration: none; text-align: center; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; height: 36px;">Get iOS Shortcut 🔗</a>
+      </div>
+    </div>
+
+    <div class="dialog-actions">
+      <button type="button" class="btn-ghost" id="close-ios-shortcut-dialog" style="width: 100%;">Close</button>
     </div>
   </dialog>
 

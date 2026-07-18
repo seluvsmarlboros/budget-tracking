@@ -67,6 +67,62 @@ export function initDashboard() {
   });
 
 
+  // iOS Promo Banner Triggers
+  const promoDismiss = document.getElementById('btn-dismiss-ios-promo');
+  const promoSetup = document.getElementById('btn-setup-ios-promo');
+  const modalClose = document.getElementById('close-ios-shortcut-dialog');
+  const dialogCopyBtn = document.getElementById('btn-dialog-copy-webhook');
+
+  if (promoDismiss) {
+    promoDismiss.addEventListener('click', () => {
+      localStorage.setItem('dismissed_ios_promo', 'true');
+      const widget = document.getElementById('widget-ios-promo');
+      if (widget) widget.style.display = 'none';
+    });
+  }
+
+  if (promoSetup) {
+    promoSetup.addEventListener('click', async () => {
+      const dialog = document.getElementById('dialog-ios-shortcut');
+      const displayDiv = document.getElementById('ios-dialog-webhook-display');
+      
+      try {
+        const { SupabaseService } = await import('./supabase.js');
+        const userObj = await SupabaseService.getCurrentUser();
+        if (userObj && userObj.id) {
+          if (displayDiv) {
+            displayDiv.textContent = `https://${window.location.host}/api/sms-log?userId=${userObj.id}`;
+          }
+          if (dialog) dialog.showModal();
+        } else {
+          toast('Please log in first to set up iOS background sync.');
+        }
+      } catch (err) {
+        console.error('Failed to resolve user for iOS promo dialog:', err);
+      }
+    });
+  }
+
+  if (modalClose) {
+    modalClose.addEventListener('click', () => {
+      const dialog = document.getElementById('dialog-ios-shortcut');
+      if (dialog) dialog.close();
+    });
+  }
+
+  if (dialogCopyBtn) {
+    dialogCopyBtn.addEventListener('click', async () => {
+      const displayDiv = document.getElementById('ios-dialog-webhook-display');
+      if (!displayDiv || displayDiv.textContent === '...') return;
+      try {
+        await navigator.clipboard.writeText(displayDiv.textContent);
+        toast('Webhook URL copied to clipboard! 📋');
+      } catch (err) {
+        console.error('Failed to copy webhook:', err);
+        toast('Failed to copy. Please select and copy manually.');
+      }
+    });
+  }
 }
 
 async function updateAiAdviceBackground() {
@@ -108,6 +164,28 @@ function render() {
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   el('greeting').textContent = `${greet}, ${user.name || 'Student'}`;
+
+  // Toggle iOS Shortcut promo widget
+  const promoWidget = el('widget-ios-promo');
+  if (promoWidget) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const dismissed = localStorage.getItem('dismissed_ios_promo') === 'true';
+    
+    if (isIOS && !dismissed) {
+      import('./supabase.js').then(async ({ SupabaseService }) => {
+        const userObj = await SupabaseService.getCurrentUser();
+        if (userObj && userObj.id) {
+          promoWidget.style.display = 'block';
+        } else {
+          promoWidget.style.display = 'none';
+        }
+      }).catch(() => {
+        promoWidget.style.display = 'none';
+      });
+    } else {
+      promoWidget.style.display = 'none';
+    }
+  }
 
 
 
