@@ -263,48 +263,31 @@ export default function Overview() {
 
   return (
     <section id="view-home" className="view active">
-      <h1 className="greeting">{greet}, {user.name || 'Student'}</h1>
-
-      {/* AI Command Bar Widget */}
-      {widgetSettings.showAiBar !== false && (
-        <div id="widget-aibar" style={{ marginBottom: '16px' }}>
-          <form id="ai-command-form" className="ai-capsule" onSubmit={handleAiSubmit}>
-            <input
-              type="text"
-              id="ai-input"
-              value={aiInput}
-              onChange={(e) => setAiInput(e.target.value)}
-              placeholder="Ask AI: 'add 120 for lunch' or 'change my budget to 2000'..."
-              required
-              disabled={isAiLoading}
-              autoComplete="off"
+      {/* 1. HERO BALANCE SECTION */}
+      <div className="hero-balance-section">
+        <span className="hero-greeting">{greet}, {user.name || 'Student'}</span>
+        <h1 className="hero-amount">{cur(left)}</h1>
+        <span className="hero-subtitle">
+          {left >= 0 ? 'remaining' : 'overdraft'} of {cur(adjustedBudget)} budget
+        </span>
+        <div className="hero-progress-container">
+          <div className="progress-track" style={{ height: '8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+            <div
+              className={`progress-fill ${budgetProgressPct >= 100 ? 'over' : ''}`}
+              style={{
+                width: `${budgetProgressPct}%`,
+                height: '100%',
+                background: budgetProgressPct >= 100 ? 'var(--red)' : 'var(--accent-gradient)',
+                borderRadius: '99px'
+              }}
             />
-            <button type="submit" id="ai-submit" disabled={isAiLoading}>
-              {isAiLoading ? 'Analyzing...' : 'Ask AI'}
-            </button>
-          </form>
-          {aiResponse && (
-            <div className={`ai-response ${aiResponse.type}`} style={{ display: 'block', marginTop: '-12px', marginBottom: '16px', padding: '16px', background: 'rgba(197, 160, 89, 0.04)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-              <p style={{ fontWeight: 500, marginBottom: '4px' }}>{aiResponse.message}</p>
-              {aiResponse.actions && aiResponse.actions.length > 0 && (
-                <>
-                  <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px dashed var(--border)' }} />
-                  <strong style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Logged Actions:</strong>
-                  <div style={{ marginTop: '4px', fontSize: '12.5px', lineHeight: '1.4' }}>
-                    {aiResponse.actions.map((act, i) => (
-                      <div key={i}>• {act}</div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+          </div>
         </div>
-      )}
+      </div>
 
       {/* Over Budget Warning Banner */}
       {left < 0 && (
-        <div id="over-budget-warning" className="card warning-card" style={{ display: 'flex', borderColor: 'var(--red)', background: 'rgba(200, 94, 58, 0.08)' }}>
+        <div id="over-budget-warning" className="card warning-card" style={{ display: 'flex', borderColor: 'var(--red)', background: 'rgba(200, 94, 58, 0.08)', marginBottom: '24px' }}>
           <span className="warning-icon" style={{ marginRight: '12px' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           </span>
@@ -317,12 +300,12 @@ export default function Overview() {
 
       {/* iOS Background Sync Promotion Widget */}
       {showIosPromo && (
-        <div id="widget-ios-promo" className="card" style={{ background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(197, 160, 89, 0.04) 100%)', borderLeft: '4px solid var(--accent)', marginBottom: '16px' }}>
+        <div id="widget-ios-promo" className="card" style={{ background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(197, 160, 89, 0.04) 100%)', borderLeft: '4px solid var(--accent)', marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
             <div>
               <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '4px', letterSpacing: '0.5px' }}>iOS Feature</div>
               <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 600 }}>Background Auto-Logging for iPhone</h4>
-              <p className="muted" style={{ margin: 0, fontSize: '12px', lineHeight: '1.45' }}>Log expenses automatically in the background when you receive bank SMS notifications.</p>
+              <p className="muted" style={{ margin: 0, fontSize: '12.5px', lineHeight: '1.45' }}>Log expenses automatically when you receive bank SMS alerts.</p>
             </div>
             <button type="button" className="btn-ghost" onClick={handleDismissIosPromo} style={{ padding: '2px 6px', height: 'auto', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '16px' }}>&times;</button>
           </div>
@@ -332,146 +315,146 @@ export default function Overview() {
         </div>
       )}
 
-      {/* Today's Spending Summary Card */}
-      <div className="card" id="widget-daily-summary" style={{ marginBottom: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, letterSpacing: '-0.2px' }}>Today's Spending</h3>
-          </div>
-          <span id="daily-total" style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--accent)' }}>{cur(dailyTotal)}</span>
-        </div>
-        <div id="daily-breakdown" style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px dashed var(--border)', paddingTop: '8px', marginTop: '8px' }}>
-          {todayExpenses.length === 0 ? (
-            <p className="muted" style={{ margin: 0, fontSize: '11.5px', textAlign: 'center', padding: '4px 0' }}>No expenses logged today.</p>
-          ) : (
-            Object.entries(todayGroupedExpenses).map(([category, amount]) => {
-              const pct = Math.round((amount / (dailyTotal || 1)) * 100);
-              return (
-                <div key={category} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12.5px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span className="legend-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }}></span>
-                    <span style={{ fontWeight: 500 }}>{category}</span>
-                  </div>
-                  <span className="muted" style={{ fontWeight: 600 }}>{cur(amount)} ({pct}%)</span>
+      {/* 2. TWO-COLUMN / SINGLE-COLUMN GRID */}
+      <div className="overview-grid">
+        
+        {/* LEFT COLUMN: AI and Activities */}
+        <div className="overview-column">
+          
+          {/* AI Command capsule */}
+          {widgetSettings.showAiBar !== false && (
+            <div id="widget-aibar">
+              <form id="ai-command-form" className="ai-capsule" onSubmit={handleAiSubmit}>
+                <input
+                  type="text"
+                  id="ai-input"
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  placeholder="Ask AI: 'spent 120 on canteen lunch'..."
+                  required
+                  disabled={isAiLoading}
+                  autoComplete="off"
+                />
+                <button type="submit" id="ai-submit" disabled={isAiLoading}>
+                  {isAiLoading ? '...' : 'Ask AI'}
+                </button>
+              </form>
+              {aiResponse && (
+                <div className={`ai-response ${aiResponse.type}`} style={{ display: 'block', marginTop: '12px', padding: '16px', background: 'rgba(197, 160, 89, 0.04)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
+                  <p style={{ fontWeight: 500, margin: 0 }}>{aiResponse.message}</p>
+                  {aiResponse.actions && aiResponse.actions.length > 0 && (
+                    <>
+                      <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px dashed var(--border)' }} />
+                      <strong style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Actions Logged:</strong>
+                      <div style={{ marginTop: '4px', fontSize: '12.5px', lineHeight: '1.4' }}>
+                        {aiResponse.actions.map((act, i) => (
+                          <div key={i}>• {act}</div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
-              );
-            })
+              )}
+            </div>
+          )}
+
+          {/* Recent Feed Widget */}
+          {widgetSettings.showRecent !== false && (
+            <div id="widget-recent">
+              <div className="section-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h2>Recent Activities</h2>
+                <a href="#activity" className="link">View all →</a>
+              </div>
+              <div className="recent-list-clean">
+                {transactions.length === 0 ? (
+                  <p className="empty-state" style={{ padding: '16px 0', textAlign: 'center' }}>No entries yet. Ask AI or tap Log below!</p>
+                ) : (
+                  transactions.slice(0, 3).map(t => (
+                    <div className="recent-item-clean" key={t.id}>
+                      <div className="item-left">
+                        <div className="item-icon">{getTransactionIcon(t)}</div>
+                        <div className="item-details">
+                          <span className="item-desc">{t.description}</span>
+                          <span className="item-meta">{t.category} • {fmtDate(t.date)}</span>
+                        </div>
+                      </div>
+                      <span className={`item-amount ${t.type === 'income' ? 'pos' : 'neg'}`}>
+                        {t.type === 'income' ? '+' : '−'}{cur(t.amount)}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           )}
         </div>
-      </div>
 
-      {/* Burn Rate Widget */}
-      {widgetSettings.showBurnRate !== false && (
-        <div className="card" id="widget-burn-rate" style={{ marginBottom: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, letterSpacing: '-0.2px' }}>Burn Rate & Runout Forecast</h3>
-            </div>
-            <span id="burn-status-badge" className="badge" style={{ fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '20px', textTransform: 'uppercase', background: burnBadgeBg, color: burnBadgeColor }}>{burnStatus}</span>
-          </div>
+        {/* RIGHT COLUMN: Consolidated Stats & Advice */}
+        <div className="overview-column">
           
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', marginBottom: '12px' }}>
-            <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: '1.5' }} dangerouslySetInnerHTML={{ __html: forecastHtml }} />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span className="muted" id="burn-rate-daily-avg">Daily Spend: {cur(dailyBurnRate)}/day</span>
-              <span className="muted" id="burn-rate-runout-est">Est. Runout: {burnStatus === 'Critical' ? 'Exhausted' : burnStatus === 'Healthy' ? 'Safe' : 'Early'}</span>
+          {/* Financial Pulse Consolidated Card */}
+          <div className="card pulse-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Financial Pulse</h3>
+            
+            <div className="pulse-row">
+              <div className="pulse-col">
+                <span className="pulse-label">Spent Today</span>
+                <span className="pulse-val">{cur(dailyTotal)}</span>
+              </div>
+              <div className="pulse-col">
+                <span className="pulse-label">Daily Average</span>
+                <span className="pulse-val">{cur(dailyBurnRate)}</span>
+              </div>
+              <div className="pulse-col">
+                <span className="pulse-label">Status</span>
+                <span className={`pulse-badge ${burnStatus.toLowerCase()}`}>{burnStatus}</span>
+              </div>
             </div>
-            <div className="progress-track" style={{ height: '6px', background: 'rgba(255,255,255,0.03)' }}>
-              <div className="progress-fill" id="burn-progress-bar" style={{ width: burnProgressWidth, background: burnProgressBg }}></div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Weekly/Monthly Budget Card */}
-      {widgetSettings.showBudget !== false && (
-        <div className="card budget-card" id="widget-budget">
-          <div className="budget-header">
-            <span className="budget-label" id="budget-period-label">{period === 'month' ? 'This month' : 'This week'}</span>
-            <span id="budget-remaining" className={`budget-remaining ${left >= 0 ? 'ok' : 'over'}`}>
-              {left >= 0 ? `${cur(left)} left` : `${cur(left)} over`}
-            </span>
-          </div>
-          <div className="progress-track">
-            <div className={`progress-fill ${budgetProgressPct >= 100 ? 'over' : ''}`} id="budget-bar" style={{ width: `${budgetProgressPct}%` }}></div>
-          </div>
-          <div className="budget-footer">
-            <span><strong id="budget-spent">{cur(totalConsumed)}</strong> spent</span>
-            {netFriendDebt > 0 && <span style={{ color: 'var(--accent)', fontWeight: 600 }}>Includes {cur(netFriendDebt)} friend debts</span>}
-            <span className="muted">of <span id="budget-limit">{cur(adjustedBudget)}</span></span>
+            {/* Net Debts Info */}
+            {(netFriendDebt > 0 || owedTotal > 0 || oweTotal > 0) && (
+              <div className="pulse-debt-box">
+                {netFriendDebt > 0 && (
+                  <div className="pulse-debt-item">
+                    <span>Friend debts included:</span>
+                    <strong>{cur(netFriendDebt)}</strong>
+                  </div>
+                )}
+                {(owedTotal > 0 || oweTotal > 0) && (
+                  <div className="pulse-debt-item">
+                    <span>Net IOU balance:</span>
+                    <span style={{ color: (owedTotal >= oweTotal) ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
+                      {owedTotal >= oweTotal ? `Friends owe you ${cur(owedTotal - oweTotal)}` : `You owe ${cur(oweTotal - owedTotal)}`}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Single Sentence Forecast */}
+            <p className="pulse-forecast-summary" dangerouslySetInnerHTML={{ __html: forecastHtml }} />
           </div>
 
           {/* AI Advisor Panel */}
           {user.targetGoal && (
-            <div className="ai-advisor-panel" id="ai-advisor-panel">
-              <div className="ai-advisor-header">
-                <div>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: '6px', marginTop: '-2px' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            <div className="card advice-card" style={{ padding: '16px', background: 'rgba(197, 160, 89, 0.02)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: '600', color: 'var(--accent)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                   AI Budget Advisor
                 </div>
-                {isAdviceLoading && <span id="ai-advisor-loader" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>thinking...</span>}
+                {isAdviceLoading && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>thinking...</span>}
               </div>
-              <div id="ai-advisor-meta" style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                Targeting: {user.targetGoal} | Cutback Area: {user.cutbackCategory || 'Canteen'}
+              <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                Target: {user.targetGoal} | Cutback category: {user.cutbackCategory || 'Canteen'}
               </div>
-              <p id="ai-advisor-text" className="muted" style={{ fontSize: '12.5px', lineHeight: '1.45' }}>
-                {user.cachedAiAdvice || 'Generating custom advice...'}
+              <p style={{ fontSize: '12.5px', lineHeight: '1.45', color: 'var(--text-secondary)', margin: 0 }}>
+                {user.cachedAiAdvice || 'Analyzing spend patterns to generate advice...'}
               </p>
             </div>
           )}
         </div>
-      )}
-
-      {/* Quick Stats Row Widget */}
-      {widgetSettings.showStats !== false && (
-        <div className="stat-row" id="widget-stats">
-          <div className="card stat-card stat-commute">
-            <span className="stat-label">Commute this month</span>
-            <span className="stat-value" id="home-commute">{cur(commuteTotal)}</span>
-          </div>
-          <div className="card stat-card clickable stat-owed" onClick={() => location.hash = '#activity'}>
-            <span className="stat-label">Friends owe you</span>
-            <span className="stat-value green" id="home-owed">{cur(owedTotal)}</span>
-          </div>
-          <div className="card stat-card clickable stat-owe" onClick={() => location.hash = '#activity'}>
-            <span className="stat-label">You owe</span>
-            <span className="stat-value red" id="home-owe">{cur(oweTotal)}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Recent Feed Widget */}
-      {widgetSettings.showRecent !== false && (
-        <div id="widget-recent">
-          <div className="section-head">
-            <h2>Recent Activities</h2>
-            <a href="#activity" className="link">View all →</a>
-          </div>
-          <div className="card" id="home-recent">
-            {transactions.length === 0 ? (
-              <p className="empty-state">No entries yet. Ask AI or tap Log below!</p>
-            ) : (
-              transactions.slice(0, 3).map(t => (
-                <div className="feed-item" key={t.id}>
-                  <div className="feed-icon">{getTransactionIcon(t)}</div>
-                  <div className="feed-body">
-                    <div className="feed-desc">{t.description}</div>
-                    <div className="feed-meta">{fmtDate(t.date)}</div>
-                  </div>
-                  <span className={`feed-amount ${t.type === 'income' ? 'pos' : 'neg'}`}>
-                    {t.type === 'income' ? '+' : '−'}{cur(t.amount)}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* iOS Webhook setup dialog modal */}
       <dialog id="dialog-ios-shortcut" className="dialog" ref={iosDialogRef}>

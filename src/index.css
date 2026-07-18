@@ -1083,31 +1083,6 @@ button, .btn {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Details and summaries */
-details.balances-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg-card);
-  padding: 16px 20px;
-  margin-bottom: 16px;
-}
-
-.balances-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  list-style: none;
-  font-family: var(--font-title);
-  font-weight: 600;
-  font-size: 15px;
-  outline: none;
-}
-
-.balances-summary::-webkit-details-marker {
-  display: none;
-}
-
 .balances-list {
   margin-top: 14px;
   border-top: 1px solid var(--border);
@@ -1115,4 +1090,239 @@ details.balances-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Overview layout redesign - Clear Visual Focus & Hierarchy */
+.hero-balance-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 24px 32px 24px;
+  background: radial-gradient(circle at center, rgba(197, 160, 89, 0.04) 0%, transparent 70%);
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+}
+
+.hero-greeting {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin-bottom: 8px;
+  opacity: 0.85;
+}
+
+.hero-amount {
+  font-family: var(--font-title);
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 6px;
+  background: linear-gradient(180deg, var(--text) 30%, rgba(255, 255, 255, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.hero-progress-container {
+  width: 100%;
+  max-width: 280px;
+}
+
+/* Two-column dashboard grid */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+@media (min-width: 768px) {
+  .overview-grid {
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 24px;
+    align-items: start;
+  }
+}
+
+.overview-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Clean list elements without surrounding boxes */
+.recent-list-clean {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 16px;
+}
+
+.recent-item-clean {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.recent-item-clean:last-child {
+  border-bottom: none;
+}
+
+.recent-item-clean .item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.recent-item-clean .item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.recent-item-clean .item-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-item-clean .item-desc {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.recent-item-clean .item-meta {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.recent-item-clean .item-amount {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.recent-item-clean .item-amount.pos {
+  color: var(--green);
+}
+
+.recent-item-clean .item-amount.neg {
+  color: var(--text);
+}
+
+/* Consolidated financial pulse statistics card */
+.pulse-card {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border-radius: var(--radius);
+}
+
+.pulse-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+}
+
+.pulse-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.pulse-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.pulse-val {
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 4px;
+}
+
+.pulse-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 99px;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+.pulse-badge.healthy {
+  background: rgba(143, 168, 120, 0.1);
+  color: var(--green);
+}
+
+.pulse-badge.warning {
+  background: rgba(197, 160, 89, 0.1);
+  color: var(--accent);
+}
+
+.pulse-badge.critical {
+  background: rgba(200, 94, 58, 0.1);
+  color: var(--red);
+}
+
+.pulse-badge.perfect {
+  background: rgba(143, 168, 120, 0.1);
+  color: var(--green);
+}
+
+.pulse-debt-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 14px;
+}
+
+.pulse-debt-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.pulse-debt-item strong {
+  color: var(--text);
+}
+
+.pulse-forecast-summary {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 0;
 }
