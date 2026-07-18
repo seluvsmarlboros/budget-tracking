@@ -84,7 +84,7 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'userId is required' });
   }
 
-  const payload = req.body;
+  const payload = req.body || {};
   const text = payload.text || payload.body;
   if (!text) {
     return res.status(400).json({ error: 'SMS text body is empty' });
