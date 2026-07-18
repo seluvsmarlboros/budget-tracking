@@ -251,7 +251,7 @@ export default function Log() {
   return (
     <section id="view-add" className="view active">
       <form id="log-form" className="card log-form" onSubmit={handleSubmit}>
-        <div style={{ display: 'flex', justifycontent: 'space-between', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2>Log Transaction</h2>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
