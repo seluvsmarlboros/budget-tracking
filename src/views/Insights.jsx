@@ -1,0 +1,292 @@
+import React, { useRef } from 'react';
+import { useStateContext } from '../contexts/StateContext';
+
+const COBALT_TEAL_PALETTE = [
+  'hsl(185, 95%, 48%)',  // Electric Cyan
+  'hsl(195, 80%, 45%)',  // Medium Cobalt Cyan
+  'hsl(205, 75%, 40%)',  // Deep Cobalt Blue
+  'hsl(175, 70%, 42%)',  // Teal Green
+  'hsl(185, 60%, 30%)',  // Dark Teal
+  'hsl(205, 50%, 25%)',  // Dark Cobalt Blue
+  'hsl(215, 30%, 40%)'   // Slate Blue
+];
+
+export default function Insights() {
+  const { state, importData } = useStateContext();
+  const { transactions, user, commute } = state;
+  const sym = user.currency || '₹';
+  const importFileRef = useRef(null);
+
+  const cur = (amount) => {
+    return sym + Math.abs(amount).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  };
+
+  // 1. DATE PREPARATION
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+  // 2. MONTHLY EXPENSES COMPUTATIONS
+  const thisMonthExpenses = transactions
+    .filter(t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= thisMonthStart)
+    .reduce((s, t) => s + t.amount, 0);
+
+  const lastMonthExpenses = transactions
+    .filter(t => {
+      const d = new Date(t.date + 'T00:00:00');
+      return t.type === 'expense' && d >= lastMonthStart && d <= lastMonthEnd;
+    })
+    .reduce((s, t) => s + t.amount, 0);
+
+  // Month-over-Month Delta
+  let deltaText = '—';
+  let deltaClass = 'muted';
+  if (lastMonthExpenses > 0) {
+    const pct = Math.round(((thisMonthExpenses - lastMonthExpenses) / lastMonthExpenses) * 100);
+    deltaText = (pct >= 0 ? '↑' : '↓') + Math.abs(pct) + '%';
+    deltaClass = pct > 0 ? 'red' : 'green';
+  }
+
+  // 3. CATEGORY BREAKDOWN (This Month Expenses)
+  const byCategory = {};
+  transactions
+    .filter(t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= thisMonthStart)
+    .forEach(t => {
+      byCategory[t.category] = (byCategory[t.category] || 0) + t.amount;
+    });
+
+  const catEntries = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+  const catTotal = catEntries.reduce((s, [, v]) => s + v, 0) || 1;
+
+  // 4. PAYMENT METHODS (UPI vs Cash)
+  let upiAmt = 0;
+  let cashAmt = 0;
+  transactions
+    .filter(t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= thisMonthStart)
+    .forEach(t => {
+      if (t.paymentMethod === 'Cash') {
+        cashAmt += t.amount;
+      } else {
+        upiAmt += t.amount;
+      }
+    });
+  const methodTotal = upiAmt + cashAmt || 1;
+  const upiPct = Math.round((upiAmt / methodTotal) * 100);
+  const cashPct = Math.round((cashAmt / methodTotal) * 100);
+
+  // 5. TRAVEL BREAKDOWN (Commute ticket fares, fuel recharges, repairs)
+  let travelTicketFares = 0;
+  let travelFuelFares = 0;
+  let travelRepairFares = 0;
+  (commute.logs || []).forEach(l => {
+    const d = new Date(l.date + 'T00:00:00');
+    if (d < thisMonthStart) return;
+    if (l.type === 'ticket' || l.type === 'pass') {
+      travelTicketFares += l.amount;
+    } else if (l.type === 'fuel') {
+      travelFuelFares += l.amount;
+    } else if (l.type === 'repair') {
+      travelRepairFares += l.amount;
+    }
+  });
+
+  // Export local state JSON backup
+  const handleExportBackup = () => {
+    const dataStr = JSON.stringify(state, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `unispend-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    window.toast('Backup JSON downloaded! 📋');
+  };
+
+  // Import local state JSON backup
+  const handleImportBackupChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result);
+        if (importData(parsed)) {
+          window.toast('Backup data imported successfully! 🚀');
+          // Reload screen
+          setTimeout(() => location.reload(), 800);
+        } else {
+          window.toast('Invalid JSON backup file structure.');
+        }
+      } catch (err) {
+        window.toast(`Import failed: ${err.message}`);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  return (
+    <section id="view-insights" className="view active">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h1 style={{ margin: 0 }}>Analytics & Insights</h1>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => importFileRef.current?.click()}>
+            Import Backup
+          </button>
+          <input
+            type="file"
+            ref={importFileRef}
+            onChange={handleImportBackupChange}
+            accept=".json"
+            style={{ display: 'none' }}
+          />
+          <button type="button" className="btn btn-ghost btn-sm" onClick={handleExportBackup}>
+            Export Backup
+          </button>
+        </div>
+      </div>
+
+      {/* Month-over-Month Cards */}
+      <div className="stat-row" style={{ marginBottom: '20px' }}>
+        <div className="card stat-card">
+          <span className="stat-label">Spent This Month</span>
+          <span className="stat-value" id="ins-this-month">{cur(thisMonthExpenses)}</span>
+        </div>
+        <div className="card stat-card">
+          <span className="stat-label">Spent Last Month</span>
+          <span className="stat-value" id="ins-last-month">{cur(lastMonthExpenses)}</span>
+        </div>
+        <div className="card stat-card">
+          <span className="stat-label">Month-over-Month Delta</span>
+          <span className={`stat-value ${deltaClass}`} id="ins-delta">{deltaText}</span>
+        </div>
+      </div>
+
+      {/* Category Breakdown Bar widget */}
+      <div className="card" style={{ marginBottom: '20px' }}>
+        <h3 style={{ marginBottom: '14px' }}>Category Breakdown (This Month)</h3>
+        
+        {catEntries.length === 0 ? (
+          <div style={{ padding: '16px 0', textAlign: 'center' }}>
+            <span className="muted" style={{ fontSize: '13px' }}>No expenses logged this month</span>
+          </div>
+        ) : (
+          <div>
+            {/* Visual Segments Bar */}
+            <div
+              id="cat-bar"
+              style={{
+                height: '16px',
+                width: '100%',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                display: 'flex',
+                background: 'rgba(255,255,255,0.03)',
+                marginBottom: '20px'
+              }}
+            >
+              {catEntries.map(([cat, amt], i) => {
+                const pct = (amt / catTotal) * 100;
+                const color = COBALT_TEAL_PALETTE[i % COBALT_TEAL_PALETTE.length];
+                return (
+                  <div
+                    key={cat}
+                    style={{ width: `${pct}%`, background: color }}
+                    title={`${cat}: ${cur(amt)} (${Math.round(pct)}%)`}
+                  ></div>
+                );
+              })}
+            </div>
+
+            {/* Custom Grid Legend */}
+            <div
+              id="cat-legend"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                gap: '12px',
+                borderTop: '1px solid var(--border)',
+                paddingTop: '16px'
+              }}
+            >
+              {catEntries.map(([cat, amt], i) => {
+                const color = COBALT_TEAL_PALETTE[i % COBALT_TEAL_PALETTE.length];
+                const pct = Math.round((amt / catTotal) * 100);
+                return (
+                  <div
+                    key={cat}
+                    className="legend-item"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 500 }}
+                  >
+                    <span
+                      className="legend-dot"
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: color,
+                        display: 'inline-block',
+                        flexShrink: 0
+                      }}
+                    ></span>
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {cat}: <strong>{cur(amt)}</strong> ({pct}%)
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="field-row">
+        {/* Payment Methods */}
+        <div className="card">
+          <h3 style={{ marginBottom: '14px' }}>Payment Mode Breakdown</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
+                <span>UPI / NetBanking</span>
+                <strong id="ins-upi">{cur(upiAmt)} ({upiPct}%)</strong>
+              </div>
+              <div className="progress-track" style={{ height: '6px' }}>
+                <div className="progress-fill" style={{ width: `${upiPct}%` }}></div>
+              </div>
+            </div>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
+                <span>Cash Payments</span>
+                <strong id="ins-cash">{cur(cashAmt)} ({cashPct}%)</strong>
+              </div>
+              <div className="progress-track" style={{ height: '6px' }}>
+                <div className="progress-fill" style={{ width: `${cashPct}%`, background: 'var(--text-muted)' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Commuter breakdown */}
+        <div className="card">
+          <h3 style={{ marginBottom: '14px' }}>Commute Cost Breakdown</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13.5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '6px', borderBottom: '1px dashed var(--border)' }}>
+              <span className="muted">Tickets & Transit Passes</span>
+              <strong id="ins-fares">{cur(travelTicketFares)}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '6px', borderBottom: '1px dashed var(--border)' }}>
+              <span className="muted">Vehicle Fuel (Petrol)</span>
+              <strong id="ins-fuel">{cur(travelFuelFares)}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span className="muted">Maintenance & Repairs</span>
+              <strong id="ins-repair">{cur(travelRepairFares)}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
