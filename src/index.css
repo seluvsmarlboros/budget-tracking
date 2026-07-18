@@ -135,7 +135,7 @@ p.muted {
 /* Top Nav / Desktop Sidebar */
 .top-nav {
   height: var(--nav-h);
-  background: rgba(18, 23, 37, 0.5);
+  background: rgba(26, 22, 20, 0.6);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--border);
@@ -218,7 +218,7 @@ body.light .top-nav {
   left: 16px;
   right: 16px;
   height: var(--bnav-h);
-  background: rgba(18, 23, 37, 0.7);
+  background: rgba(26, 22, 20, 0.75);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
