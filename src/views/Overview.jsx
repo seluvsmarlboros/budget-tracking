@@ -12,7 +12,7 @@ export default function Overview() {
   // Dialog refs
   const iosDialogRef = useRef(null);
   
-  const { user, transactions, spikes, friends, widgetSettings, ai } = state;
+  const { user, transactions, spikes, friends, widgetSettings, ai, wallet } = state;
   const sym = user.currency || '₹';
 
   // State Mutators map for AI commands
@@ -263,28 +263,6 @@ export default function Overview() {
 
   return (
     <section id="view-home" className="view active">
-      {/* 1. HERO BALANCE SECTION */}
-      <div className="hero-balance-section">
-        <span className="hero-greeting">{greet}, {user.name || 'Student'}</span>
-        <h1 className="hero-amount">{cur(left)}</h1>
-        <span className="hero-subtitle">
-          {left >= 0 ? 'remaining' : 'overdraft'} of {cur(adjustedBudget)} budget
-        </span>
-        <div className="hero-progress-container">
-          <div className="progress-track" style={{ height: '8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '99px', overflow: 'hidden' }}>
-            <div
-              className={`progress-fill ${budgetProgressPct >= 100 ? 'over' : ''}`}
-              style={{
-                width: `${budgetProgressPct}%`,
-                height: '100%',
-                background: budgetProgressPct >= 100 ? 'var(--red)' : 'var(--accent-gradient)',
-                borderRadius: '99px'
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Over Budget Warning Banner */}
       {left < 0 && (
         <div id="over-budget-warning" className="card warning-card" style={{ display: 'flex', borderColor: 'var(--red)', background: 'rgba(200, 94, 58, 0.08)', marginBottom: '24px' }}>
@@ -318,9 +296,31 @@ export default function Overview() {
       {/* 2. TWO-COLUMN / SINGLE-COLUMN GRID */}
       <div className="overview-grid">
         
-        {/* LEFT COLUMN: AI and Activities */}
+        {/* LEFT COLUMN: Hero balance, AI, and Activities */}
         <div className="overview-column">
           
+          {/* 1. HERO BALANCE SECTION CARD */}
+          <div className="hero-balance-section">
+            <span className="hero-greeting">{greet}, {user.name || 'Student'}</span>
+            <h1 className="hero-amount">{cur(left)}</h1>
+            <span className="hero-subtitle">
+              {left >= 0 ? 'remaining' : 'overdraft'} of {cur(adjustedBudget)} budget
+            </span>
+            <div className="hero-progress-container">
+              <div className="progress-track" style={{ height: '8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+                <div
+                  className={`progress-fill ${budgetProgressPct >= 100 ? 'over' : ''}`}
+                  style={{
+                    width: `${Math.min(100, budgetProgressPct)}%`,
+                    height: '100%',
+                    background: budgetProgressPct >= 100 ? 'var(--red)' : 'var(--accent-gradient)',
+                    borderRadius: '99px'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* AI Command capsule */}
           {widgetSettings.showAiBar !== false && (
             <div id="widget-aibar">
@@ -358,7 +358,7 @@ export default function Overview() {
             </div>
           )}
 
-          {/* Recent Feed Widget */}
+          {/* Recent Feed Widget (Shows 5 on desktop, 3 on mobile) */}
           {widgetSettings.showRecent !== false && (
             <div id="widget-recent">
               <div className="section-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -369,7 +369,7 @@ export default function Overview() {
                 {transactions.length === 0 ? (
                   <p className="empty-state" style={{ padding: '16px 0', textAlign: 'center' }}>No entries yet. Ask AI or tap Log below!</p>
                 ) : (
-                  transactions.slice(0, 3).map(t => (
+                  transactions.slice(0, window.innerWidth >= 768 ? 5 : 3).map(t => (
                     <div className="recent-item-clean" key={t.id}>
                       <div className="item-left">
                         <div className="item-icon">{getTransactionIcon(t)}</div>
@@ -389,7 +389,7 @@ export default function Overview() {
           )}
         </div>
 
-        {/* RIGHT COLUMN: Consolidated Stats & Advice */}
+        {/* RIGHT COLUMN: Consolidated Stats, Goals, Spikes, & Advice */}
         <div className="overview-column">
           
           {/* Financial Pulse Consolidated Card */}
@@ -434,6 +434,54 @@ export default function Overview() {
             {/* Single Sentence Forecast */}
             <p className="pulse-forecast-summary" dangerouslySetInnerHTML={{ __html: forecastHtml }} />
           </div>
+
+          {/* Student Savings Goals Progress Card */}
+          {wallet?.savingsGoals && wallet.savingsGoals.length > 0 && (
+            <div className="card pulse-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Savings Progress</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {wallet.savingsGoals.map((goal, i) => {
+                  const pct = Math.min(100, Math.round(((goal.saved || 0) / (goal.target || 1)) * 100));
+                  return (
+                    <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px' }}>
+                        <span style={{ fontWeight: 500 }}>{goal.name}</span>
+                        <span className="muted" style={{ fontWeight: 600 }}>{cur(goal.saved)} / {cur(goal.target)} ({pct}%)</span>
+                      </div>
+                      <div className="progress-track" style={{ height: '6px', background: 'rgba(255,255,255,0.03)' }}>
+                        <div className="progress-fill" style={{ width: `${pct}%`, height: '100%', background: 'var(--accent-gradient)', borderRadius: '99px' }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Upcoming Spike Expenses Card */}
+          {spikes && spikes.length > 0 && (
+            <div className="card pulse-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Upcoming Spikes</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[...spikes]
+                  .filter(s => s && s.date && new Date(s.date) >= new Date().setHours(0,0,0,0))
+                  .sort((a, b) => new Date(a.date) - new Date(b.date))
+                  .slice(0, 2)
+                  .map((s, i) => {
+                    const diffDays = Math.ceil((new Date(s.date) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+                    return (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 600 }}>{s.title}</span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>In {diffDays} days ({new Date(s.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})</span>
+                        </div>
+                        <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{cur(s.amount)}</span>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
 
           {/* AI Advisor Panel */}
           {user.targetGoal && (
