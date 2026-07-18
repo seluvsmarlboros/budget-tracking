@@ -267,8 +267,8 @@ export default function Overview() {
 
       {/* AI Command Bar Widget */}
       {widgetSettings.showAiBar !== false && (
-        <div className="card ai-card" id="widget-aibar">
-          <form id="ai-command-form" className="ai-form" onSubmit={handleAiSubmit}>
+        <div id="widget-aibar" style={{ marginBottom: '16px' }}>
+          <form id="ai-command-form" className="ai-capsule" onSubmit={handleAiSubmit}>
             <input
               type="text"
               id="ai-input"
@@ -279,16 +279,16 @@ export default function Overview() {
               disabled={isAiLoading}
               autoComplete="off"
             />
-            <button type="submit" className="btn-primary" id="ai-submit" disabled={isAiLoading}>
+            <button type="submit" id="ai-submit" disabled={isAiLoading}>
               {isAiLoading ? 'Analyzing...' : 'Ask AI'}
             </button>
           </form>
           {aiResponse && (
-            <div className={`ai-response ${aiResponse.type}`} style={{ display: 'block' }}>
+            <div className={`ai-response ${aiResponse.type}`} style={{ display: 'block', marginTop: '-12px', marginBottom: '16px', padding: '16px', background: 'rgba(197, 160, 89, 0.04)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
               <p style={{ fontWeight: 500, marginBottom: '4px' }}>{aiResponse.message}</p>
               {aiResponse.actions && aiResponse.actions.length > 0 && (
                 <>
-                  <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px solid var(--border)' }} />
+                  <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px dashed var(--border)' }} />
                   <strong style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Logged Actions:</strong>
                   <div style={{ marginTop: '4px', fontSize: '12.5px', lineHeight: '1.4' }}>
                     {aiResponse.actions.map((act, i) => (
@@ -304,7 +304,7 @@ export default function Overview() {
 
       {/* Over Budget Warning Banner */}
       {left < 0 && (
-        <div id="over-budget-warning" className="card warning-card" style={{ display: 'flex', borderColor: 'var(--red)', background: 'rgba(239, 68, 68, 0.05)' }}>
+        <div id="over-budget-warning" className="card warning-card" style={{ display: 'flex', borderColor: 'var(--red)', background: 'rgba(200, 94, 58, 0.08)' }}>
           <span className="warning-icon" style={{ marginRight: '12px' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           </span>
@@ -317,7 +317,7 @@ export default function Overview() {
 
       {/* iOS Background Sync Promotion Widget */}
       {showIosPromo && (
-        <div id="widget-ios-promo" className="card" style={{ background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(6, 182, 212, 0.05) 100%)', borderLeft: '4px solid var(--accent)', marginBottom: '16px' }}>
+        <div id="widget-ios-promo" className="card" style={{ background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(197, 160, 89, 0.04) 100%)', borderLeft: '4px solid var(--accent)', marginBottom: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
             <div>
               <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '4px', letterSpacing: '0.5px' }}>iOS Feature</div>
