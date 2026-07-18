@@ -1,27 +1,14 @@
-/* Supabase Integration Service Module */
+import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = "https://rzqwybcxxduvlntkittv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_svAhbKhIH8dBnwFvs_IcfQ_tnZ05pPQ";
 
 // Initialize Supabase Client
-export let supabase = null;
-
-export function initSupabaseClient() {
-  if (supabase) return supabase;
-  if (window.supabase) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  }
-  return supabase;
-}
-
-// Auto-run on load
-initSupabaseClient();
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export const SupabaseService = {
   // ─── Authentication & Profile ──────────────────────────────────────
   async sendMagicLink(email, displayName) {
-    initSupabaseClient();
-    if (!supabase) throw new Error("Supabase is not initialized");
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -33,8 +20,6 @@ export const SupabaseService = {
   },
 
   async signInWithGoogle() {
-    initSupabaseClient();
-    if (!supabase) throw new Error("Supabase is not initialized");
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -46,8 +31,6 @@ export const SupabaseService = {
   },
 
   async verifyOTP(email, token) {
-    initSupabaseClient();
-    if (!supabase) throw new Error("Supabase is not initialized");
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token,
@@ -58,23 +41,17 @@ export const SupabaseService = {
   },
 
   async getCurrentUser() {
-    initSupabaseClient();
-    if (!supabase) return null;
     const { data: { user } } = await supabase.auth.getUser();
     return user;
   },
 
   async getProfile(userId) {
-    initSupabaseClient();
-    if (!supabase) return null;
     const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
     if (error) throw error;
     return data;
   },
 
   async updateProfile(profile) {
-    initSupabaseClient();
-    if (!supabase) return null;
     const user = await this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
     const { error } = await supabase.from("profiles").upsert({
@@ -86,19 +63,14 @@ export const SupabaseService = {
   },
 
   async signOut() {
-    initSupabaseClient();
-    if (!supabase) return;
     await supabase.auth.signOut();
   },
 
   // ─── Partnership Invite / Join / Leave ──────────────────────────────
   async checkPartnerships() {
-    initSupabaseClient();
-    if (!supabase) return [];
     const user = await this.getCurrentUser();
     if (!user) return [];
 
-    // Check for active partnerships
     const { data, error } = await supabase
       .from("partnerships")
       .select("*, user_a:profiles!partnerships_user_a_fkey(*), user_b:profiles!partnerships_user_b_fkey(*)")
@@ -110,8 +82,6 @@ export const SupabaseService = {
   },
 
   async checkPendingInvite() {
-    initSupabaseClient();
-    if (!supabase) return null;
     const user = await this.getCurrentUser();
     if (!user) return null;
 
@@ -128,8 +98,6 @@ export const SupabaseService = {
   },
 
   async generateInvite() {
-    initSupabaseClient();
-    if (!supabase) return null;
     const user = await this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
 
@@ -157,7 +125,6 @@ export const SupabaseService = {
   },
 
   async redeemInvite(code) {
-    if (!supabase) return null;
     const user = await this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
 
@@ -202,7 +169,6 @@ export const SupabaseService = {
   },
 
   async leavePartnership(partnershipId) {
-    if (!supabase) return;
     const { error } = await supabase
       .from("partnerships")
       .update({ status: "ended" })
@@ -213,7 +179,6 @@ export const SupabaseService = {
 
   // ─── Shared Expenses ────────────────────────────────────────────────
   async getSharedExpenses(partnershipId) {
-    if (!supabase) return [];
     const { data, error } = await supabase
       .from("shared_expenses")
       .select("*")
@@ -225,7 +190,6 @@ export const SupabaseService = {
   },
 
   async addSharedExpense(expense) {
-    if (!supabase) return null;
     const user = await this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
 
@@ -255,7 +219,6 @@ export const SupabaseService = {
 
   // ─── Settle Up & Balance ───────────────────────────────────────────
   async getNetBalance(partnershipId) {
-    if (!supabase) return { balance: 0, debtor: null, creditor: null };
     const { data, error } = await supabase
       .from("v_partnership_balance")
       .select("*")
@@ -274,7 +237,6 @@ export const SupabaseService = {
   },
 
   async settleBalance(partnershipId, amount, details) {
-    if (!supabase) return null;
     const user = await this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
 
@@ -303,8 +265,6 @@ export const SupabaseService = {
   },
 
   async sendReminderNotification(partnershipId, partnerId, amount, senderName) {
-    initSupabaseClient();
-    if (!supabase) return null;
     const { error } = await supabase
       .from("notifications")
       .insert({
@@ -318,8 +278,6 @@ export const SupabaseService = {
   },
 
   async sendDisconnectCodeNotification(partnerId, code, senderName) {
-    initSupabaseClient();
-    if (!supabase) return null;
     const { error } = await supabase
       .from("notifications")
       .insert({
@@ -334,7 +292,6 @@ export const SupabaseService = {
 
   // ─── Ledger Entries & Activity Feed ──────────────────────────────────
   async getLedgerEntries(partnershipId) {
-    if (!supabase) return [];
     const { data, error } = await supabase
       .from("ledger_entries")
       .select("*, recorded_by:profiles(*)")
@@ -347,7 +304,6 @@ export const SupabaseService = {
 
   // ─── Recurring Bill Templates ────────────────────────────────────────
   async getRecurringTemplates(partnershipId) {
-    if (!supabase) return [];
     const { data, error } = await supabase
       .from("recurring_templates")
       .select("*")
@@ -359,8 +315,6 @@ export const SupabaseService = {
   },
 
   async addRecurringTemplate(template) {
-    initSupabaseClient();
-    if (!supabase) return null;
     const user = await this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
 
@@ -385,7 +339,6 @@ export const SupabaseService = {
   },
 
   async toggleRecurringTemplate(templateId, isActive) {
-    if (!supabase) return;
     const { error } = await supabase
       .from("recurring_templates")
       .update({ is_active: isActive })
@@ -395,7 +348,6 @@ export const SupabaseService = {
   },
 
   async deleteRecurringTemplate(templateId) {
-    if (!supabase) return;
     const { error } = await supabase
       .from("recurring_templates")
       .delete()
@@ -406,7 +358,6 @@ export const SupabaseService = {
 
   // ─── Notifications ──────────────────────────────────────────────────
   async getNotifications() {
-    if (!supabase) return [];
     const user = await this.getCurrentUser();
     if (!user) return [];
 
@@ -421,7 +372,6 @@ export const SupabaseService = {
   },
 
   async markNotificationsRead() {
-    if (!supabase) return;
     const user = await this.getCurrentUser();
     if (!user) return;
 
@@ -433,8 +383,6 @@ export const SupabaseService = {
 
   // ─── Web Push Notification Subscription ────────────────────────────
   async savePushSubscription(subscription) {
-    initSupabaseClient();
-    if (!supabase) throw new Error("Supabase is not initialized");
     const user = await this.getCurrentUser();
     if (!user) throw new Error("Not authenticated with Supabase");
 
@@ -455,8 +403,6 @@ export const SupabaseService = {
   },
 
   async removePushSubscription() {
-    initSupabaseClient();
-    if (!supabase) throw new Error("Supabase is not initialized");
     const user = await this.getCurrentUser();
     if (!user) throw new Error("Not authenticated with Supabase");
 

@@ -1,5 +1,4 @@
-/* Receipt Scanning (OCR) Controller (js/ocr.js) */
-import { toast } from './app.js';
+/* Receipt Scanning (OCR) Service Module (src/services/ocr.js) */
 
 let tesseractLoaded = false;
 
@@ -22,63 +21,28 @@ function loadTesseract() {
   });
 }
 
-export function initOCR() {
-  const ocrBtn = document.getElementById('btn-ocr-receipt');
-  const fileInput = document.getElementById('ocr-file-input');
+export async function scanReceipt(file, onStatusUpdate = () => {}) {
+  if (!file) return null;
 
-  if (!ocrBtn || !fileInput) return;
+  onStatusUpdate('Loading OCR engine...');
+  await loadTesseract();
 
-  ocrBtn.addEventListener('click', () => {
-    fileInput.click();
-  });
+  onStatusUpdate('Reading receipt content...');
+  const result = await window.Tesseract.recognize(file, 'eng');
+  const text = result.data.text;
+  console.log('[OCR Text Scan]:', text);
 
-  fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // Parse Amount from text
+  const amount = parseAmountFromText(text);
 
-    toast('Loading OCR engine...');
-    ocrBtn.disabled = true;
-    const originalContent = ocrBtn.innerHTML;
-    ocrBtn.textContent = '⏳';
+  // Parse Description from text
+  const description = parseDescriptionFromText(text);
 
-    try {
-      await loadTesseract();
-      toast('Reading receipt content...');
-      
-      const result = await window.Tesseract.recognize(file, 'eng');
-      const text = result.data.text;
-      console.log('[OCR Text Scan]:', text);
-
-      // Parse Amount from text
-      const parsedAmount = parseAmountFromText(text);
-      if (parsedAmount) {
-        document.getElementById('log-amount').value = parsedAmount;
-        toast(`Autofilled: ₹${parsedAmount}! 🧾`);
-      } else {
-        toast('Scan complete. No numeric totals found. Please type manually.');
-      }
-
-      // Parse Description from text
-      const parsedDesc = parseDescriptionFromText(text);
-      if (parsedDesc) {
-        document.getElementById('log-desc').value = parsedDesc;
-      }
-
-      // Default Date if empty
-      const dateInput = document.getElementById('log-date');
-      if (!dateInput.value) {
-        dateInput.value = new Date().toISOString().split('T')[0];
-      }
-
-    } catch (err) {
-      console.error(err);
-      toast(`OCR Scan failed: ${err.message}`);
-    } finally {
-      ocrBtn.disabled = false;
-      ocrBtn.innerHTML = originalContent;
-      fileInput.value = '';
-    }
-  });
+  return {
+    amount,
+    description,
+    date: new Date().toISOString().split('T')[0]
+  };
 }
 
 function parseAmountFromText(text) {

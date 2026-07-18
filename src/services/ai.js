@@ -1,14 +1,10 @@
-/* AI Assistant Service Module */
-import { State } from './state.js';
-import { SupabaseService } from './supabase.js';
-
 // Universal fallback key — works out of the box for all users (Groq/Llama)
 const UNIVERSAL_KEY = ["gsk", "XvTW2HftoIAi0QOv8kETWGdyb3FYOq9lJm4DU2FR8S7IerDaJ9wn"].join("_");
 const UNIVERSAL_PROVIDER = 'groq';
 const UNIVERSAL_MODEL = 'llama-3.3-70b-versatile';
 
-export async function askAI(command) {
-  const { ai, user, categories, friends } = State.data;
+export async function askAI(command, state, stateContext, checkAuthState) {
+  const { ai, user, categories, friends } = state;
 
   // Resolve effective key/provider — fall back to universal if user hasn't set one
   const effectiveKey = (ai.apiKey && ai.apiKey.length > 10) ? ai.apiKey : UNIVERSAL_KEY;
@@ -96,12 +92,6 @@ Output: {"actions": [], "message": "Hello! How can I help you manage your colleg
 User: "I split a 500 bill with Rohan for pizza"
 Output: {"actions": [{"action": "add_split", "direction": "lent", "friend": "Rohan", "amount": 500, "description": "Pizza", "splitHalf": true, "date": "${today}"}], "message": "Logged the pizza bill. Rohan owes you ₹250."}
 
-User: "split shared bill of 1000 for electricity with my partner Priya"
-Output: {"actions": [{"action": "add_shared_bill", "friend": "Priya", "amount": 1000, "description": "Electricity", "splitType": "equal"}], "message": "Logged the shared bill of ₹1000 for Electricity. Priya owes you ₹500."}
-
-User: "change my weekly budget to 2000"
-Output: {"actions": [{"action": "update_settings", "weeklyPocketMoney": 2000}], "message": "Budget updated to ₹2000 per week."}
-
 Current Application Context:
 ${JSON.stringify(context, null, 2)}
 `;
@@ -175,7 +165,6 @@ ${JSON.stringify(context, null, 2)}
     const json = await res.json();
     let text = json.choices?.[0]?.message?.content || '';
 
-    // Extract JSON block strictly using regex to prevent markdown conversational wrappers crashing parsing
     text = text.trim();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -197,12 +186,10 @@ ${JSON.stringify(context, null, 2)}
 
     const executed = [];
     for (const act of actions) {
-      const summary = executeAction(act);
+      const summary = await executeAction(act, state, stateContext, checkAuthState);
       executed.push(summary);
     }
 
-    // Save and return
-    State.saveState();
     return {
       success: true,
       actions: executed,
@@ -214,19 +201,18 @@ ${JSON.stringify(context, null, 2)}
   }
 }
 
-function executeAction(act) {
-  const sym = State.data.user.currency || '₹';
+async function executeAction(act, state, stateContext, checkAuthState) {
+  const sym = state.user.currency || '₹';
   switch (act.action) {
     case 'add_transaction': {
       let cat = act.category || 'Other';
-      // Ensure category exists
-      const match = State.data.categories.find(c => c.toLowerCase() === cat.toLowerCase());
+      const match = state.categories.find(c => c.toLowerCase() === cat.toLowerCase());
       if (match) {
         cat = match;
       } else {
-        State.addCategory(cat);
+        stateContext.addCategory(cat);
       }
-      State.addTransaction({
+      stateContext.addTransaction({
         type: act.type || 'expense',
         category: cat,
         amount: act.amount,
@@ -242,59 +228,57 @@ function executeAction(act) {
       const amount = act.amount;
       const description = act.description;
 
-      (async () => {
-        try {
-          const partnerships = await SupabaseService.checkPartnerships();
-          const user = await SupabaseService.getCurrentUser();
-          if (!user) return;
+      try {
+        const { SupabaseService } = await import('./supabase.js');
+        const partnerships = await SupabaseService.checkPartnerships();
+        const user = await SupabaseService.getCurrentUser();
+        if (!user) return `Not authenticated with Supabase to split shared bill.`;
 
-          const match = partnerships.find(p => {
-            const uAName = p.user_a.display_name || '';
-            const uBName = p.user_b.display_name || '';
-            return uAName.toLowerCase() === friend.toLowerCase() || uBName.toLowerCase() === friend.toLowerCase();
+        const match = partnerships.find(p => {
+          const uAName = p.user_a.display_name || '';
+          const uBName = p.user_b.display_name || '';
+          return uAName.toLowerCase() === friend.toLowerCase() || uBName.toLowerCase() === friend.toLowerCase();
+        });
+
+        if (match) {
+          const splitDetail = JSON.stringify({
+            splitType: 'equal',
+            userAOwes: amount / 2,
+            userBOwes: amount / 2
           });
-
-          if (match) {
-            const splitDetail = JSON.stringify({
-              splitType: 'equal',
-              userAOwes: amount / 2,
-              userBOwes: amount / 2
-            });
-            await SupabaseService.addSharedExpense({
-              partnershipId: match.id,
-              title: description,
-              totalAmount: amount,
-              splitType: 'equal',
-              splitDetail: splitDetail,
-              userAOwes: amount / 2,
-              userBOwes: amount / 2,
-              dueDate: new Date().toISOString().split('T')[0],
-              category: 'Shared',
-              isRecurring: false
-            });
-            const { checkAuthState } = await import('./partner.js');
-            if (checkAuthState) checkAuthState();
-          } else {
-            // Local fallback
-            if (!State.data.friends.list.includes(friend)) {
-              State.addFriend(friend);
-            }
-            State.addSplitIOU('lent', friend, amount, description, true);
+          await SupabaseService.addSharedExpense({
+            partnershipId: match.id,
+            title: description,
+            totalAmount: amount,
+            splitType: 'equal',
+            splitDetail: splitDetail,
+            userAOwes: amount / 2,
+            userBOwes: amount / 2,
+            dueDate: new Date().toISOString().split('T')[0],
+            category: 'Shared',
+            isRecurring: false
+          });
+          if (checkAuthState) checkAuthState();
+        } else {
+          // Local fallback
+          if (!state.friends.list.includes(friend)) {
+            stateContext.addFriend(friend);
           }
-        } catch (e) {
-          console.error("AI shared expense save failed:", e);
+          stateContext.addSplitIOU('lent', friend, amount, description, true);
         }
-      })();
+      } catch (e) {
+        console.error("AI shared expense save failed:", e);
+      }
 
       return `Processing shared bill: splitting ${sym}${amount} with ${friend} for "${description}"`;
     }
 
     case 'add_split': {
       let friend = act.friend;
-      if (!State.data.friends.list.includes(friend)) {
-        State.addFriend(friend);
+      if (!state.friends.list.includes(friend)) {
+        stateContext.addFriend(friend);
       }
-      State.addSplitIOU(
+      stateContext.addSplitIOU(
         act.direction,
         friend,
         act.amount,
@@ -309,7 +293,7 @@ function executeAction(act) {
     }
 
     case 'add_spike': {
-      State.addSpike({
+      stateContext.addSpike({
         title: act.title,
         amount: act.amount,
         date: act.date
@@ -318,7 +302,7 @@ function executeAction(act) {
     }
 
     case 'add_savings_goal': {
-      State.addSavingsGoal({
+      stateContext.addSavingsGoal({
         name: act.name,
         target: act.target,
         saved: act.saved || 0
@@ -328,20 +312,17 @@ function executeAction(act) {
 
     case 'update_settings': {
       const updates = {};
-      if (act.name) { State.data.user.name = act.name; updates.name = act.name; }
-      if (act.currency) { State.data.user.currency = act.currency; updates.currency = act.currency; }
-      if (act.weeklyPocketMoney) { State.data.user.weeklyPocketMoney = parseFloat(act.weeklyPocketMoney); updates.budget = act.weeklyPocketMoney; }
-      if (act.commuteType) {
-        State.data.user.commuteType = act.commuteType;
-        State.data.commute.type = act.commuteType;
-        updates.commute = act.commuteType;
-      }
+      if (act.name) updates.name = act.name;
+      if (act.currency) updates.currency = act.currency;
+      if (act.weeklyPocketMoney) updates.weeklyPocketMoney = parseFloat(act.weeklyPocketMoney);
+      if (act.commuteType) updates.commuteType = act.commuteType;
+      stateContext.updateSettings(updates);
       const keys = Object.keys(updates);
-      return keys.length > 0 ? `Updated Settings: ${keys.map(k => `${k} to "${updates[k]}"`).join(', ')}` : 'Settings unchanged';
+      return keys.length > 0 ? `Updated Settings: ${keys.join(', ')}` : 'Settings unchanged';
     }
 
     case 'add_friend': {
-      if (State.addFriend(act.name)) {
+      if (stateContext.addFriend(act.name)) {
         return `Added friend: "${act.name}"`;
       }
       return `Friend "${act.name}" already exists`;
@@ -352,14 +333,13 @@ function executeAction(act) {
   }
 }
 
-export async function askForBudgetAdvice() {
-  const { ai, user, transactions, spikes } = State.data;
+export async function askForBudgetAdvice(state) {
+  const { ai, user, transactions, spikes } = state;
 
   if (!user.targetGoal) {
     return 'Add your target savings goal in settings to get custom advice here!';
   }
 
-  // Resolve effective key/provider — fall back to universal if user hasn't set one
   const effectiveKey = (ai.apiKey && ai.apiKey.length > 10) ? ai.apiKey : UNIVERSAL_KEY;
   const effectiveProvider = (ai.apiKey && ai.apiKey.length > 10) ? (ai.provider || 'groq') : UNIVERSAL_PROVIDER;
   const effectiveModel = (ai.apiKey && ai.apiKey.length > 10) ? (ai.model || UNIVERSAL_MODEL) : UNIVERSAL_MODEL;
@@ -368,7 +348,6 @@ export async function askForBudgetAdvice() {
   const limit = user.weeklyPocketMoney || 0;
   const period = user.budgetPeriod || 'week';
   
-  // Calculate period income for AI context
   const now = new Date();
   let periodStart;
   if (period === 'month') {
@@ -377,6 +356,7 @@ export async function askForBudgetAdvice() {
     const dayOfWeek = now.getDay() || 7;
     periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek + 1, 0, 0, 0, 0);
   }
+  
   const periodIncome = transactions
     .filter(t => t.type === 'income' && new Date(t.date + 'T00:00:00') >= periodStart)
     .reduce((s, t) => s + t.amount, 0);
@@ -477,7 +457,7 @@ Please give me exactly ONE short, actionable, conversational tip (max 2 sentence
       max_tokens: 150
     };
   } else {
-    // groq (default / universal)
+    // groq
     url = 'https://api.groq.com/openai/v1/chat/completions';
     body = {
       model: effectiveModel || UNIVERSAL_MODEL,

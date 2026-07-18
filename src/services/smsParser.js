@@ -1,4 +1,4 @@
-/* UPI and Banking SMS notification parser (js/smsParser.js) */
+/* UPI and Banking SMS notification parser (src/services/smsParser.js) */
 
 export function parseUPIAndSMS(text) {
   if (!text) return null;
