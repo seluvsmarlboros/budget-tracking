@@ -50,8 +50,12 @@ export const StateProvider = ({ children }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (!parsed.categories || !parsed.categories.length) parsed.categories = [...DEFAULT_CATEGORIES];
         let migrated = false;
+        if (!parsed.user) {
+          parsed.user = { ...emptyState.user };
+          migrated = true;
+        }
+        if (!parsed.categories || !parsed.categories.length) parsed.categories = [...DEFAULT_CATEGORIES];
         
         if (parsed.user.upiId === undefined) {
           parsed.user.upiId = '';
@@ -596,8 +600,8 @@ export const StateProvider = ({ children }) => {
     // Find who is the partner
     if (isUserA && isUserB) {
       // If we match names, display their name
-      const myDisplayName = user.name.toLowerCase();
-      if (userA.display_name.toLowerCase() === myDisplayName) {
+      const myDisplayName = (user?.name || '').toLowerCase();
+      if ((userA.display_name || '').toLowerCase() === myDisplayName) {
         partnerName = userB.display_name;
       } else {
         partnerName = userA.display_name;
@@ -614,7 +618,7 @@ export const StateProvider = ({ children }) => {
       // If I am user A, positive balance means partner owes me.
       // If I am user B, positive balance means I owe partner (so reverse the sign)
       let calculatedBalance = 0;
-      if (userA && userA.display_name && userA.display_name.toLowerCase() === user.name.toLowerCase()) {
+      if (userA && userA.display_name && (userA.display_name.toLowerCase() === (user?.name || '').toLowerCase())) {
         calculatedBalance = rawBalance; // Positive means Rohan owes Priya (me)
       } else {
         calculatedBalance = -rawBalance; // Reversing sign
