@@ -165,6 +165,41 @@ function render() {
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   el('greeting').textContent = `${greet}, ${user.name || 'Student'}`;
 
+  // Today's Spending Summary Calculations (Timezone-safe YYYY-MM-DD)
+  const dLocal = new Date();
+  const yearLocal = dLocal.getFullYear();
+  const monthLocal = String(dLocal.getMonth() + 1).padStart(2, '0');
+  const dateLocal = String(dLocal.getDate()).padStart(2, '0');
+  const todayStr = `${yearLocal}-${monthLocal}-${dateLocal}`;
+  
+  const todayExpenses = transactions.filter(t => t.type === 'expense' && t.date === todayStr);
+  const dailyTotal = todayExpenses.reduce((s, t) => s + t.amount, 0);
+
+  const elDailyTotal = el('daily-total');
+  const elDailyBreakdown = el('daily-breakdown');
+  if (elDailyTotal && elDailyBreakdown) {
+    elDailyTotal.textContent = cur(dailyTotal);
+    if (todayExpenses.length === 0) {
+      elDailyBreakdown.innerHTML = '<p class="muted" style="margin: 0; font-size: 11.5px; text-align: center; padding: 4px 0;">No expenses logged today.</p>';
+    } else {
+      const byCat = {};
+      todayExpenses.forEach(t => {
+        byCat[t.category] = (byCat[t.category] || 0) + t.amount;
+      });
+      elDailyBreakdown.innerHTML = Object.entries(byCat)
+        .map(([cat, amt]) => {
+          const pct = Math.round((amt / (dailyTotal || 1)) * 100);
+          return `<div style="display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; margin: 2px 0;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="legend-dot" style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block;"></span>
+              <span style="font-weight: 500;">${cat}</span>
+            </div>
+            <span class="muted" style="font-weight: 600;">${sym}${amt} (${pct}%)</span>
+          </div>`;
+        }).join('');
+    }
+  }
+
   // Toggle iOS Shortcut promo widget
   const promoWidget = el('widget-ios-promo');
   if (promoWidget) {
