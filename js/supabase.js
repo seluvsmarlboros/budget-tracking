@@ -317,6 +317,21 @@ export const SupabaseService = {
     return true;
   },
 
+  async sendDisconnectCodeNotification(partnerId, code, senderName) {
+    initSupabaseClient();
+    if (!supabase) return null;
+    const { error } = await supabase
+      .from("notifications")
+      .insert({
+        user_id: partnerId,
+        type: "disconnect_code",
+        message: JSON.stringify({ code, senderName })
+      });
+
+    if (error) throw error;
+    return true;
+  },
+
   // ─── Ledger Entries & Activity Feed ──────────────────────────────────
   async getLedgerEntries(partnershipId) {
     if (!supabase) return [];

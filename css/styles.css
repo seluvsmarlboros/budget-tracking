@@ -5,6 +5,7 @@
   
   /* Dark Theme by default - True Black / Deep Space gray */
   --bg: #000000;                /* True black */
+  --bg-body: #000000;
   --bg-card: #121214;           /* Refined deep charcoal elevated card background */
   --border: #222224;            /* Subtle dark border */
   --border-focus: #34d399;      /* Lighter emerald green */
@@ -35,6 +36,7 @@
 /* Light Theme - Neutral Palette with Emerald Accent */
 body.light {
   --bg: #f5f5f7;                /* Clean Apple system light gray */
+  --bg-body: #f5f5f7;
   --bg-card: #ffffff;           /* Crisp solid white for card elevation */
   --border: #e5e5ea;            /* Thin gray border */
   --border-focus: #10b981;      /* Emerald Green for focus */
@@ -1652,6 +1654,7 @@ body.dark #split-pct-slider::-webkit-slider-thumb {
 .splash-screen.fade-out {
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
 }
 
 .splash-content {

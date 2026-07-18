@@ -13,6 +13,7 @@ let itemizedCount = 0;
 let balanceInfo = { balance: 0, rawBalance: 0 };
 let realtimeSubscription = null;
 let unlinkedSubscription = null;
+let activeDisconnectCode = null;
 
 export async function initPartner() {
   console.log('UniSpend: initPartner() triggered');
@@ -73,6 +74,20 @@ export async function initPartner() {
   const leaveBtn = document.getElementById('leave-partner-btn');
   if (leaveBtn) {
     leaveBtn.addEventListener('click', () => {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      activeDisconnectCode = code;
+
+      if (partnerProfile && partnerProfile.id) {
+        SupabaseService.sendDisconnectCodeNotification(
+          partnerProfile.id,
+          code,
+          profile.display_name || 'Your partner'
+        ).catch(err => {
+          console.error('Failed to send disconnect code notification:', err);
+        });
+        toast('Verification code sent to partner! 🔒');
+      }
+
       const dialog = document.getElementById('dialog-disconnect-confirm');
       const input = document.getElementById('disconnect-confirm-input');
       const submit = document.getElementById('disconnect-submit-btn');
@@ -86,7 +101,7 @@ export async function initPartner() {
   const disconnectSubmitBtn = document.getElementById('disconnect-submit-btn');
   if (disconnectInput && disconnectSubmitBtn) {
     disconnectInput.addEventListener('input', () => {
-      disconnectSubmitBtn.disabled = disconnectInput.value !== 'DISCONNECT';
+      disconnectSubmitBtn.disabled = disconnectInput.value !== activeDisconnectCode;
     });
   }
 
@@ -660,7 +675,17 @@ function setupRealtimeSubscription(partnershipId) {
       { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${currentUserId}` },
       (payload) => {
         console.log('Realtime notification received:', payload);
-        showFullscreenReminder(payload.new.message);
+        if (payload.new && payload.new.type === 'disconnect_code') {
+          try {
+            const info = JSON.parse(payload.new.message);
+            showFullscreenReminder(`🔒 Disconnect Request: ${info.senderName || 'Your partner'} wants to disconnect. Share this security authorization code with them to verify: ${info.code}`);
+          } catch (err) {
+            console.error('Failed to parse disconnect code payload', err);
+            showFullscreenReminder(payload.new.message);
+          }
+        } else {
+          showFullscreenReminder(payload.new.message);
+        }
         refreshDashboard();
       }
     )
