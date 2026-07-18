@@ -209,7 +209,12 @@ function render() {
     .filter(t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= periodStart)
     .reduce((s, t) => s + t.amount, 0);
 
-  const budget = user.weeklyPocketMoney || 0;
+  const periodIncome = transactions
+    .filter(t => t.type === 'income' && new Date(t.date + 'T00:00:00') >= periodStart)
+    .reduce((s, t) => s + t.amount, 0);
+
+  const baseBudget = user.weeklyPocketMoney || 0;
+  const adjustedBudget = baseBudget + periodIncome;
   
   // Calculate friend debts to deduct from main pocket money
   let netFriendDebt = 0;
@@ -221,9 +226,9 @@ function render() {
     });
   }
 
-  const left = budget - periodExpenses - netFriendDebt;
+  const left = adjustedBudget - periodExpenses - netFriendDebt;
   const totalConsumed = periodExpenses + netFriendDebt;
-  const pct = budget > 0 ? Math.min((totalConsumed / budget) * 100, 100) : 0;
+  const pct = adjustedBudget > 0 ? Math.min((totalConsumed / adjustedBudget) * 100, 100) : 0;
 
   // Toggle warning banner
   const warningEl = el('over-budget-warning');
@@ -232,7 +237,7 @@ function render() {
   }
 
   el('budget-spent').textContent = sym + Math.round(totalConsumed);
-  el('budget-limit').textContent = sym + budget;
+  el('budget-limit').textContent = sym + Math.round(adjustedBudget);
   el('budget-remaining').textContent = left >= 0 ? `${sym}${Math.round(left)} left` : `${sym}${Math.round(Math.abs(left))} over`;
   el('budget-remaining').className = 'budget-remaining ' + (left >= 0 ? 'ok' : 'over');
 

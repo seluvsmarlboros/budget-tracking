@@ -350,6 +350,21 @@ export async function askForBudgetAdvice() {
   const limit = user.weeklyPocketMoney || 0;
   const period = user.budgetPeriod || 'week';
   
+  // Calculate period income for AI context
+  const now = new Date();
+  let periodStart;
+  if (period === 'month') {
+    periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else {
+    const dayOfWeek = now.getDay() || 7;
+    periodStart = new Date(now);
+    periodStart.setDate(now.getDate() - dayOfWeek + 1);
+    periodStart.setHours(0,0,0,0);
+  }
+  const periodIncome = transactions
+    .filter(t => t.type === 'income' && new Date(t.date + 'T00:00:00') >= periodStart)
+    .reduce((s, t) => s + t.amount, 0);
+  
   const today = new Date().toISOString().split('T')[0];
   const recentTransactions = transactions.slice(0, 10).map(t => 
     `- ${t.date}: spent ${sym}${t.amount} on ${t.description} [Category: ${t.category || 'Other'}]`
@@ -360,7 +375,8 @@ export async function askForBudgetAdvice() {
   ).join('\n');
 
   const prompt = `
-I have a ${period}ly budget limit of ${sym}${limit}.
+I have a base ${period}ly budget limit of ${sym}${limit}.
+During this current ${period}, I have also received ${sym}${periodIncome} in extra income (making my total available budget pool ${sym}${limit + periodIncome}).
 My current saving/spending goal is: "${user.targetGoal}".
 I have targeted cutting back specifically on the category: "${user.cutbackCategory || 'Canteen'}".
 Today's date is: ${today}.
