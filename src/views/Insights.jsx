@@ -2,13 +2,13 @@ import React, { useRef } from 'react';
 import { useStateContext } from '../contexts/StateContext';
 
 const COBALT_TEAL_PALETTE = [
-  'hsl(185, 95%, 48%)',  // Electric Cyan
-  'hsl(195, 80%, 45%)',  // Medium Cobalt Cyan
-  'hsl(205, 75%, 40%)',  // Deep Cobalt Blue
-  'hsl(175, 70%, 42%)',  // Teal Green
-  'hsl(185, 60%, 30%)',  // Dark Teal
-  'hsl(205, 50%, 25%)',  // Dark Cobalt Blue
-  'hsl(215, 30%, 40%)'   // Slate Blue
+  '#b08d46', // Medium Gold
+  '#e6c27e', // Champagne Gold
+  '#8c6e3b', // Deep Amber Gold
+  '#d4b978', // Warm Gold
+  '#6e562c', // Dark Bronze
+  '#998052', // Sand Gold
+  '#bf9e65'  // Bronze Gold
 ];
 
 export default function Insights() {
