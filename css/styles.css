@@ -211,7 +211,7 @@ body.dark .nav-link.active {
 .bottom-nav {
   display: none;
   position: fixed;
-  bottom: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   left: 16px;
   right: 16px;
   height: var(--bnav-h);
@@ -262,7 +262,7 @@ body.dark .bottom-nav {
   flex: 1;
   overflow-y: auto;
   width: 100%;
-  padding: 20px 16px 100px;
+  padding: 20px 16px calc(100px + env(safe-area-inset-bottom, 0px));
   transition: var(--transition);
 }
 
