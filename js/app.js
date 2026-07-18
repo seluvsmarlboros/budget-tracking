@@ -139,4 +139,13 @@ async function processPendingSmsTransactions() {
   }
 }
 
+// Global dialog closer delegate
+document.body.addEventListener('click', e => {
+  const closeBtn = e.target.closest('[data-close-dialog]');
+  if (closeBtn) {
+    const dialog = closeBtn.closest('dialog');
+    if (dialog) dialog.close();
+  }
+});
+
 document.addEventListener('DOMContentLoaded', boot);

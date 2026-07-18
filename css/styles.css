@@ -3,7 +3,37 @@
 :root {
   --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
-  /* Light Theme - Neutral Palette with Emerald Accent */
+  /* Dark Theme by default - True Black / Deep Space gray */
+  --bg: #000000;                /* True black */
+  --bg-card: #121214;           /* Refined deep charcoal elevated card background */
+  --border: #222224;            /* Subtle dark border */
+  --border-focus: #34d399;      /* Lighter emerald green */
+  --text: #ffffff;              /* Crisp white text */
+  --text-secondary: #aeaeb2;    /* Soft gray text */
+  --text-muted: #8e8e93;        /* Muted gray text */
+  
+  --accent: #10b981;            /* Emerald Green accent */
+  --accent-hover: #059669;      /* Darker emerald green */
+  --accent-light: rgba(16, 185, 129, 0.06);
+  --accent-gradient: #10b981;
+  
+  --green: #10b981;
+  --red: #ff453a;               /* Apple system red */
+  --orange: #ff9f0a;            /* Apple system orange */
+  
+  --radius: 12px;               /* Precise 12px border-radius */
+  --radius-sm: 6px;             /* Compact 6px border-radius */
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.4); /* Refined Apple-style dark shadow */
+  --glass-blur: blur(16px);
+  
+  --nav-h: 56px;
+  --sidebar-w: 240px;
+  --bnav-h: 64px;
+  --transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Light Theme - Neutral Palette with Emerald Accent */
+body.light {
   --bg: #f5f5f7;                /* Clean Apple system light gray */
   --bg-card: #ffffff;           /* Crisp solid white for card elevation */
   --border: #e5e5ea;            /* Thin gray border */
@@ -15,39 +45,9 @@
   --accent: #10b981;            /* Emerald Green accent */
   --accent-hover: #059669;      /* Darker emerald green */
   --accent-light: rgba(16, 185, 129, 0.05); /* Extremely soft green highlight */
-  --accent-gradient: #10b981;   /* Removed gradient slop, solid emerald accent */
+  --accent-gradient: #10b981;
   
-  --green: #10b981;
-  --red: #ff453a;               /* Apple system red */
-  --orange: #ff9f0a;            /* Apple system orange */
-  
-  --radius: 12px;               /* Precise 12px border-radius */
-  --radius-sm: 6px;             /* Compact 6px border-radius */
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.04); /* Subtle Apple-style flat shadow */
-  --glass-blur: blur(10px);
-  
-  --nav-h: 56px;
-  --sidebar-w: 240px;
-  --bnav-h: 64px;
-  --transition: all 0.15s ease;
-}
-
-/* Dark Theme - True Black / Deep Space gray */
-body.dark {
-  --bg: #000000;                /* True black */
-  --bg-card: #1c1c1e;           /* Deep gray elevated card background */
-  --border: #2c2c2e;            /* Subtle dark gray border */
-  --border-focus: #34d399;      /* Lighter emerald green */
-  --text: #ffffff;              /* Crisp white text */
-  --text-secondary: #aeaeb2;    /* Soft gray text */
-  --text-muted: #8e8e93;        /* Muted gray text */
-  
-  --accent: #34d399;            /* High-contrast emerald for dark mode */
-  --accent-hover: #10b981;
-  --accent-light: rgba(52, 211, 153, 0.06);
-  --accent-gradient: #34d399;
-  
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 /* Reset & Global Styles */
@@ -1216,36 +1216,79 @@ body.dark .goal-fill {
   margin: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
-  max-width: 360px;
+  padding: 24px;
+  max-width: 380px;
   width: 90%;
   background: var(--bg-card);
   color: var(--text);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow);
   outline: none;
+  overflow: visible;
+  animation: dialogScaleIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes dialogScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .dialog::backdrop {
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  animation: backdropFadeIn 0.18s ease-out;
 }
 
-body.dark .dialog::backdrop {
-  background: rgba(0, 0, 0, 0.6);
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .dialog h3 {
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
   color: var(--text);
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  padding-right: 28px; /* space for absolute close button */
+}
+
+.btn-close-dialog {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.btn-close-dialog:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text);
+}
+
+body.light .btn-close-dialog:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
   gap: 6px;
-  margin-top: 14px;
+  margin-top: 18px;
 }
 
 .dialog-actions .btn-primary {

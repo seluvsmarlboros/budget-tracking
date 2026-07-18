@@ -137,14 +137,27 @@ export function initSettings() {
     }
   });
 
-  // Dark mode toggle
+  // Dark mode toggle (Dark by default; body.light is light mode)
   const toggle = document.getElementById('toggle-dark');
-  const isDark = localStorage.getItem('unispend_dark') === '1';
-  if (isDark) { document.body.classList.add('dark'); toggle.checked = true; }
-  toggle.addEventListener('change', () => {
-    document.body.classList.toggle('dark', toggle.checked);
-    localStorage.setItem('unispend_dark', toggle.checked ? '1' : '0');
-  });
+  const isDark = localStorage.getItem('unispend_dark') !== '0';
+  if (isDark) {
+    document.body.classList.remove('light');
+    if (toggle) toggle.checked = true;
+  } else {
+    document.body.classList.add('light');
+    if (toggle) toggle.checked = false;
+  }
+  if (toggle) {
+    toggle.addEventListener('change', () => {
+      if (toggle.checked) {
+        document.body.classList.remove('light');
+        localStorage.setItem('unispend_dark', '1');
+      } else {
+        document.body.classList.add('light');
+        localStorage.setItem('unispend_dark', '0');
+      }
+    });
+  }
 
   // Dashboard Widget Toggles
   const toggles = {

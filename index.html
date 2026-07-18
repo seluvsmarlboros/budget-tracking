@@ -27,6 +27,11 @@
   </script>
 </head>
 <body>
+  <script>
+    if (localStorage.getItem('unispend_dark') === '0') {
+      document.body.classList.add('light');
+    }
+  </script>
 
   <!-- ═══ APP SPLASH SCREEN ═══ -->
   <div id="splash-screen" class="splash-screen">
@@ -119,7 +124,9 @@
 
         <!-- Over Budget Warning Banner -->
         <div id="over-budget-warning" class="card warning-card" style="display:none;">
-          <span class="warning-icon">⚠️</span>
+          <span class="warning-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </span>
           <div class="warning-body">
             <div class="warning-title">Budget Warning</div>
             <div class="warning-desc">You have exceeded your safe spending limit (including friend debts)! Reduce non-essential expenses.</div>
@@ -159,9 +166,8 @@
           <!-- AI Advisor Panel -->
           <div class="ai-advisor-panel" id="ai-advisor-panel">
             <div class="ai-advisor-header">
-              <span>
-                ✨ AI Budget Advisor
-              </span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                AI Budget Advisor
               <span id="ai-advisor-loader" style="display:none;">thinking...</span>
             </div>
             <div id="ai-advisor-meta"></div>
@@ -364,7 +370,7 @@
             <p id="partner-balance-desc" class="muted" style="font-size: 13.5px; margin-bottom: 16px;">All settled up!</p>
             <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
               <button type="button" class="btn-primary" id="settle-up-btn" style="width: auto; padding: 10px 24px;">Settle Up</button>
-              <button type="button" class="btn-ghost" id="send-reminder-btn" style="display: none; width: auto; padding: 10px 20px; align-items: center; justify-content: center; gap: 6px;">🔔 Send Reminder</button>
+              <button type="button" class="btn-ghost" id="send-reminder-btn" style="display: none; width: auto; padding: 10px 20px; align-items: center; justify-content: center; gap: 6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg> Send Reminder</button>
             </div>
           </div>
 
@@ -611,17 +617,27 @@
 
       <!-- ── VIEW: SETTINGS ── -->
       <section id="view-settings" class="view">
-        <h1>Settings</h1>
+        <h1 class="greeting">Settings</h1>
 
-        <!-- Streak -->
-        <div class="card streak-line">
-          <span>🔥 <strong id="set-streak">0</strong>-day streak</span>
-          <span class="muted"><span id="set-active-days">0</span> days tracked total</span>
+        <!-- Streak & Active Days Callout (Monochrome and Minimalist) -->
+        <div class="card" style="border-left: 3px solid var(--accent); background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-body) 100%);">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--accent); letter-spacing: 0.5px;">User Streak</div>
+              <h4 style="margin: 4px 0 0 0; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                <span id="set-streak">0</span>-day streak
+              </h4>
+            </div>
+            <div style="text-align: right;">
+              <span class="muted" style="font-size: 12px;"><span id="set-active-days">0</span> days tracked</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Budget & Profile -->
+        <!-- Group 1: Profile & Budget Limit -->
         <div class="card">
-          <h3>Budget</h3>
+          <h3 style="margin-bottom: 14px;">Profile & Budget</h3>
           <form id="settings-form">
             <div class="field-row">
               <div class="field">
@@ -684,50 +700,148 @@
                 </select>
               </div>
             </div>
-            <button type="submit" class="btn-primary">Save</button>
+            <button type="submit" class="btn-primary" style="margin-top: 8px;">Save Profile Settings</button>
           </form>
         </div>
 
-        <!-- PWA Push Alerts Card -->
+        <!-- Group 2: Preferences & Appearance -->
         <div class="card">
-          <h3>Push Notifications</h3>
-          <p class="muted" style="font-size: 13px; margin-bottom: 16px;">
-            Get real-time push alerts on your lock screen for shared bills, settlements, and reminders.
-          </p>
-          <div class="check-row" style="display: flex; align-items: center; gap: 8px;">
-            <input type="checkbox" id="settings-push-toggle" style="width: 20px; height: 20px; cursor: pointer;">
-            <label for="settings-push-toggle" id="settings-push-label" style="font-weight: 500; cursor: pointer;">Enable Push Alerts</label>
+          <h3 style="margin-bottom: 16px;">Preferences & Display</h3>
+          
+          <!-- Dark Mode Toggle Switch -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px;">
+            <span style="font-size: 13px; font-weight: 500;">Dark Theme</span>
+            <label class="toggle">
+              <input type="checkbox" id="toggle-dark">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Push Notifications Toggle -->
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px;">
+            <div>
+              <span style="font-size: 13px; font-weight: 500; display: block;">Push Notifications</span>
+              <span class="muted" style="font-size: 11px; display: block; margin-top: 2px;">Lock screen alerts for bills, settlements & reminders.</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="settings-push-toggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Widget Customization checklist -->
+          <div>
+            <span style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 8px;">Dashboard Widgets</span>
+            <div class="check-grid" style="grid-template-columns: 1fr; gap: 8px;">
+              <label style="font-size: 12.5px;"><input type="checkbox" id="widget-toggle-budget" checked style="margin-right: 6px;"> Weekly Budget Card</label>
+              <label style="font-size: 12.5px;"><input type="checkbox" id="widget-toggle-aibar" checked style="margin-right: 6px;"> AI Command Bar</label>
+              <label style="font-size: 12.5px;"><input type="checkbox" id="widget-toggle-stats" checked style="margin-right: 6px;"> Quick Stats Row</label>
+              <label style="font-size: 12.5px;"><input type="checkbox" id="widget-toggle-recent" checked style="margin-right: 6px;"> Recent Activity Feed</label>
+            </div>
+          </div>
+
+          <!-- iOS Automation Card -->
+          <div id="ios-automation-card" style="display:none; border-top: 1px solid var(--border); padding-top: 16px; margin-top: 16px;">
+            <h4 style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px;">iOS Background Sync</h4>
+            <p class="muted" style="font-size: 12px; margin-bottom: 12px;">Auto-log transactions directly from incoming bank SMS messages on your iPhone.</p>
+            <div style="background: var(--bg-body); border: 1px solid var(--border); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px;">
+              <span class="muted" style="font-size: 11px; text-transform: uppercase; font-weight: 600;">Your Automation Webhook URL:</span>
+              <div id="ios-webhook-display" style="font-size: 11.5px; font-family: monospace; word-break: break-all; margin: 6px 0; background: var(--bg-card); padding: 8px; border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary);">...</div>
+              <button type="button" class="btn-ghost btn-sm" id="btn-copy-webhook" style="width: auto;">Copy Webhook URL</button>
+            </div>
+            <div style="font-size: 12px; line-height: 1.45;">
+              <strong style="display: block; margin-bottom: 4px;">Setup iOS Automation:</strong>
+              1. Open iOS <strong>Shortcuts</strong> app &rarr; <strong>Automation</strong> tab &rarr; <strong>New Automation</strong>.<br>
+              2. Choose <strong>Message</strong> as trigger: set containing to <code>debited</code>, and toggle <strong>Run Immediately</strong>.<br>
+              3. Add action: <strong>Get Contents of URL</strong>.<br>
+              4. Paste the webhook URL above, set method to <code>POST</code>, body type to <code>JSON</code>, and map key <code>text</code> to the <code>Shortcut Input</code>.
+            </div>
           </div>
         </div>
 
-        <!-- Dashboard Customizer Card -->
+        <!-- Group 3: Categories, Goals & Auto Rules -->
         <div class="card">
-          <h3>Dashboard Layout</h3>
-          <p class="muted" style="font-size: 13px; margin-bottom: 12px;">Toggle which widgets appear on your dashboard overview.</p>
-          <div class="check-grid" style="grid-template-columns: 1fr; gap: 8px; margin-bottom: 0;">
-            <label style="font-size: 13px;"><input type="checkbox" id="widget-toggle-budget" checked style="margin-right: 6px;"> Weekly Budget Card</label>
-            <label style="font-size: 13px;"><input type="checkbox" id="widget-toggle-aibar" checked style="margin-right: 6px;"> AI Command Bar</label>
-            <label style="font-size: 13px;"><input type="checkbox" id="widget-toggle-stats" checked style="margin-right: 6px;"> Quick Stats Row</label>
-            <label style="font-size: 13px;"><input type="checkbox" id="widget-toggle-recent" checked style="margin-right: 6px;"> Recent Activity Feed</label>
+          <h3 style="margin-bottom: 16px;">App Lists & Auto Rules</h3>
+
+          <!-- Categories List Manager -->
+          <div style="padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 14px;">
+            <div class="card-head" style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; font-weight: 600;">Custom Categories</span>
+              <button class="btn-ghost btn-sm" id="btn-add-cat" style="padding: 4px 10px; font-size: 11px;">+ Add Category</button>
+            </div>
+            <div class="tag-list" id="cat-tags">
+              <!-- populated by JS -->
+            </div>
+          </div>
+
+          <!-- Savings Goals Manager -->
+          <div style="padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 14px;">
+            <div class="card-head" style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 13px; font-weight: 600;">Savings Goals</span>
+              <button class="btn-ghost btn-sm" id="btn-add-goal" style="padding: 4px 10px; font-size: 11px;">+ Add Goal</button>
+            </div>
+            <div id="goals-list">
+              <!-- populated by JS -->
+            </div>
+          </div>
+
+          <!-- Auto-Categorization Rules -->
+          <div>
+            <span style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">Auto-Categorization Rules</span>
+            <span class="muted" style="font-size: 11.5px; display: block; margin-bottom: 10px;">Set rules to automatically assign categories to transaction keywords.</span>
+            <form id="auto-rule-form" style="display: flex; gap: 8px; margin-bottom: 10px;">
+              <input type="text" id="rule-keyword" placeholder="Keyword (e.g. Uber)" required style="flex: 1.5; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; outline: none; background: var(--bg-card); color: var(--text);">
+              <select id="rule-category" style="flex: 1.2; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; outline: none; background: var(--bg-card); color: var(--text);">
+                <!-- populated by JS from categories -->
+              </select>
+              <button type="submit" class="btn-primary" style="width: auto; padding: 6px 14px; font-size: 12.5px;">Add</button>
+            </form>
+            <div class="tag-list" id="rules-tags">
+              <!-- populated by JS -->
+              <div class="empty-state" style="padding: 12px 0;">No active rules. Add one above!</div>
+            </div>
           </div>
         </div>
 
-
-
-        <!-- Auto Rules Card -->
+        <!-- Group 4: AI & System Actions -->
         <div class="card">
-          <h3>Auto-Categorization Rules</h3>
-          <p class="muted" style="font-size: 13px; margin-bottom: 12px;">Create rules to automatically categorize expenses based on text keywords.</p>
-          <form id="auto-rule-form" style="display: flex; gap: 8px; margin-bottom: 12px;">
-            <input type="text" id="rule-keyword" placeholder="Keyword (e.g. Uber)" required style="flex: 1.5; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; outline: none;">
-            <select id="rule-category" style="flex: 1.2; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; outline: none; background: var(--bg-card); color: var(--text);">
-              <!-- populated by JS from categories -->
-            </select>
-            <button type="submit" class="btn-primary" style="width: auto; padding: 6px 14px;">Add</button>
-          </form>
-          <div class="tag-list" id="rules-tags">
-            <!-- populated by JS -->
-            <div class="empty-state" style="padding: 12px 0;">No active rules. Add one above!</div>
+          <h3 style="margin-bottom: 16px;">AI Assistant & System</h3>
+
+          <!-- AI Settings -->
+          <div style="padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 14px;">
+            <span style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 10px;">AI Model Keys</span>
+            <form id="ai-settings-form" style="display: flex; flex-direction: column; gap: 10px;">
+              <div class="field">
+                <label for="set-ai-provider">AI Provider</label>
+                <select id="set-ai-provider">
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="gemini">Google Gemini (AI Studio)</option>
+                  <option value="groq">Groq</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="set-ai-key" id="ai-key-label">API Key</label>
+                <input type="password" id="set-ai-key" placeholder="API Key">
+              </div>
+              <div class="field">
+                <label for="set-ai-model">Model</label>
+                <select id="set-ai-model">
+                  <!-- populated by JS -->
+                </select>
+              </div>
+              <button type="submit" class="btn-primary">Save AI Credentials</button>
+            </form>
+          </div>
+
+          <!-- Data Backup Actions -->
+          <div>
+            <span style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 10px;">Backup & Reset</span>
+            <div class="btn-stack" style="display: flex; flex-direction: column; gap: 8px;">
+              <button class="btn-ghost full" id="btn-export" style="text-align: left; padding: 10px 14px; font-size: 12.5px;">Export backup (JSON)</button>
+              <label class="btn-ghost full" for="btn-import" style="text-align: left; padding: 10px 14px; font-size: 12.5px; display: block; cursor: pointer;">Import backup</label>
+              <input type="file" id="btn-import" accept=".json" hidden>
+              <button class="btn-danger full" id="btn-reset" style="text-align: left; padding: 10px 14px; font-size: 12.5px;">Reset all local data</button>
+            </div>
           </div>
         </div>
 
@@ -746,77 +860,6 @@
             2. Choose <strong>Message</strong> as trigger: set containing to <code>debited</code>, and toggle <strong>Run Immediately</strong>.<br>
             3. Add action: <strong>Get Contents of URL</strong>.<br>
             4. Paste the webhook URL above, set method to <code>POST</code>, body type to <code>JSON</code>, and map key <code>text</code> to the <code>Shortcut Input</code>.
-          </div>
-        </div>
-
-        <!-- AI Settings -->
-        <div class="card">
-          <h3>AI Assistant Settings</h3>
-          <form id="ai-settings-form">
-            <div class="field">
-              <label for="set-ai-provider">AI Provider</label>
-              <select id="set-ai-provider">
-                <option value="openrouter">OpenRouter</option>
-                <option value="gemini">Google Gemini (AI Studio)</option>
-                <option value="groq">Groq</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="set-ai-key" id="ai-key-label">API Key</label>
-              <input type="password" id="set-ai-key" placeholder="API Key">
-            </div>
-            <div class="field">
-              <label for="set-ai-model">Model</label>
-              <select id="set-ai-model">
-                <!-- populated by JS -->
-              </select>
-            </div>
-            <button type="submit" class="btn-primary">Save AI Settings</button>
-          </form>
-        </div>
-
-
-        <!-- Categories -->
-        <div class="card">
-          <div class="card-head">
-            <h3>Categories</h3>
-            <button class="btn-ghost btn-sm" id="btn-add-cat">+ Add</button>
-          </div>
-          <div class="tag-list" id="cat-tags">
-            <!-- populated by JS -->
-          </div>
-        </div>
-
-        <!-- Savings Goals -->
-        <div class="card">
-          <div class="card-head">
-            <h3>Savings goals</h3>
-            <button class="btn-ghost btn-sm" id="btn-add-goal">+ Add</button>
-          </div>
-          <div id="goals-list">
-            <!-- populated by JS -->
-          </div>
-        </div>
-
-        <!-- Data -->
-        <div class="card">
-          <h3>Data</h3>
-          <div class="btn-stack">
-            <button class="btn-ghost full" id="btn-export">Export backup (JSON)</button>
-            <label class="btn-ghost full" for="btn-import">Import backup</label>
-            <input type="file" id="btn-import" accept=".json" hidden>
-            <button class="btn-danger full" id="btn-reset">Reset all data</button>
-          </div>
-        </div>
-
-        <!-- Theme -->
-        <div class="card">
-          <div class="toggle-row">
-            <span>Dark mode</span>
-            <label class="toggle">
-              <input type="checkbox" id="toggle-dark">
-              <span class="toggle-slider"></span>
-            </label>
           </div>
         </div>
       </section>
@@ -918,6 +961,7 @@
 
   <!-- ═══ DIALOGS ═══ -->
   <dialog id="dialog-friend" class="dialog">
+    <button type="button" class="btn-close-dialog" data-close-dialog aria-label="Close dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <h3>Add friend</h3>
     <form id="form-friend" method="dialog">
       <div class="field">
@@ -932,6 +976,7 @@
   </dialog>
 
   <dialog id="dialog-settle" class="dialog">
+    <button type="button" class="btn-close-dialog" data-close-dialog aria-label="Close dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <h3>Settle up</h3>
     <p class="muted" id="settle-desc"></p>
     <form id="form-settle" method="dialog">
@@ -948,6 +993,7 @@
   </dialog>
 
   <dialog id="dialog-spike" class="dialog">
+    <button type="button" class="btn-close-dialog" data-close-dialog aria-label="Close dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <h3>Add upcoming expense</h3>
     <form id="form-spike" method="dialog">
       <div class="field">
@@ -972,6 +1018,7 @@
   </dialog>
 
   <dialog id="dialog-group" class="dialog">
+    <button type="button" class="btn-close-dialog" data-close-dialog aria-label="Close dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <h3>Group split</h3>
     <form id="form-group" method="dialog">
       <div class="field">
@@ -995,6 +1042,7 @@
   </dialog>
 
   <dialog id="dialog-cat" class="dialog">
+    <button type="button" class="btn-close-dialog" data-close-dialog aria-label="Close dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <h3>Add category</h3>
     <form id="form-cat" method="dialog">
       <div class="field">
@@ -1009,6 +1057,7 @@
   </dialog>
 
   <dialog id="dialog-goal" class="dialog">
+    <button type="button" class="btn-close-dialog" data-close-dialog aria-label="Close dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <h3>New savings goal</h3>
     <form id="form-goal" method="dialog">
       <div class="field">
@@ -1036,6 +1085,7 @@
 
   <!-- UPI Scan Dialog -->
   <dialog id="dialog-scan" class="dialog" style="max-width: 450px;">
+    <button type="button" class="btn-close-dialog" data-close-dialog aria-label="Close dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <h3>Scan UPI QR Code</h3>
     <div id="reader" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 8px; overflow: hidden; background: #000;"></div>
     <div class="dialog-actions" style="margin-top: 16px;">
@@ -1045,6 +1095,7 @@
 
   <!-- QR Code Display Dialog -->
   <dialog id="dialog-qr-show" class="dialog" style="max-width: 320px; text-align: center;">
+    <button type="button" class="btn-close-dialog" data-close-dialog aria-label="Close dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <h3 id="qr-title">Scan to Pay</h3>
     <p class="muted" id="qr-desc" style="font-size: 13px; margin-bottom: 16px;"></p>
     <div id="qrcode-container" style="display: inline-block; padding: 16px; background: #fff; border-radius: 8px; margin-bottom: 16px;">
@@ -1057,6 +1108,7 @@
 
   <!-- Equalize Debts Dialog -->
   <dialog id="dialog-equalize" class="dialog" style="max-width: 400px;">
+    <button type="button" class="btn-close-dialog" data-close-dialog aria-label="Close dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <h3>Simplified settlements</h3>
     <p class="muted" style="font-size: 13px; margin-bottom: 16px;">We netted out all mutual balances. Rohan paying Alex and Alex paying Priya becomes Rohan paying Priya directly. Here is the minimum set of payments to settle everyone:</p>
     <div id="equalize-list" style="margin-bottom: 20px;">
@@ -1069,8 +1121,9 @@
 
   <!-- iOS Shortcut Onboarding Dialog -->
   <dialog id="dialog-ios-shortcut" class="dialog" style="max-width: 420px; padding: 24px;">
+    <button type="button" class="btn-close-dialog" data-close-dialog aria-label="Close dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <div style="text-align: center; margin-bottom: 20px;">
-      <div style="font-size: 40px; margin-bottom: 8px;">⚡</div>
+      <div style="margin-bottom: 12px; display: inline-flex; justify-content: center; align-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--accent-light);"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
       <h3 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">Setup iOS Auto-Logging</h3>
       <p class="muted" style="font-size: 13px; margin: 6px 0 0 0;">Log expenses instantly from your bank SMS texts in the background.</p>
     </div>
@@ -1098,6 +1151,7 @@
 
   <!-- Settle Up Dialog -->
   <dialog id="dialog-settle-up" class="dialog" style="max-width: 400px;">
+    <button type="button" class="btn-close-dialog" data-close-dialog aria-label="Close dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <h3>Settle Up Running Balance</h3>
     <form id="form-settle-up" method="dialog">
       <div id="settle-up-info" style="font-size: 14px; margin-bottom: 12px; font-weight: 500;">
@@ -1128,19 +1182,19 @@
   <!-- Celebration Overlay -->
   <div id="celebration-overlay" class="celebration-overlay" style="display:none;">
     <div class="celebration-card">
-      <div class="celebration-icon">🎉</div>
+      <div class="celebration-icon" style="margin-bottom: 16px;"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
       <h2>Partner Connected!</h2>
       <p style="margin: 10px 0 20px; font-size: 14px; color: var(--text-secondary);">You and <strong id="celebrated-partner-name">your partner</strong> are now synced in real time.</p>
-      <button class="btn-primary" id="celebration-close-btn">Let's Split! ➔</button>
+      <button class="btn-primary" id="celebration-close-btn" style="width: 100%;">Start Splitting</button>
     </div>
   </div>
   <!-- Reminder Fullscreen Overlay -->
   <div id="reminder-overlay" class="celebration-overlay" style="display:none; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
     <div class="celebration-card" style="border: 1px solid var(--accent); box-shadow: 0 0 30px rgba(99, 102, 241, 0.2);">
-      <div class="celebration-icon" style="font-size: 56px; animation: wobble-bell 1s infinite alternate; display: inline-block;">🔔</div>
+      <div class="celebration-icon" style="margin-bottom: 16px; display: inline-flex; justify-content: center; align-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--accent-light); margin-left: auto; margin-right: auto; animation: wobble-bell 1.5s infinite alternate;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
       <h2 id="reminder-overlay-title" style="margin-top: 10px;">Reminder Alert!</h2>
       <p id="reminder-overlay-message" style="margin: 15px 0 25px; font-size: 15px; color: var(--text-primary); line-height: 1.5; font-weight: 500;"></p>
-      <button class="btn-primary" id="reminder-overlay-close-btn" style="width: 100%;">Got it! ➔</button>
+      <button class="btn-primary" id="reminder-overlay-close-btn" style="width: 100%;">Got it</button>
     </div>
   </div>
 
