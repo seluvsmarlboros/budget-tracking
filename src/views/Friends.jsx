@@ -92,7 +92,7 @@ export default function Friends() {
         const updatedP = freshPartnerships.find(p => p.id === activePartnership.id);
         if (updatedP) {
           setActivePartnership(updatedP);
-          const isUserA = updatedP.user_a.id === user.id;
+          const isUserA = updatedP.user_a && (typeof updatedP.user_a === 'object' ? updatedP.user_a.id === user.id : updatedP.user_a === user.id);
           const partnerProf = isUserA ? updatedP.user_b : updatedP.user_a;
           setPartnerProfile(partnerProf);
           setAuthState('dashboard');
@@ -243,16 +243,16 @@ export default function Friends() {
 
   // 3. REFRESH DASHBOARD DETAILS
   const refreshDashboardData = async (partnership, partnerProf, userId) => {
-    const pName = partnerProf.display_name || partnerProf.id.substring(0, 6);
+    const pName = partnerProf?.display_name || partnerProf?.id?.substring(0, 6) || (typeof partnerProf === 'string' ? partnerProf.substring(0, 6) : 'Partner');
     
     // Balance
     const balance = await SupabaseService.getNetBalance(partnership.id);
-    setBalanceInfo(balance);
+    setBalanceInfo(balance || { balance: 0, rawBalance: 0 });
 
     // Sync to state provider context
-    const partnerName = partnerProf.display_name || 'Partner';
-    const isUserA = partnership.user_a.id === userId;
-    syncSupabaseBalances(balance.rawBalance, partnership.user_a, partnership.user_b);
+    const partnerName = partnerProf?.display_name || 'Partner';
+    const isUserA = partnership.user_a && (typeof partnership.user_a === 'object' ? partnership.user_a.id === userId : partnership.user_a === userId);
+    syncSupabaseBalances(balance?.rawBalance || 0, partnership.user_a, partnership.user_b);
 
     // Recurring templates
     const templates = await SupabaseService.getRecurringTemplates(partnership.id);
@@ -376,7 +376,7 @@ export default function Friends() {
       const senderName = profile.display_name || 'Your partner';
       await SupabaseService.sendReminderNotification(
         activePartnership.id,
-        partnerProfile.id,
+        partnerProfile?.id,
         balanceInfo.balance,
         senderName
       );
@@ -466,7 +466,7 @@ export default function Friends() {
 
     let userAOwes = 0;
     let userBOwes = 0;
-    const isUserA = activePartnership.user_a.id === currentUserId;
+    const isUserA = activePartnership.user_a && (typeof activePartnership.user_a === 'object' ? activePartnership.user_a.id === currentUserId : activePartnership.user_a === currentUserId);
 
     if (splitType === 'equal') {
       userAOwes = totalAmt / 2;
@@ -567,7 +567,7 @@ export default function Friends() {
       return;
     }
 
-    const isUserA = activePartnership.user_a.id === currentUserId;
+    const isUserA = activePartnership.user_a && (typeof activePartnership.user_a === 'object' ? activePartnership.user_a.id === currentUserId : activePartnership.user_a === currentUserId);
     let userAOwes = 0;
     let userBOwes = 0;
 
@@ -627,7 +627,7 @@ export default function Friends() {
 
     const details = {
       description: `Settled ${sym}${amt.toFixed(2)} via ${settleMethod}`,
-      partnerId: partnerProfile.id,
+      partnerId: partnerProfile?.id,
       payerName: profile.display_name || 'Partner'
     };
 
@@ -677,8 +677,8 @@ export default function Friends() {
   };
 
   // Helper selectors
-  const isUserA = activePartnership ? activePartnership.user_a.id === currentUserId : false;
-  const isDebtor = activePartnership ? ((balanceInfo.rawBalance > 0 && isUserA) || (balanceInfo.rawBalance < 0 && !isUserA)) : false;
+  const isUserA = activePartnership ? (activePartnership.user_a && (typeof activePartnership.user_a === 'object' ? activePartnership.user_a.id === currentUserId : activePartnership.user_a === currentUserId)) : false;
+  const isDebtor = activePartnership ? (((balanceInfo?.rawBalance || 0) > 0 && isUserA) || ((balanceInfo?.rawBalance || 0) < 0 && !isUserA)) : false;
 
   // Settle Pay Deep Link helper
   const getSettleUpPayLink = () => {
@@ -772,10 +772,18 @@ export default function Friends() {
               <div className="empty-state">No synced friends yet. Share a code below to connect!</div>
             ) : (
               activePartnerships.map(p => {
-                const partnerUser = p.user_a.id === currentUserId ? p.user_b : p.user_a;
-                const pName = partnerUser.display_name || partnerUser.id.substring(0, 6);
+                const isUserA = p.user_a && (typeof p.user_a === 'object' ? p.user_a.id === currentUserId : p.user_a === currentUserId);
+                const partnerUser = isUserA ? p.user_b : p.user_a;
+                let pName = 'Partner';
+                if (partnerUser) {
+                  if (typeof partnerUser === 'object') {
+                    pName = partnerUser.display_name || partnerUser.id?.substring(0, 6) || 'Partner';
+                  } else {
+                    pName = partnerUser.substring(0, 6);
+                  }
+                }
                 const bal = directoryBalances[p.id] || { balance: 0, rawBalance: 0 };
-                const partnerDebtor = (bal.rawBalance > 0 && p.user_a.id === currentUserId) || (bal.rawBalance < 0 && p.user_a.id !== currentUserId);
+                const partnerDebtor = ((bal.rawBalance || 0) > 0 && isUserA) || ((bal.rawBalance || 0) < 0 && !isUserA);
 
                 let statusText = 'Settled';
                 let statusColor = 'var(--text-muted)';
