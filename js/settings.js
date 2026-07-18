@@ -137,6 +137,27 @@ export function initSettings() {
     }
   });
 
+  // Settings Tab Navigation Switching
+  const navButtons = document.querySelectorAll('.settings-nav-btn');
+  const groupCards = document.querySelectorAll('.settings-group-card');
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Set active nav button
+      navButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Show/hide matching group card
+      const activeTab = btn.dataset.settingsTab;
+      groupCards.forEach(card => {
+        if (card.id === `settings-group-${activeTab}`) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+
   // Dark mode toggle (Dark by default; body.light is light mode)
   const toggle = document.getElementById('toggle-dark');
   const isDark = localStorage.getItem('unispend_dark') !== '0';
@@ -232,6 +253,39 @@ export function initSettings() {
 
 function render() {
   const { user, categories, wallet } = State.data;
+
+  // Update profile banner information
+  const profileName = document.getElementById('set-profile-name');
+  if (profileName) profileName.textContent = user.name || 'Student';
+
+  const avatarEl = document.getElementById('set-profile-avatar');
+  if (avatarEl) {
+    avatarEl.textContent = (user.name || 'Student')
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
+  }
+
+  const profileEmail = document.getElementById('set-profile-email');
+  if (profileEmail) {
+    SupabaseService.getCurrentUser().then(supabaseUser => {
+      if (supabaseUser && supabaseUser.email) {
+        profileEmail.innerHTML = `<span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.2); font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Sync Connected (${supabaseUser.email})
+        </span>`;
+      } else {
+        profileEmail.innerHTML = `<span class="badge" style="background: rgba(107, 114, 128, 0.1); color: var(--text-muted); border: 1px solid var(--border); font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
+          Local Offline Mode
+        </span>`;
+      }
+    }).catch(() => {
+      profileEmail.innerHTML = `<span class="badge" style="background: rgba(107, 114, 128, 0.1); color: var(--text-muted); border: 1px solid var(--border); font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
+        Local Offline Mode
+      </span>`;
+    });
+  }
 
   // Streak
   document.getElementById('set-streak').textContent = user.streak || 0;

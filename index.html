@@ -680,35 +680,48 @@
               <span class="method-label">Maintenance</span>
               <span class="method-value" id="ins-repair">₹0</span>
             </div>
-          </div>
-        </div>
-
-        <button class="btn-ghost full" id="btn-export-summary">Export summary</button>
-      </section>
-
-      <!-- ── VIEW: SETTINGS ── -->
+          <!-- ── VIEW: SETTINGS ── -->
       <section id="view-settings" class="view">
         <h1 class="greeting">Settings</h1>
 
-        <!-- Streak & Active Days Callout (Monochrome and Minimalist) -->
-        <div class="card" style="border-left: 3px solid var(--accent); background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-body) 100%);">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div>
-              <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--accent); letter-spacing: 0.5px;">User Streak</div>
-              <h4 style="margin: 4px 0 0 0; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-                <span id="set-streak">0</span>-day streak
-              </h4>
+        <!-- Premium Profile Banner -->
+        <div class="profile-banner">
+          <div class="profile-banner-content">
+            <div class="profile-avatar" id="set-profile-avatar">S</div>
+            <div class="profile-info">
+              <h2 class="profile-name" id="set-profile-name">Student</h2>
+              <div id="set-profile-email">Local Offline Mode</div>
             </div>
-            <div style="text-align: right;">
-              <span class="muted" style="font-size: 12px;"><span id="set-active-days">0</span> days tracked</span>
+          </div>
+          <div class="profile-streak-row">
+            <div class="profile-stat-chip">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+              <div class="profile-stat-val">
+                <span id="set-streak">0</span>
+                <span>Active Streak</span>
+              </div>
+            </div>
+            <div class="profile-stat-chip">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <div class="profile-stat-val">
+                <span id="set-active-days">0</span>
+                <span>Days Tracked</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Group 1: Profile & Budget Limit -->
-        <div class="card">
-          <h3 style="margin-bottom: 14px;">Profile & Budget</h3>
+        <!-- Settings Sub-Navigation -->
+        <div class="settings-nav">
+          <button type="button" class="settings-nav-btn active" data-settings-tab="profile">Profile & Budget</button>
+          <button type="button" class="settings-nav-btn" data-settings-tab="preferences">Display & Toggles</button>
+          <button type="button" class="settings-nav-btn" data-settings-tab="lists">Lists & Rules</button>
+          <button type="button" class="settings-nav-btn" data-settings-tab="system">AI & System</button>
+        </div>
+
+        <!-- Settings Group 1: Profile & Budget -->
+        <div class="card settings-group-card" id="settings-group-profile">
+          <h3 style="margin-bottom: 14px;">Profile & Budget limits</h3>
           <form id="settings-form">
             <div class="field-row">
               <div class="field">
@@ -775,8 +788,8 @@
           </form>
         </div>
 
-        <!-- Group 2: Preferences & Appearance -->
-        <div class="card">
+        <!-- Settings Group 2: Preferences & Display -->
+        <div class="card settings-group-card" id="settings-group-preferences" style="display: none;">
           <h3 style="margin-bottom: 16px;">Preferences & Display</h3>
           
           <!-- Dark Mode Toggle Switch -->
@@ -831,8 +844,8 @@
           </div>
         </div>
 
-        <!-- Group 3: Categories, Goals & Auto Rules -->
-        <div class="card">
+        <!-- Settings Group 3: App Lists & Auto Rules -->
+        <div class="card settings-group-card" id="settings-group-lists" style="display: none;">
           <h3 style="margin-bottom: 16px;">App Lists & Auto Rules</h3>
 
           <!-- Categories List Manager -->
@@ -875,8 +888,8 @@
           </div>
         </div>
 
-        <!-- Group 4: AI & System Actions -->
-        <div class="card">
+        <!-- Settings Group 4: AI & System Actions -->
+        <div class="card settings-group-card" id="settings-group-system" style="display: none;">
           <h3 style="margin-bottom: 16px;">AI Assistant & System</h3>
 
           <!-- AI Settings -->
@@ -916,8 +929,6 @@
             </div>
           </div>
         </div>
-
-
       </section>
 
     </main>
