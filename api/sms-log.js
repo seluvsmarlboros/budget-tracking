@@ -111,5 +111,6 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: `Database write failed: ${error.message}` });
   }
 
-  return res.status(200).json({ success: true, parsed });
+  res.setHeader('Content-Type', 'text/plain');
+  return res.status(200).send(`Logged ₹${parsed.amount} for ${parsed.description}! 💸`);
 };
