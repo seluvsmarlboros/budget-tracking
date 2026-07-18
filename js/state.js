@@ -37,11 +37,6 @@ const emptyState = {
     showAiBar: true,
     showStats: true,
     showRecent: true
-  },
-  linkedBank: {
-    linked: false,
-    bankName: '',
-    syncedCount: 0
   }
 };
 
@@ -78,14 +73,6 @@ export const State = {
             showAiBar: true,
             showStats: true,
             showRecent: true
-          };
-          migrated = true;
-        }
-        if (!this.data.linkedBank) {
-          this.data.linkedBank = {
-            linked: false,
-            bankName: '',
-            syncedCount: 0
           };
           migrated = true;
         }

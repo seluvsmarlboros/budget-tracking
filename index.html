@@ -193,6 +193,9 @@
           <div class="amount-field">
             <span class="currency" id="log-currency">₹</span>
             <input type="number" id="log-amount" placeholder="0" step="any" min="0.01" inputmode="decimal" autocomplete="off">
+            <button type="button" class="btn-scan-trigger" id="btn-paste-sms" title="Paste Transaction SMS/UPI Alert" style="margin-right: 8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            </button>
             <button type="button" class="btn-scan-trigger" id="btn-ocr-receipt" title="Scan Receipt (OCR)" style="margin-right: 8px;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
             </button>
@@ -694,24 +697,7 @@
           </div>
         </div>
 
-        <!-- Bank Sync Card -->
-        <div class="card">
-          <h3>Bank Integration (Demo)</h3>
-          <p class="muted" style="font-size: 13px; margin-bottom: 12px;">Link a simulated bank account to auto-import student expenses.</p>
-          <div id="bank-unlinked-view">
-            <button type="button" class="btn-primary" id="btn-link-bank" style="width: auto;">Link Bank Account</button>
-          </div>
-          <div id="bank-linked-view" style="display: none; align-items: center; justify-content: space-between; gap: 12px;">
-            <div>
-              <span class="badge" id="bank-name-display" style="font-size: 11px;">HDFC Bank</span>
-              <p class="muted" style="font-size: 12px; margin-top: 4px;">Last synced: <span id="bank-last-sync">Never</span></p>
-            </div>
-            <div style="display: flex; gap: 6px;">
-              <button type="button" class="btn-ghost btn-sm" id="btn-sync-bank">Sync Now</button>
-              <button type="button" class="btn-danger btn-sm" id="btn-unlink-bank" style="padding: 5px 8px;">Unlink</button>
-            </div>
-          </div>
-        </div>
+
 
         <!-- Auto Rules Card -->
         <div class="card">
@@ -1013,34 +999,7 @@
     </form>
   </dialog>
 
-  <!-- Bank Linking Dialog -->
-  <dialog id="dialog-link-bank" class="dialog" style="max-width: 360px;">
-    <h3>Select Bank</h3>
-    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;" id="bank-list-buttons">
-      <button type="button" class="btn-ghost" data-bank="Chase Bank" style="justify-content: flex-start; gap: 8px;">🏦 Chase Bank</button>
-      <button type="button" class="btn-ghost" data-bank="HDFC Student Account" style="justify-content: flex-start; gap: 8px;">🏦 HDFC Student Account</button>
-      <button type="button" class="btn-ghost" data-bank="ICICI Campus Card" style="justify-content: flex-start; gap: 8px;">🏦 ICICI Campus Card</button>
-      <button type="button" class="btn-ghost" data-bank="SBI Youth Account" style="justify-content: flex-start; gap: 8px;">🏦 SBI Youth Account</button>
-    </div>
-    <form id="form-link-bank-auth" style="display: none; flex-direction: column; gap: 10px;" method="dialog">
-      <input type="hidden" id="selected-bank-name">
-      <div class="field">
-        <label for="bank-user-id">Student ID / Login ID</label>
-        <input type="text" id="bank-user-id" placeholder="alex123" required>
-      </div>
-      <div class="field">
-        <label for="bank-password">Password / PIN</label>
-        <input type="password" id="bank-password" placeholder="••••" required>
-      </div>
-      <div class="dialog-actions">
-        <button type="button" class="btn-ghost" id="close-link-bank-dialog">Cancel</button>
-        <button type="submit" class="btn-primary">Link Account</button>
-      </div>
-    </form>
-    <div class="dialog-actions" id="bank-select-cancel-container">
-      <button type="button" class="btn-ghost" id="close-bank-select-dialog" style="width: 100%;">Cancel</button>
-    </div>
-  </dialog>
+
 
   <!-- UPI Scan Dialog -->
   <dialog id="dialog-scan" class="dialog" style="max-width: 450px;">

@@ -2,6 +2,7 @@
 import { State } from './state.js';
 import { toast } from './app.js';
 import { initQRScanner } from './qr.js';
+import { parseUPIAndSMS } from './smsParser.js';
 
 let currentType = 'expense';
 let currentCat = '';
@@ -21,6 +22,31 @@ export function initAddForm() {
 
   // Set today's date
   document.getElementById('log-date').valueAsDate = new Date();
+
+  // Paste SMS Listener
+  const btnPasteSms = document.getElementById('btn-paste-sms');
+  if (btnPasteSms) {
+    btnPasteSms.addEventListener('click', async () => {
+      try {
+        const clipboardText = await navigator.clipboard.readText();
+        if (!clipboardText) {
+          toast('Clipboard is empty! Copy a UPI / banking SMS alert first.');
+          return;
+        }
+
+        const parsed = parseUPIAndSMS(clipboardText);
+        if (parsed) {
+          autofillLogForm(parsed);
+          toast(`Autofilled ₹${parsed.amount || ''} from clipboard! 📋`);
+        } else {
+          toast('No transaction details discovered in copied text.');
+        }
+      } catch (err) {
+        console.error('Clipboard reading failed:', err);
+        toast('Permission to read clipboard is required.');
+      }
+    });
+  }
 
   // Type pills
   document.getElementById('type-pills').addEventListener('click', e => {
@@ -154,5 +180,25 @@ function updateSplitHint() {
     hint.textContent = `${friend} will owe you ${sym}${part}`;
   } else {
     hint.textContent = `You'll owe ${friend} ${sym}${part}`;
+  }
+}
+
+export function autofillLogForm(data) {
+  if (!data) return;
+  if (data.amount) document.getElementById('log-amount').value = data.amount;
+  if (data.description) document.getElementById('log-desc').value = data.description;
+  if (data.date) document.getElementById('log-date').value = data.date;
+  if (data.type) {
+    currentType = data.type;
+    const pillRow = document.getElementById('type-pills');
+    if (pillRow) {
+      document.querySelectorAll('#type-pills .pill').forEach(p => p.classList.toggle('active', p.dataset.type === currentType));
+    }
+    const splitCtrl = document.getElementById('split-controls');
+    if (splitCtrl) splitCtrl.style.display = currentType === 'split' ? '' : 'none';
+    const catPills = document.getElementById('cat-pills');
+    if (catPills) catPills.style.display = currentType === 'split' ? 'none' : '';
+    const submitBtn = document.getElementById('log-submit');
+    if (submitBtn) submitBtn.textContent = currentType === 'income' ? 'Log income' : currentType === 'split' ? 'Log split' : 'Log expense';
   }
 }

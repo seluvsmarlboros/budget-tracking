@@ -1652,16 +1652,7 @@ body.dark #split-pct-slider::-webkit-slider-thumb {
   margin-top: 12px;
 }
 
-/* Badge for Bank Status */
-.badge {
-  display: inline-block;
-  padding: 4px 8px;
-  background: var(--accent-light);
-  color: var(--accent);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-}
+
 
 /* Print CSS */
 @media print {

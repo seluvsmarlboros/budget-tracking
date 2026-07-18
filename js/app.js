@@ -10,7 +10,6 @@ import { initSettings } from './settings.js';
 import { initPartner } from './partner.js';
 import { initPWA } from './pwa.js';
 import { initOCR } from './ocr.js';
-import { initBank } from './bank.js';
 
 function boot() {
   console.log('UniSpend: boot() triggered');
@@ -39,7 +38,25 @@ function boot() {
     initSettings();
     initPartner();
     initOCR();
-    initBank();
+  }
+
+  // Handle shared target text from PWA
+  const params = new URLSearchParams(window.location.search);
+  const sharedText = params.get('text') || params.get('title') || params.get('url');
+  if (sharedText) {
+    console.log('[PWA Share Target] Received shared payload:', sharedText);
+    import('./smsParser.js').then(parser => {
+      const parsed = parser.parseUPIAndSMS(sharedText);
+      if (parsed) {
+        import('./add.js').then(addForm => {
+          window.location.hash = '#add';
+          setTimeout(() => {
+            addForm.autofillLogForm(parsed);
+            toast('Autofilled shared transaction! 🧾');
+          }, 400);
+        });
+      }
+    });
   }
 
   // Fade out splash screen
