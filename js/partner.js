@@ -71,7 +71,34 @@ export async function initPartner() {
   if (reminderBtn) reminderBtn.addEventListener('click', handleSendReminder);
 
   const leaveBtn = document.getElementById('leave-partner-btn');
-  if (leaveBtn) leaveBtn.addEventListener('click', handleLeavePartnership);
+  if (leaveBtn) {
+    leaveBtn.addEventListener('click', () => {
+      const dialog = document.getElementById('dialog-disconnect-confirm');
+      const input = document.getElementById('disconnect-confirm-input');
+      const submit = document.getElementById('disconnect-submit-btn');
+      if (input) input.value = '';
+      if (submit) submit.disabled = true;
+      if (dialog) dialog.showModal();
+    });
+  }
+
+  const disconnectInput = document.getElementById('disconnect-confirm-input');
+  const disconnectSubmitBtn = document.getElementById('disconnect-submit-btn');
+  if (disconnectInput && disconnectSubmitBtn) {
+    disconnectInput.addEventListener('input', () => {
+      disconnectSubmitBtn.disabled = disconnectInput.value !== 'DISCONNECT';
+    });
+  }
+
+  const disconnectForm = document.getElementById('form-disconnect-confirm');
+  if (disconnectForm) {
+    disconnectForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const dialog = document.getElementById('dialog-disconnect-confirm');
+      if (dialog) dialog.close();
+      await handleLeavePartnership();
+    });
+  }
 
   // Wire Split Type Buttons
   const splitPills = document.querySelectorAll('#split-type-pills .pill');
@@ -524,7 +551,6 @@ async function handleRedeemInvite(e) {
 
 async function handleLeavePartnership() {
   if (!activePartnership) return;
-  if (!confirm('Are you sure you want to disconnect from your partner? This ends the sync.')) return;
 
   try {
     if (partnerProfile) {
