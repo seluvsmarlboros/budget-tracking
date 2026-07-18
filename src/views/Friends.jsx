@@ -4,6 +4,7 @@ import { SupabaseService, supabase } from '../services/supabase';
 
 export default function Friends() {
   const { state, syncSupabaseBalances } = useStateContext();
+  const sym = state?.user?.currency || '₹';
   const [currentUserId, setCurrentUserId] = useState(null);
   const [profile, setProfile] = useState(null);
   
@@ -97,7 +98,11 @@ export default function Friends() {
           setPartnerProfile(partnerProf);
           setAuthState('dashboard');
           setupRealtimeSubscription(updatedP.id, user.id);
-          await refreshDashboardData(updatedP, partnerProf, user.id);
+          try {
+            await refreshDashboardData(updatedP, partnerProf, user.id);
+          } catch (err) {
+            console.error("Failed to refresh partner dashboard data:", err);
+          }
           return;
         } else {
           setActivePartnership(null);
@@ -114,8 +119,13 @@ export default function Friends() {
       // Resolve directory balances
       const balancesMap = {};
       for (const p of partnerships) {
-        const bal = await SupabaseService.getNetBalance(p.id);
-        balancesMap[p.id] = bal;
+        try {
+          const bal = await SupabaseService.getNetBalance(p.id);
+          balancesMap[p.id] = bal;
+        } catch (err) {
+          console.error("Failed to load net balance for partnership:", p.id, err);
+          balancesMap[p.id] = { balance: 0, rawBalance: 0 };
+        }
       }
       setDirectoryBalances(balancesMap);
 
@@ -246,46 +256,69 @@ export default function Friends() {
     const pName = partnerProf?.display_name || partnerProf?.id?.substring(0, 6) || (typeof partnerProf === 'string' ? partnerProf.substring(0, 6) : 'Partner');
     
     // Balance
-    const balance = await SupabaseService.getNetBalance(partnership.id);
+    let balance = null;
+    try {
+      balance = await SupabaseService.getNetBalance(partnership.id);
+    } catch (err) {
+      console.error("Failed to load net balance:", err);
+    }
     setBalanceInfo(balance || { balance: 0, rawBalance: 0 });
 
     // Sync to state provider context
-    const partnerName = partnerProf?.display_name || 'Partner';
-    const isUserA = partnership.user_a && (typeof partnership.user_a === 'object' ? partnership.user_a.id === userId : partnership.user_a === userId);
-    syncSupabaseBalances(balance?.rawBalance || 0, partnership.user_a, partnership.user_b);
+    try {
+      syncSupabaseBalances(balance?.rawBalance || 0, partnership.user_a, partnership.user_b);
+    } catch (err) {
+      console.error("Failed to sync supabase balances to state context:", err);
+    }
 
     // Recurring templates
-    const templates = await SupabaseService.getRecurringTemplates(partnership.id);
-    setRecurringTemplates(templates);
+    let templates = [];
+    try {
+      templates = await SupabaseService.getRecurringTemplates(partnership.id);
+    } catch (err) {
+      console.error("Failed to load recurring templates:", err);
+    }
+    setRecurringTemplates(templates || []);
 
     // Activity
-    const expenses = await SupabaseService.getSharedExpenses(partnership.id);
-    const ledger = await SupabaseService.getLedgerEntries(partnership.id);
+    let expenses = [];
+    try {
+      expenses = await SupabaseService.getSharedExpenses(partnership.id);
+    } catch (err) {
+      console.error("Failed to load shared expenses:", err);
+    }
+
+    let ledger = [];
+    try {
+      ledger = await SupabaseService.getLedgerEntries(partnership.id);
+    } catch (err) {
+      console.error("Failed to load ledger entries:", err);
+    }
 
     const combined = [];
-    expenses.forEach(e => {
+    (expenses || []).forEach(e => {
       combined.push({
         id: e.id,
         created_at: e.created_at,
         date: new Date(e.created_at),
         type: e.category === 'Loan' ? 'loan' : 'expense',
         title: e.title,
-        total: parseFloat(e.total_amount),
+        total: parseFloat(e.total_amount || 0),
         added_by: e.added_by,
-        user_a_owes: parseFloat(e.user_a_owes),
-        user_b_owes: parseFloat(e.user_b_owes),
+        user_a_owes: parseFloat(e.user_a_owes || 0),
+        user_b_owes: parseFloat(e.user_b_owes || 0),
         recorded_by: e.added_by
       });
     });
 
-    ledger.filter(l => l.type === 'settlement').forEach(s => {
+    (ledger || []).filter(l => l && l.type === 'settlement').forEach(s => {
       combined.push({
         id: s.id,
         created_at: s.created_at,
         date: new Date(s.created_at),
         type: 'settlement',
-        title: s.description,
-        total: Math.abs(parseFloat(s.amount)),
+        title: s.description || 'Settle Up',
+        total: Math.abs(parseFloat(s.amount || 0)),
         added_by: s.recorded_by,
         recorded_by: s.recorded_by
       });
