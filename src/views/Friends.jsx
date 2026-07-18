@@ -904,7 +904,7 @@ export default function Friends() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         
         {/* Connection status header card */}
-        <div className="card" style={{ background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(6, 182, 212, 0.03) 100%)', borderLeft: '4px solid var(--accent)' }}>
+        <div className="card" style={{ background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(197, 160, 89, 0.03) 100%)', borderLeft: '4px solid var(--accent)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 600, letterSpacing: '0.5px' }}>Live Connection</div>
