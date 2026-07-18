@@ -95,10 +95,118 @@ export async function initPartner() {
     addItemBtn.addEventListener('click', () => addItemizedRow('', 0, 'me'));
   }
 
+  // Wire Tab Switches for Expense vs Loan
+  const btnTabExpense = document.getElementById('btn-tab-expense');
+  const btnTabLoan = document.getElementById('btn-tab-loan');
+  const sharedExpenseForm = document.getElementById('shared-expense-form');
+  const sharedLoanForm = document.getElementById('shared-loan-form');
+
+  if (btnTabExpense && btnTabLoan && sharedExpenseForm && sharedLoanForm) {
+    btnTabExpense.addEventListener('click', () => {
+      btnTabExpense.classList.add('active');
+      btnTabExpense.style.color = 'var(--accent)';
+      btnTabExpense.style.borderBottomColor = 'var(--accent)';
+      
+      btnTabLoan.classList.remove('active');
+      btnTabLoan.style.color = 'var(--text-secondary)';
+      btnTabLoan.style.borderBottomColor = 'transparent';
+      
+      sharedExpenseForm.style.display = 'block';
+      sharedLoanForm.style.display = 'none';
+    });
+
+    btnTabLoan.addEventListener('click', () => {
+      btnTabLoan.classList.add('active');
+      btnTabLoan.style.color = 'var(--accent)';
+      btnTabLoan.style.borderBottomColor = 'var(--accent)';
+      
+      btnTabExpense.classList.remove('active');
+      btnTabExpense.style.color = 'var(--text-secondary)';
+      btnTabExpense.style.borderBottomColor = 'transparent';
+      
+      sharedExpenseForm.style.display = 'none';
+      sharedLoanForm.style.display = 'block';
+    });
+  }
+
+  // Wire Loan Direction Pills
+  let currentLoanDir = 'lend';
+  const loanDirPills = document.getElementById('loan-dir-pills');
+  if (loanDirPills) {
+    loanDirPills.addEventListener('click', e => {
+      const pill = e.target.closest('.pill');
+      if (!pill) return;
+      currentLoanDir = pill.dataset.dir;
+      document.querySelectorAll('#loan-dir-pills .pill').forEach(p => p.classList.toggle('active', p === pill));
+    });
+  }
+
   // Wire Form Submits
   const expenseForm = document.getElementById('shared-expense-form');
   if (expenseForm) {
     expenseForm.addEventListener('submit', handleSharedExpenseSubmit);
+  }
+
+  const loanForm = document.getElementById('shared-loan-form');
+  if (loanForm) {
+    loanForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('shared-loan-title').value.trim();
+      const amount = parseFloat(document.getElementById('shared-loan-amount').value);
+      const dueDate = document.getElementById('shared-loan-due').value || null;
+
+      if (!amount || amount <= 0) { toast('Please enter a valid amount'); return; }
+      if (!title) { toast('Please enter a description'); return; }
+
+      const isUserA = activePartnership.user_a.id === currentUserId;
+
+      let userAOwes = 0;
+      let userBOwes = 0;
+
+      if (currentLoanDir === 'lend') {
+        userAOwes = isUserA ? 0 : amount;
+        userBOwes = isUserA ? amount : 0;
+      } else {
+        userAOwes = isUserA ? 0 : -amount;
+        userBOwes = isUserA ? -amount : 0;
+      }
+
+      const expenseData = {
+        partnershipId: activePartnership.id,
+        title,
+        totalAmount: amount,
+        splitType: 'fixed',
+        splitDetail: JSON.stringify({ splitType: 'fixed', userAOwes, userBOwes, isLoan: true, direction: currentLoanDir }),
+        userAOwes,
+        userBOwes,
+        dueDate,
+        category: 'Loan',
+        isRecurring: false
+      };
+
+      try {
+        const res = await SupabaseService.addSharedExpense(expenseData);
+        if (res) {
+          State.addTransaction({
+            type: currentLoanDir === 'lend' ? 'expense' : 'income',
+            category: 'Loan',
+            amount: amount,
+            paymentMethod: 'UPI',
+            date: dueDate || new Date().toISOString().split('T')[0],
+            description: currentLoanDir === 'lend'
+              ? `[Lent to ${partnerProfile.display_name || 'Friend'}] ${title}`
+              : `[Borrowed from ${partnerProfile.display_name || 'Friend'}] ${title}`
+          });
+          toast('Loan logged successfully!');
+        }
+        document.getElementById('shared-loan-form').reset();
+        currentLoanDir = 'lend';
+        document.querySelectorAll('#loan-dir-pills .pill').forEach(p => p.classList.toggle('active', p.dataset.dir === 'lend'));
+        await refreshDashboard();
+      } catch (err) {
+        toast(`Failed to log loan: ${err.message}`);
+      }
+    });
   }
 
   // Wire Settle Up Dialog
@@ -542,7 +650,11 @@ async function refreshDashboard() {
   if (!activePartnership) return;
   
   // 1. Set display name
-  document.getElementById('partner-display-name').textContent = partnerProfile.display_name || partnerProfile.id.substring(0, 6);
+  const pName = partnerProfile.display_name || partnerProfile.id.substring(0, 6);
+  document.getElementById('partner-display-name').textContent = pName;
+  document.querySelectorAll('.partner-name-lbl').forEach(lbl => {
+    lbl.textContent = pName;
+  });
 
   // 2. Fetch running net balance
   balanceInfo = await SupabaseService.getNetBalance(activePartnership.id);
@@ -723,7 +835,7 @@ function renderActivityLog(expenses, ledger) {
     combined.push({
       id: e.id,
       date: new Date(e.created_at),
-      type: 'expense',
+      type: e.category === 'Loan' ? 'loan' : 'expense',
       title: e.title,
       total: parseFloat(e.total_amount),
       added_by: e.added_by,
@@ -757,7 +869,9 @@ function renderActivityLog(expenses, ledger) {
 
     const icon = document.createElement('div');
     icon.className = 'feed-icon';
-    if (item.type === 'expense') {
+    if (item.type === 'loan') {
+      icon.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`;
+    } else if (item.type === 'expense') {
       icon.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><path d="M16 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>`;
     } else {
       icon.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--green);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
@@ -769,22 +883,40 @@ function renderActivityLog(expenses, ledger) {
 
     const desc = document.createElement('div');
     desc.className = 'feed-desc';
-    desc.textContent = item.title;
+    
+    const val = document.createElement('div');
+    val.className = 'feed-amount';
+
+    if (item.type === 'loan') {
+      const isUserA = activePartnership.user_a.id === currentUserId;
+      const myShare = isUserA ? item.user_a_owes : item.user_b_owes;
+      const partnerShare = isUserA ? item.user_b_owes : item.user_a_owes;
+      const partnerName = partnerProfile ? (partnerProfile.display_name || 'Friend') : 'Friend';
+      
+      // If partnerShare > 0 or myShare < 0, it means I lent money to partner.
+      if (partnerShare > 0 || myShare < 0) {
+        desc.textContent = `Lent to ${partnerName}: ${item.title}`;
+        val.style.color = 'var(--green)';
+        val.textContent = `+₹${Math.abs(item.total).toFixed(2)}`;
+      } else {
+        desc.textContent = `Borrowed from ${partnerName}: ${item.title}`;
+        val.style.color = 'var(--red)';
+        val.textContent = `-₹${Math.abs(item.total).toFixed(2)}`;
+      }
+    } else {
+      desc.textContent = item.title;
+      val.textContent = `₹${item.total.toFixed(2)}`;
+    }
     body.appendChild(desc);
 
     const meta = document.createElement('div');
     meta.className = 'feed-meta';
     
-    const adderName = item.added_by === currentUserId ? 'You' : partnerProfile.display_name;
+    const adderName = item.added_by === currentUserId ? 'You' : (partnerProfile ? (partnerProfile.display_name || 'Partner') : 'Partner');
     const formattedDate = item.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     meta.textContent = `${adderName} on ${formattedDate}`;
     body.appendChild(meta);
     el.appendChild(body);
-
-    // Value
-    const val = document.createElement('div');
-    val.className = 'feed-amount';
-    val.textContent = `₹${item.total.toFixed(2)}`;
     el.appendChild(val);
 
     container.appendChild(el);
