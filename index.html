@@ -716,6 +716,24 @@
           </div>
         </div>
 
+        <!-- iOS Automation Card -->
+        <div class="card" id="ios-automation-card" style="display:none;">
+          <h3>iOS Background Sync</h3>
+          <p class="muted" style="font-size: 13px; margin-bottom: 12px;">Auto-log transactions directly from incoming bank SMS messages on your iPhone.</p>
+          <div style="background: var(--bg-body); border: 1px solid var(--border); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px;">
+            <span class="muted" style="font-size: 11px; text-transform: uppercase; font-weight: 600;">Your Automation Webhook URL:</span>
+            <div id="ios-webhook-display" style="font-size: 12px; font-family: monospace; word-break: break-all; margin: 6px 0; background: var(--bg-card); padding: 8px; border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary);">...</div>
+            <button type="button" class="btn-ghost btn-sm" id="btn-copy-webhook" style="width: auto;">Copy Webhook URL</button>
+          </div>
+          <div style="font-size: 12.5px; line-height: 1.45;">
+            <strong style="display: block; margin-bottom: 4px;">Setup iOS Automation:</strong>
+            1. Open iOS <strong>Shortcuts</strong> app &rarr; <strong>Automation</strong> tab &rarr; <strong>New Automation</strong>.<br>
+            2. Choose <strong>Message</strong> as trigger: set containing to <code>debited</code>, and toggle <strong>Run Immediately</strong>.<br>
+            3. Add action: <strong>Get Contents of URL</strong>.<br>
+            4. Paste the webhook URL above, set method to <code>POST</code>, body type to <code>JSON</code>, and map key <code>text</code> to the <code>Shortcut Input</code>.
+          </div>
+        </div>
+
         <!-- AI Settings -->
         <div class="card">
           <h3>AI Assistant Settings</h3>

@@ -1,6 +1,7 @@
 /* Settings — profile, streak, categories, goals, data, theme */
 import { State } from './state.js';
 import { toast, cur } from './app.js';
+import { SupabaseService } from './supabase.js';
 
 export function initSettings() {
   render();
@@ -197,6 +198,22 @@ export function initSettings() {
       renderRulesList();
     });
   }
+
+  // iOS Webhook Copy button
+  const copyBtn = document.getElementById('btn-copy-webhook');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      const urlText = document.getElementById('ios-webhook-display').textContent;
+      if (!urlText || urlText === '...') return;
+      try {
+        await navigator.clipboard.writeText(urlText);
+        toast('Webhook URL copied to clipboard! 📋');
+      } catch (err) {
+        console.error('Clipboard copy failed:', err);
+        toast('Failed to copy. Please select and copy manually.');
+      }
+    });
+  }
 }
 
 function render() {
@@ -260,6 +277,24 @@ function render() {
   const ruleCatSelect = document.getElementById('rule-category');
   if (ruleCatSelect) {
     ruleCatSelect.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
+  // iOS Webhook URL Render
+  const iosCard = document.getElementById('ios-automation-card');
+  const iosWebhook = document.getElementById('ios-webhook-display');
+  if (iosCard && iosWebhook) {
+    SupabaseService.getCurrentUser().then(user => {
+      if (user && user.id) {
+        iosCard.style.display = 'block';
+        iosWebhook.textContent = `https://${window.location.host}/api/sms-log?userId=${user.id}`;
+      } else {
+        iosCard.style.display = 'none';
+        iosWebhook.textContent = '...';
+      }
+    }).catch(err => {
+      console.warn('Failed to retrieve current user in settings:', err);
+      iosCard.style.display = 'none';
+    });
   }
 
   renderRulesList();

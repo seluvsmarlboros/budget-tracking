@@ -10,6 +10,7 @@ import { initSettings } from './settings.js';
 import { initPartner } from './partner.js';
 import { initPWA } from './pwa.js';
 import { initOCR } from './ocr.js';
+import { supabase, SupabaseService } from './supabase.js';
 
 function boot() {
   console.log('UniSpend: boot() triggered');
@@ -38,6 +39,7 @@ function boot() {
     initSettings();
     initPartner();
     initOCR();
+    processPendingSmsTransactions();
   }
 
   // Handle shared target text from PWA
@@ -94,6 +96,47 @@ export function fmtDate(dateStr) {
   if (diff === 1) return 'Yesterday';
   if (diff < 7) return `${diff}d ago`;
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+async function processPendingSmsTransactions() {
+  try {
+    const user = await SupabaseService.getCurrentUser();
+    if (!user) return;
+
+    // Fetch matching pending transactions from notifications queue
+    const { data: notifications, error: fetchErr } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('type', 'pending_transaction');
+
+    if (fetchErr) throw fetchErr;
+    if (!notifications || notifications.length === 0) return;
+
+    console.log(`[PWA Background Sync] Processing ${notifications.length} queued SMS payments`);
+
+    for (const notif of notifications) {
+      try {
+        const txn = JSON.parse(notif.message);
+        State.addTransaction(txn);
+        toast(`Auto-logged ₹${txn.amount} for ${txn.description} from iOS SMS! 📲`);
+      } catch (parseErr) {
+        console.error('Failed to parse queued SMS transaction payload:', parseErr);
+      }
+    }
+
+    // Flush processed items
+    const { error: delErr } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('type', 'pending_transaction');
+
+    if (delErr) throw delErr;
+
+  } catch (err) {
+    console.error('Failed to sync background SMS transactions:', err);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', boot);
