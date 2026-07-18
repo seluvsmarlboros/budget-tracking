@@ -30,6 +30,18 @@ const emptyState = {
     provider: 'groq',
     apiKey: getDefaultKey(),
     model: 'llama-3.3-70b-versatile'
+  },
+  rules: [],
+  widgetSettings: {
+    showBudget: true,
+    showAiBar: true,
+    showStats: true,
+    showRecent: true
+  },
+  linkedBank: {
+    linked: false,
+    bankName: '',
+    syncedCount: 0
   }
 };
 
@@ -59,6 +71,24 @@ export const State = {
         if (!this.data.spikes) { this.data.spikes = []; migrated = true; }
         if (!this.data.commute) { this.data.commute = { type: 'none', dailyCost: 0, passCost: 0, logs: [], maintenance: [], attendanceDays: [] }; migrated = true; }
         if (!this.data.friends) { this.data.friends = { list: [], balances: {}, history: [] }; migrated = true; }
+        if (!this.data.rules) { this.data.rules = []; migrated = true; }
+        if (!this.data.widgetSettings) {
+          this.data.widgetSettings = {
+            showBudget: true,
+            showAiBar: true,
+            showStats: true,
+            showRecent: true
+          };
+          migrated = true;
+        }
+        if (!this.data.linkedBank) {
+          this.data.linkedBank = {
+            linked: false,
+            bankName: '',
+            syncedCount: 0
+          };
+          migrated = true;
+        }
 
         if (this.data.user.budgetPeriod === undefined) {
           this.data.user.budgetPeriod = 'week';
@@ -139,7 +169,17 @@ export const State = {
 
   /* Transactions */
   addTransaction(txn) {
-    const t = { id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), ...txn, amount: parseFloat(txn.amount) };
+    let category = txn.category;
+    // Apply automated categorization rules if category is default or not explicitly overridden by split
+    if (txn.type === 'expense' && this.data.rules && this.data.rules.length > 0) {
+      const descLower = (txn.description || '').toLowerCase();
+      const match = this.data.rules.find(r => descLower.includes(r.keyword.toLowerCase()));
+      if (match) {
+        category = match.category;
+        console.log(`[Auto-Categorization] Matched "${txn.description}" to category "${category}" via keyword "${match.keyword}"`);
+      }
+    }
+    const t = { id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), ...txn, category, amount: parseFloat(txn.amount) };
     this.data.transactions.unshift(t);
     this.updateStreak();
     this.saveState();

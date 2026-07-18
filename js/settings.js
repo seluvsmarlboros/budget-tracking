@@ -144,6 +144,59 @@ export function initSettings() {
     document.body.classList.toggle('dark', toggle.checked);
     localStorage.setItem('unispend_dark', toggle.checked ? '1' : '0');
   });
+
+  // Dashboard Widget Toggles
+  const toggles = {
+    showBudget: document.getElementById('widget-toggle-budget'),
+    showAiBar: document.getElementById('widget-toggle-aibar'),
+    showStats: document.getElementById('widget-toggle-stats'),
+    showRecent: document.getElementById('widget-toggle-recent')
+  };
+
+  Object.entries(toggles).forEach(([key, el]) => {
+    if (!el) return;
+    el.addEventListener('change', () => {
+      State.data.widgetSettings[key] = el.checked;
+      State.saveState();
+      import('./dashboard.js').then(m => m.updateDashboardWidgets());
+    });
+  });
+
+  // Auto rules form
+  const ruleForm = document.getElementById('auto-rule-form');
+  if (ruleForm) {
+    ruleForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const keyword = document.getElementById('rule-keyword').value.trim();
+      const category = document.getElementById('rule-category').value;
+      if (!keyword || !category) return;
+      
+      State.data.rules = State.data.rules || [];
+      if (State.data.rules.some(r => r.keyword.toLowerCase() === keyword.toLowerCase())) {
+        toast('Rule already exists');
+        return;
+      }
+      State.data.rules.push({ keyword, category });
+      State.saveState();
+      toast(`Added rule: ${keyword} → ${category}`);
+      ruleForm.reset();
+      renderRulesList();
+    });
+  }
+
+  // Auto rules delete
+  const rulesTags = document.getElementById('rules-tags');
+  if (rulesTags) {
+    rulesTags.addEventListener('click', e => {
+      const btn = e.target.closest('[data-del-rule]');
+      if (!btn) return;
+      const kw = btn.dataset.delRule;
+      State.data.rules = (State.data.rules || []).filter(r => r.keyword !== kw);
+      State.saveState();
+      toast('Rule removed');
+      renderRulesList();
+    });
+  }
 }
 
 function render() {
@@ -194,6 +247,37 @@ function render() {
         </div>
       </div>`;
     }).join('');
+  }
+
+  // Widget Checkboxes Sync
+  const settings = State.data.widgetSettings || { showBudget: true, showAiBar: true, showStats: true, showRecent: true };
+  if (document.getElementById('widget-toggle-budget')) document.getElementById('widget-toggle-budget').checked = settings.showBudget !== false;
+  if (document.getElementById('widget-toggle-aibar')) document.getElementById('widget-toggle-aibar').checked = settings.showAiBar !== false;
+  if (document.getElementById('widget-toggle-stats')) document.getElementById('widget-toggle-stats').checked = settings.showStats !== false;
+  if (document.getElementById('widget-toggle-recent')) document.getElementById('widget-toggle-recent').checked = settings.showRecent !== false;
+
+  // Rules Dropdown Category Sync
+  const ruleCatSelect = document.getElementById('rule-category');
+  if (ruleCatSelect) {
+    ruleCatSelect.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
+  renderRulesList();
+}
+
+function renderRulesList() {
+  const container = document.getElementById('rules-tags');
+  if (!container) return;
+  const rules = State.data.rules || [];
+  if (rules.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="padding: 12px 0;">No active rules. Add one above!</div>';
+  } else {
+    container.innerHTML = rules.map(r => 
+      `<span class="tag" style="border: 1px solid var(--border); background: var(--bg-body); font-size: 12px; border-radius: var(--radius-sm); padding: 4px 8px; display: inline-flex; align-items: center; gap: 6px; margin: 4px;">
+        <strong>${r.keyword}</strong> &rarr; <span class="muted">${r.category}</span>
+        <button data-del-rule="${r.keyword}" style="background: none; border: none; font-size: 14px; line-height: 1; cursor: pointer; color: var(--text-muted);">&times;</button>
+      </span>`
+    ).join('');
   }
 }
 

@@ -28,6 +28,14 @@
 </head>
 <body>
 
+  <!-- ═══ APP SPLASH SCREEN ═══ -->
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-content">
+      <div class="splash-logo">UniSpend</div>
+      <div class="splash-spinner"></div>
+    </div>
+  </div>
+
   <!-- ═══ APP SHELL ═══ -->
   <div id="app" class="app hidden">
 
@@ -100,7 +108,7 @@
         <h1 class="greeting" id="greeting">Good afternoon</h1>
 
         <!-- AI Command Bar -->
-        <div class="card ai-card">
+        <div class="card ai-card" id="widget-aibar">
           <form id="ai-command-form" class="ai-form">
             <input type="text" id="ai-input" placeholder="Ask AI: 'add 120 for lunch' or 'change my budget to 2000'..." required autocomplete="off">
             <button type="submit" class="btn-primary" id="ai-submit">Ask AI</button>
@@ -119,7 +127,7 @@
         </div>
 
         <!-- Weekly Budget -->
-        <div class="card budget-card">
+        <div class="card budget-card" id="widget-budget">
           <div class="budget-header">
             <span class="budget-label" id="budget-period-label">This week</span>
             <span class="budget-remaining" id="budget-remaining">₹0 left</span>
@@ -149,7 +157,7 @@
         </div>
 
         <!-- Quick Stats Row -->
-        <div class="stat-row">
+        <div class="stat-row" id="widget-stats">
           <div class="card stat-card stat-commute">
             <span class="stat-label">Commute this month</span>
             <span class="stat-value" id="home-commute">₹0</span>
@@ -165,12 +173,14 @@
         </div>
 
         <!-- Recent -->
-        <div class="section-head">
-          <h2>Recent</h2>
-          <a href="#activity" class="link">View all →</a>
-        </div>
-        <div class="card" id="home-recent">
-          <p class="empty-state">No entries yet. Ask AI or tap Log below!</p>
+        <div id="widget-recent">
+          <div class="section-head">
+            <h2>Recent</h2>
+            <a href="#activity" class="link">View all →</a>
+          </div>
+          <div class="card" id="home-recent">
+            <p class="empty-state">No entries yet. Ask AI or tap Log below!</p>
+          </div>
         </div>
       </section>
 
@@ -183,6 +193,10 @@
           <div class="amount-field">
             <span class="currency" id="log-currency">₹</span>
             <input type="number" id="log-amount" placeholder="0" step="any" min="0.01" inputmode="decimal" autocomplete="off">
+            <button type="button" class="btn-scan-trigger" id="btn-ocr-receipt" title="Scan Receipt (OCR)" style="margin-right: 8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            </button>
+            <input type="file" id="ocr-file-input" accept="image/*" style="display: none;">
             <button type="button" class="btn-scan-trigger" id="btn-scan-qr" title="Scan UPI QR Code">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </button>
@@ -668,6 +682,54 @@
           </div>
         </div>
 
+        <!-- Dashboard Customizer Card -->
+        <div class="card">
+          <h3>Dashboard Layout</h3>
+          <p class="muted" style="font-size: 13px; margin-bottom: 12px;">Toggle which widgets appear on your dashboard overview.</p>
+          <div class="check-grid" style="grid-template-columns: 1fr; gap: 8px; margin-bottom: 0;">
+            <label style="font-size: 13px;"><input type="checkbox" id="widget-toggle-budget" checked style="margin-right: 6px;"> Weekly Budget Card</label>
+            <label style="font-size: 13px;"><input type="checkbox" id="widget-toggle-aibar" checked style="margin-right: 6px;"> AI Command Bar</label>
+            <label style="font-size: 13px;"><input type="checkbox" id="widget-toggle-stats" checked style="margin-right: 6px;"> Quick Stats Row</label>
+            <label style="font-size: 13px;"><input type="checkbox" id="widget-toggle-recent" checked style="margin-right: 6px;"> Recent Activity Feed</label>
+          </div>
+        </div>
+
+        <!-- Bank Sync Card -->
+        <div class="card">
+          <h3>Bank Integration (Demo)</h3>
+          <p class="muted" style="font-size: 13px; margin-bottom: 12px;">Link a simulated bank account to auto-import student expenses.</p>
+          <div id="bank-unlinked-view">
+            <button type="button" class="btn-primary" id="btn-link-bank" style="width: auto;">Link Bank Account</button>
+          </div>
+          <div id="bank-linked-view" style="display: none; align-items: center; justify-content: space-between; gap: 12px;">
+            <div>
+              <span class="badge" id="bank-name-display" style="font-size: 11px;">HDFC Bank</span>
+              <p class="muted" style="font-size: 12px; margin-top: 4px;">Last synced: <span id="bank-last-sync">Never</span></p>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn-ghost btn-sm" id="btn-sync-bank">Sync Now</button>
+              <button type="button" class="btn-danger btn-sm" id="btn-unlink-bank" style="padding: 5px 8px;">Unlink</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Auto Rules Card -->
+        <div class="card">
+          <h3>Auto-Categorization Rules</h3>
+          <p class="muted" style="font-size: 13px; margin-bottom: 12px;">Create rules to automatically categorize expenses based on text keywords.</p>
+          <form id="auto-rule-form" style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <input type="text" id="rule-keyword" placeholder="Keyword (e.g. Uber)" required style="flex: 1.5; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; outline: none;">
+            <select id="rule-category" style="flex: 1.2; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; outline: none; background: var(--bg-card); color: var(--text);">
+              <!-- populated by JS from categories -->
+            </select>
+            <button type="submit" class="btn-primary" style="width: auto; padding: 6px 14px;">Add</button>
+          </form>
+          <div class="tag-list" id="rules-tags">
+            <!-- populated by JS -->
+            <div class="empty-state" style="padding: 12px 0;">No active rules. Add one above!</div>
+          </div>
+        </div>
+
         <!-- AI Settings -->
         <div class="card">
           <h3>AI Assistant Settings</h3>
@@ -949,6 +1011,35 @@
         <button type="submit" class="btn-primary">Create</button>
       </div>
     </form>
+  </dialog>
+
+  <!-- Bank Linking Dialog -->
+  <dialog id="dialog-link-bank" class="dialog" style="max-width: 360px;">
+    <h3>Select Bank</h3>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;" id="bank-list-buttons">
+      <button type="button" class="btn-ghost" data-bank="Chase Bank" style="justify-content: flex-start; gap: 8px;">🏦 Chase Bank</button>
+      <button type="button" class="btn-ghost" data-bank="HDFC Student Account" style="justify-content: flex-start; gap: 8px;">🏦 HDFC Student Account</button>
+      <button type="button" class="btn-ghost" data-bank="ICICI Campus Card" style="justify-content: flex-start; gap: 8px;">🏦 ICICI Campus Card</button>
+      <button type="button" class="btn-ghost" data-bank="SBI Youth Account" style="justify-content: flex-start; gap: 8px;">🏦 SBI Youth Account</button>
+    </div>
+    <form id="form-link-bank-auth" style="display: none; flex-direction: column; gap: 10px;" method="dialog">
+      <input type="hidden" id="selected-bank-name">
+      <div class="field">
+        <label for="bank-user-id">Student ID / Login ID</label>
+        <input type="text" id="bank-user-id" placeholder="alex123" required>
+      </div>
+      <div class="field">
+        <label for="bank-password">Password / PIN</label>
+        <input type="password" id="bank-password" placeholder="••••" required>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn-ghost" id="close-link-bank-dialog">Cancel</button>
+        <button type="submit" class="btn-primary">Link Account</button>
+      </div>
+    </form>
+    <div class="dialog-actions" id="bank-select-cancel-container">
+      <button type="button" class="btn-ghost" id="close-bank-select-dialog" style="width: 100%;">Cancel</button>
+    </div>
   </dialog>
 
   <!-- UPI Scan Dialog -->

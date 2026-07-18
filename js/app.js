@@ -9,6 +9,8 @@ import { initInsights } from './insights.js';
 import { initSettings } from './settings.js';
 import { initPartner } from './partner.js';
 import { initPWA } from './pwa.js';
+import { initOCR } from './ocr.js';
+import { initBank } from './bank.js';
 
 function boot() {
   console.log('UniSpend: boot() triggered');
@@ -36,6 +38,17 @@ function boot() {
     initInsights();
     initSettings();
     initPartner();
+    initOCR();
+    initBank();
+  }
+
+  // Fade out splash screen
+  const splash = document.getElementById('splash-screen');
+  if (splash) {
+    splash.classList.add('fade-out');
+    setTimeout(() => {
+      splash.style.display = 'none';
+    }, 450);
   }
 }
 

@@ -97,6 +97,13 @@ function render() {
   const sym = user.currency || '₹';
   const el = id => document.getElementById(id);
 
+  // Apply widget settings
+  const ws = State.data.widgetSettings || { showBudget: true, showAiBar: true, showStats: true, showRecent: true };
+  if (el('widget-budget')) el('widget-budget').style.display = ws.showBudget !== false ? '' : 'none';
+  if (el('widget-aibar')) el('widget-aibar').style.display = ws.showAiBar !== false ? '' : 'none';
+  if (el('widget-stats')) el('widget-stats').style.display = ws.showStats !== false ? 'flex' : 'none';
+  if (el('widget-recent')) el('widget-recent').style.display = ws.showRecent !== false ? '' : 'none';
+
   // Greeting
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -229,4 +236,13 @@ function feedItem(t, sym) {
     </div>
     <span class="feed-amount ${amtCls}">${sign}${sym}${t.amount}</span>
   </div>`;
+}
+
+export function updateDashboardWidgets() {
+  const el = id => document.getElementById(id);
+  const ws = State.data.widgetSettings || { showBudget: true, showAiBar: true, showStats: true, showRecent: true };
+  if (el('widget-budget')) el('widget-budget').style.display = ws.showBudget !== false ? '' : 'none';
+  if (el('widget-aibar')) el('widget-aibar').style.display = ws.showAiBar !== false ? '' : 'none';
+  if (el('widget-stats')) el('widget-stats').style.display = ws.showStats !== false ? 'flex' : 'none';
+  if (el('widget-recent')) el('widget-recent').style.display = ws.showRecent !== false ? '' : 'none';
 }
