@@ -110,11 +110,11 @@
 
 
         <!-- Over Budget Warning Banner -->
-        <div id="over-budget-warning" class="card warning-card" style="display:none; background: rgba(185, 28, 28, 0.12); border: 1px solid var(--red); color: var(--red); display: flex; align-items: center; gap: 10px; padding: 12px 16px; margin-bottom: 12px; border-radius: var(--radius-md);">
-          <span style="font-size: 20px; font-weight: bold;">⚠️</span>
-          <div style="flex: 1;">
-            <div style="font-weight: 700; font-size: 14px;">Budget Warning</div>
-            <div style="font-size: 12px; opacity: 0.9;">You have exceeded your safe spending limit (including friend debts)! Reduce non-essential expenses.</div>
+        <div id="over-budget-warning" class="card warning-card" style="display:none;">
+          <span class="warning-icon">⚠️</span>
+          <div class="warning-body">
+            <div class="warning-title">Budget Warning</div>
+            <div class="warning-desc">You have exceeded your safe spending limit (including friend debts)! Reduce non-essential expenses.</div>
           </div>
         </div>
 
@@ -134,15 +134,15 @@
           </div>
 
           <!-- AI Advisor Panel -->
-          <div class="ai-advisor-panel" id="ai-advisor-panel" style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border);">
-            <div class="ai-advisor-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <span style="font-size: 13px; font-weight: 600; color: var(--accent); display: flex; align-items: center; gap: 4px;">
+          <div class="ai-advisor-panel" id="ai-advisor-panel">
+            <div class="ai-advisor-header">
+              <span>
                 ✨ AI Budget Advisor
               </span>
-              <span id="ai-advisor-loader" style="display:none; font-size: 11px; color: var(--text-secondary);">thinking...</span>
+              <span id="ai-advisor-loader" style="display:none;">thinking...</span>
             </div>
-            <div id="ai-advisor-meta" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;"></div>
-            <p id="ai-advisor-text" class="muted" style="font-size: 12.5px; margin: 0; line-height: 1.5; font-style: italic;">
+            <div id="ai-advisor-meta"></div>
+            <p id="ai-advisor-text" class="muted">
               Set a savings target in settings to get automated AI coaching.
             </p>
           </div>
@@ -252,7 +252,7 @@
         <!-- STATE A: User NOT Authenticated with Supabase -->
         <div id="partner-auth" class="card">
           <h3>Sign in to Sync with Friends</h3>
-          <p class="muted" style="font-size: 13px; margin-bottom: 16px;">
+          <p class="muted">
             To split bills and get live notifications, connect using your email magic link.
           </p>
           <form id="partner-login-form">
@@ -266,12 +266,12 @@
             </div>
             <button type="submit" class="btn-primary" id="partner-auth-submit">Send Magic Link</button>
           </form>
-          <div id="partner-auth-msg" class="hint" style="display:none; color: var(--green); margin-top: 12px; font-weight: 500;"></div>
+          <div id="partner-auth-msg" class="hint success" style="display:none;"></div>
         </div>
 
         <!-- STATE B: Authenticated & Connected Friends Directory -->
         <div id="partner-unlinked" style="display:none;">
-          <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div class="card card-header-row">
             <h3>Welcome, <span id="partner-unlinked-name">...</span></h3>
             <button type="button" class="btn-ghost btn-sm" id="partner-logout-btn">Sign Out</button>
           </div>
@@ -279,7 +279,7 @@
           <!-- Connected Friends Directory List Card -->
           <div class="card">
             <h3>Connected Friends</h3>
-            <p class="muted" style="font-size: 13px; margin-bottom: 12px;">Tap any friend to manage shared bills and reminders.</p>
+            <p class="muted">Tap any friend to manage shared bills and reminders.</p>
             <div id="friends-directory-list" class="activity-feed">
               <div class="empty-state">No synced friends yet. Share a code below to connect!</div>
             </div>
@@ -287,12 +287,12 @@
           
           <!-- Add Friends Box -->
           <div class="card">
-            <h3 style="margin-bottom: 12px;">Add a New Friend</h3>
-            <div style="border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 20px;">
+            <h3>Add a New Friend</h3>
+            <div class="border-section">
               <h4>1. Generate an Invite Code</h4>
-              <p class="muted" style="font-size: 13.5px; margin-bottom: 12px;">Invite your roommate or friend to sync balances.</p>
+              <p class="muted">Invite your roommate or friend to sync balances.</p>
               <button type="button" class="btn-primary" id="gen-invite-btn" style="width: auto;">Generate Code</button>
-              <div id="invite-code-display" style="display:none; margin-top: 12px; padding: 12px; background: var(--accent-light); border: 1px dashed var(--border); border-radius: var(--radius-sm); text-align: center;">
+              <div id="invite-code-display" class="invite-code-box" style="display:none;">
                 <span class="muted" style="font-size: 11px; text-transform: uppercase;">Your invite code (expires in 48h):</span>
                 <div id="invite-code-val" style="font-size: 24px; font-weight: 700; letter-spacing: 2px; margin: 4px 0;">...</div>
                 <button type="button" class="btn-ghost btn-sm" id="copy-invite-link">Copy Invite Link</button>
@@ -301,7 +301,7 @@
 
             <div>
               <h4>2. Redeem Friend's Invite Code</h4>
-              <p class="muted" style="font-size: 13.5px; margin-bottom: 12px;">Enter the 6-character code your friend shared with you.</p>
+              <p class="muted">Enter the 6-character code your friend shared with you.</p>
               <form id="redeem-invite-form" style="display: flex; gap: 8px;">
                 <input type="text" id="redeem-code-input" placeholder="ABC123" required style="flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; outline: none;" maxlength="6">
                 <button type="submit" class="btn-primary" style="width: auto;">Connect</button>
@@ -314,7 +314,7 @@
         <div id="partner-dashboard" style="display:none;">
           
           <!-- Back & Friend Header Card -->
-          <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="card card-header-row">
             <div style="display: flex; align-items: center; gap: 12px;">
               <button type="button" class="btn-ghost btn-sm" id="friend-back-btn" style="width: auto; padding: 6px 12px;">← Back</button>
               <div>
@@ -326,7 +326,7 @@
           </div>
 
           <!-- Running Net Balance Card -->
-          <div class="card" style="text-align: center; padding: 24px 16px;">
+          <div class="card card-centered">
             <span class="muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Ledger Summary</span>
             <div id="partner-balance-val" style="font-size: 32px; font-weight: 700; margin: 8px 0;">₹0</div>
             <p id="partner-balance-desc" class="muted" style="font-size: 13.5px; margin-bottom: 16px;">All settled up!</p>

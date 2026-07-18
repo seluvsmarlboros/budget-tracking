@@ -2,7 +2,7 @@
 import { State } from './state.js';
 import { cur } from './app.js';
 
-const PALETTE = ['#18181b', '#3f3f46', '#71717a', '#a1a1aa', '#27272a', '#52525b', '#a1a1aa', '#d4d4d8'];
+const PALETTE = ['#10b981', '#18181b', '#3f3f46', '#71717a', '#a1a1aa', '#d4d4d8', '#e4e4e7'];
 
 export function initInsights() {
   render();
