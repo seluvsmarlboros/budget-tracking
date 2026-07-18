@@ -6,31 +6,31 @@
   --font-title: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  /* Custom Color Tokens (Obsidian Dark Theme) */
-  --bg: hsl(222, 25%, 8%);
-  --bg-body: hsl(222, 25%, 8%);
-  --bg-card: rgba(18, 23, 37, 0.65);
-  --border: rgba(255, 255, 255, 0.06);
-  --border-focus: hsl(185, 95%, 48%);
-  --text: hsl(210, 40%, 98%);
-  --text-secondary: hsl(215, 18%, 72%);
-  --text-muted: hsl(215, 12%, 50%);
+  /* Custom Color Tokens (Bronze Obsidian Theme) */
+  --bg: hsl(20, 15%, 2%);
+  --bg-body: hsl(20, 15%, 2%);
+  --bg-card: rgba(26, 22, 20, 0.45);
+  --border: rgba(197, 160, 89, 0.12);
+  --border-focus: hsl(38, 55%, 52%);
+  --text: hsl(38, 20%, 94%);
+  --text-secondary: hsl(38, 10%, 65%);
+  --text-muted: hsl(38, 8%, 45%);
 
-  /* Neon Electric Cyan & Teal Accent */
-  --accent: hsl(185, 95%, 48%);
-  --accent-hover: hsl(185, 100%, 40%);
-  --accent-light: rgba(6, 182, 212, 0.08);
-  --accent-glow: hsla(185, 95%, 48%, 0.12);
-  --accent-gradient: linear-gradient(135deg, hsl(195, 100%, 50%) 0%, hsl(180, 100%, 40%) 100%);
+  /* Luxurious Gold Accent & Gradients */
+  --accent: hsl(38, 55%, 52%);
+  --accent-hover: hsl(38, 65%, 60%);
+  --accent-light: rgba(197, 160, 89, 0.08);
+  --accent-glow: rgba(197, 160, 89, 0.05);
+  --accent-gradient: linear-gradient(135deg, #b08d46 0%, #e6c27e 100%);
 
-  --green: hsl(150, 75%, 42%);
-  --red: hsl(8, 85%, 60%);
-  --orange: hsl(32, 95%, 55%);
+  --green: hsl(78, 25%, 52%);
+  --red: hsl(18, 65%, 48%);
+  --orange: hsl(35, 60%, 45%);
 
-  --radius: 16px;
+  --radius: 12px;
   --radius-sm: 8px;
-  --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  --glass-blur: blur(16px);
+  --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  --glass-blur: blur(24px) saturate(140%);
 
   --nav-h: 64px;
   --sidebar-w: 260px;
@@ -38,21 +38,21 @@
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Light Theme overrides - Clean ice cyan with cobalt/teal details */
+/* Light Theme overrides - Clean warm ivory with gold/bronze details */
 body.light {
-  --bg: hsl(190, 20%, 96%);
-  --bg-body: hsl(190, 20%, 96%);
-  --bg-card: rgba(255, 255, 255, 0.8);
-  --border: rgba(0, 0, 0, 0.08);
-  --border-focus: hsl(185, 90%, 40%);
-  --text: hsl(222, 25%, 12%);
-  --text-secondary: hsl(215, 15%, 35%);
-  --text-muted: hsl(215, 10%, 55%);
+  --bg: hsl(35, 20%, 96%);
+  --bg-body: hsl(35, 20%, 96%);
+  --bg-card: rgba(255, 250, 245, 0.8);
+  --border: rgba(197, 160, 89, 0.2);
+  --border-focus: hsl(38, 50%, 45%);
+  --text: hsl(20, 15%, 12%);
+  --text-secondary: hsl(20, 10%, 35%);
+  --text-muted: hsl(20, 8%, 55%);
   
-  --bg-card-raw: #ffffff;
-  --accent-light: rgba(6, 182, 212, 0.05);
-  --accent-glow: rgba(6, 182, 212, 0.05);
-  --shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  --bg-card-raw: #fffaf5;
+  --accent-light: rgba(197, 160, 89, 0.05);
+  --accent-glow: rgba(197, 160, 89, 0.05);
+  --shadow: 0 8px 24px rgba(197, 160, 89, 0.08);
 }
 
 /* Reset & Global Styles */
@@ -365,8 +365,50 @@ body.light .bottom-nav {
 
 .card:hover {
   transform: translateY(-2px);
-  border-color: rgba(6, 182, 212, 0.2);
+  border-color: rgba(197, 160, 89, 0.25);
   box-shadow: 0 12px 40px var(--accent-glow);
+}
+
+/* Integrated Command Capsule */
+.ai-capsule {
+  display: flex;
+  align-items: center;
+  border-radius: 99px;
+  background: rgba(15, 12, 10, 0.7);
+  border: 1px solid rgba(197, 160, 89, 0.25);
+  padding: 6px 6px 6px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  transition: var(--transition);
+}
+.ai-capsule:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(197, 160, 89, 0.15);
+}
+.ai-capsule input {
+  flex: 1;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  padding: 8px 0;
+}
+.ai-capsule button {
+  border-radius: 99px;
+  background: var(--accent-gradient);
+  color: #000 !important;
+  font-weight: 700;
+  border: none;
+  padding: 8px 20px;
+  cursor: pointer;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: opacity 0.2s;
+}
+.ai-capsule button:hover {
+  opacity: 0.9;
 }
 
 .card-head {
