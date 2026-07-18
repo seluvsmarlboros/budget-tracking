@@ -1,6 +1,6 @@
 /* Progressive Web App Service Worker (sw.js) */
 
-const CACHE_NAME = 'unispend-cache-v2';
+const CACHE_NAME = 'unispend-cache-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
