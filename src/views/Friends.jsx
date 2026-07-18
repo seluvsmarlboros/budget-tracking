@@ -1250,34 +1250,44 @@ export default function Friends() {
 
                   if (partnerShare > 0 || myShare < 0) {
                     feedTitle = `Lent to ${pName}: ${item.title}`;
-                    feedAmtStr = `+₹${Math.abs(item.total).toFixed(2)}`;
+                    feedAmtStr = `+₹${Math.abs(item.total || 0).toFixed(2)}`;
                     feedAmtColor = 'var(--green)';
                   } else {
                     feedTitle = `Borrowed from ${pName}: ${item.title}`;
-                    feedAmtStr = `-₹${Math.abs(item.total).toFixed(2)}`;
+                    feedAmtStr = `-₹${Math.abs(item.total || 0).toFixed(2)}`;
                     feedAmtColor = 'var(--red)';
                   }
                 } else if (isSettlement) {
-                  const isPayer = item.recorded_by === currentUserId;
+                  const isPayer = (item.recorded_by && typeof item.recorded_by === 'object') ? item.recorded_by.id === currentUserId : item.recorded_by === currentUserId;
                   const pName = partnerProfile ? (partnerProfile.display_name || 'Partner') : 'Partner';
                   if (isPayer) {
                     feedTitle = `You paid ${pName}: Settle Up`;
-                    feedAmtStr = `-₹${Math.abs(item.total).toFixed(2)}`;
+                    feedAmtStr = `-₹${Math.abs(item.total || 0).toFixed(2)}`;
                     feedAmtColor = 'var(--red)';
                   } else {
                     feedTitle = `${pName} paid You: Settle Up`;
-                    feedAmtStr = `+₹${Math.abs(item.total).toFixed(2)}`;
+                    feedAmtStr = `+₹${Math.abs(item.total || 0).toFixed(2)}`;
                     feedAmtColor = 'var(--green)';
                   }
                 } else {
                   // Standard expense split representation
                   const pName = partnerProfile ? (partnerProfile.display_name || 'Partner') : 'Partner';
                   feedTitle = `Shared Bill: ${item.title}`;
-                  feedAmtStr = `₹${item.total.toFixed(2)}`;
+                  feedAmtStr = `₹${(item.total || 0).toFixed(2)}`;
                 }
 
-                const payerName = item.recorded_by === currentUserId ? 'You' : (partnerProfile?.display_name || 'Partner');
-                const fmtDate = new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const isPayerGlobal = (item.recorded_by && typeof item.recorded_by === 'object') ? item.recorded_by.id === currentUserId : item.recorded_by === currentUserId;
+                const payerName = isPayerGlobal ? 'You' : (typeof item.recorded_by === 'object' ? (item.recorded_by?.display_name || 'Partner') : (partnerProfile?.display_name || 'Partner'));
+                
+                let fmtDate = 'Recently';
+                if (item.created_at) {
+                  try {
+                    const dObj = new Date(item.created_at);
+                    if (!isNaN(dObj.getTime())) {
+                      fmtDate = dObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    }
+                  } catch (e) {}
+                }
 
                 return (
                   <div className="feed-item" key={item.id}>
