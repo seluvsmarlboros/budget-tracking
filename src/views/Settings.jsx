@@ -291,7 +291,7 @@ export default function Settings() {
   return (
     <section id="view-settings" className="view active">
       {/* Header Profile summary */}
-      <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '24px', background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(6, 182, 212, 0.03) 100%)', borderLeft: '4px solid var(--accent)' }}>
+      <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '24px', background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(197, 160, 89, 0.03) 100%)', borderLeft: '4px solid var(--accent)' }}>
         <div id="set-profile-avatar" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--accent-light)', color: 'var(--accent)', fontSize: '20px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {name.charAt(0).toUpperCase() || 'S'}
         </div>
@@ -667,7 +667,7 @@ export default function Settings() {
             
             {/* iOS Webhook Card */}
             {supabaseEmail && (
-              <div id="ios-automation-card" className="card" style={{ display: 'block', background: 'rgba(6, 182, 212, 0.02)', borderColor: 'var(--border-focus)', padding: '16px', marginBottom: '20px' }}>
+              <div id="ios-automation-card" className="card" style={{ display: 'block', background: 'rgba(197, 160, 89, 0.02)', borderColor: 'var(--border-focus)', padding: '16px', marginBottom: '20px' }}>
                 <h4 style={{ margin: '0 0 4px 0' }}>iOS Webhook URL</h4>
                 <p className="muted" style={{ fontSize: '12px', margin: '0 0 10px 0', lineHeight: 1.4 }}>Paste this webhook URL into your iOS Shortcut to sync bank transaction texts in the background.</p>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
