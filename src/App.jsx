@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { useStateContext } from './contexts/StateContext';
 
 // Import Views
@@ -9,6 +9,49 @@ import Activity from './views/Activity';
 import Insights from './views/Insights';
 import Settings from './views/Settings';
 import Onboarding from './views/Onboarding';
+
+export class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error('UniSpend crashed:', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          minHeight: '100vh', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: '16px',
+          background: 'var(--bg, #0e0c0b)', color: 'var(--text, #f5f0e8)',
+          padding: '24px', textAlign: 'center'
+        }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(197,160,89,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700 }}>Something went wrong</h2>
+          <p style={{ margin: 0, fontSize: '13px', opacity: 0.6, maxWidth: '280px' }}>
+            {this.state.error?.message || 'An unexpected error occurred.'}
+          </p>
+          <button
+            onClick={() => { this.setState({ hasError: false, error: null }); window.location.hash = '#home'; }}
+            style={{
+              marginTop: '8px', padding: '10px 24px', borderRadius: '99px',
+              background: 'linear-gradient(135deg, #b08d46, #e6c27e)',
+              color: '#0e0c0b', fontWeight: 700, fontSize: '14px',
+              border: 'none', cursor: 'pointer'
+            }}
+          >
+            Reload App
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function App() {
   const { state } = useStateContext();

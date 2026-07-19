@@ -12,8 +12,11 @@ export default function Overview() {
   // Dialog refs
   const iosDialogRef = useRef(null);
   
-  const { user, transactions, spikes, friends, widgetSettings, ai, wallet } = state;
-  const sym = user.currency || '₹';
+  const { user, transactions, spikes = [], friends, widgetSettings, ai, wallet } = state;
+  const sym = user?.currency || '₹';
+  const friendBalances = friends?.balances || {};
+  const savingsGoals = wallet?.savingsGoals || [];
+  const activeSources = wallet?.sources || [];
 
   // State Mutators map for AI commands
   const stateContextMutators = {
@@ -82,15 +85,12 @@ export default function Overview() {
   const baseBudget = user.weeklyPocketMoney || 0;
   const adjustedBudget = baseBudget + periodIncome;
   
-  // Calculate friend debts to deduct from pocket money
   let netFriendDebt = 0;
-  if (friends && friends.balances) {
-    Object.values(friends.balances).forEach(b => {
-      if (b < 0) {
-        netFriendDebt += Math.abs(b);
-      }
-    });
-  }
+  Object.values(friendBalances).forEach(b => {
+    if (b < 0) {
+      netFriendDebt += Math.abs(b);
+    }
+  });
 
   const left = adjustedBudget - periodExpenses - netFriendDebt;
   const totalConsumed = periodExpenses + netFriendDebt;
@@ -166,7 +166,7 @@ export default function Overview() {
 
   let owedTotal = 0;
   let oweTotal = 0;
-  Object.values(friends.balances).forEach(b => {
+  Object.values(friendBalances).forEach(b => {
     if (b > 0) owedTotal += b;
     else oweTotal += Math.abs(b);
   });
@@ -436,11 +436,11 @@ export default function Overview() {
           </div>
 
           {/* Student Savings Goals Progress Card */}
-          {wallet?.savingsGoals && wallet.savingsGoals.length > 0 && (
+          {savingsGoals.length > 0 && (
             <div className="card pulse-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Savings Progress</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {wallet.savingsGoals.map((goal, i) => {
+                {savingsGoals.map((goal, i) => {
                   const pct = Math.min(100, Math.round(((goal.saved || 0) / (goal.target || 1)) * 100));
                   return (
                     <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -459,7 +459,7 @@ export default function Overview() {
           )}
 
           {/* Upcoming Spike Expenses Card */}
-          {spikes && spikes.length > 0 && (
+          {spikes.length > 0 && (
             <div className="card pulse-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Upcoming Spikes</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
