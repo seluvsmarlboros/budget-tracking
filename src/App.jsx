@@ -39,8 +39,8 @@ export class ErrorBoundary extends Component {
             onClick={() => { this.setState({ hasError: false, error: null }); window.location.hash = '#home'; }}
             style={{
               marginTop: '8px', padding: '10px 24px', borderRadius: '99px',
-              background: 'linear-gradient(135deg, #b08d46, #e6c27e)',
-              color: '#0e0c0b', fontWeight: 700, fontSize: '14px',
+              background: 'var(--accent-gradient)',
+              color: '#0D1A15', fontWeight: 700, fontSize: '14px',
               border: 'none', cursor: 'pointer'
             }}
           >

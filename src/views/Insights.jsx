@@ -78,7 +78,8 @@ export default function Insights() {
   let travelTicketFares = 0;
   let travelFuelFares = 0;
   let travelRepairFares = 0;
-  (commute.logs || []).forEach(l => {
+  const commuteLogs = commute?.logs || [];
+  commuteLogs.forEach(l => {
     const d = new Date(l.date + 'T00:00:00');
     if (d < thisMonthStart) return;
     if (l.type === 'ticket' || l.type === 'pass') {

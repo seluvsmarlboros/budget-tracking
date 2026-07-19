@@ -52,6 +52,9 @@ export const StateProvider = ({ children }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        if (!parsed || typeof parsed !== 'object') {
+          throw new Error('State is null or invalid type');
+        }
         let migrated = false;
         if (!parsed.user) {
           parsed.user = { ...emptyState.user };
@@ -543,7 +546,26 @@ export const StateProvider = ({ children }) => {
 
   const deleteCategory = (name) => {
     const updated = JSON.parse(JSON.stringify(state));
+    // 1. Remove from categories list
     updated.categories = updated.categories.filter(c => c !== name);
+    // 2. Cascade update transactions
+    updated.transactions = (updated.transactions || []).map(t => {
+      if (t.category === name) {
+        return { ...t, category: 'Other' };
+      }
+      return t;
+    });
+    // 3. Cascade update auto-category rules
+    updated.rules = (updated.rules || []).map(r => {
+      if (r.category === name) {
+        return { ...r, category: 'Other' };
+      }
+      return r;
+    });
+    // 4. Update cutbackCategory if it matches
+    if (updated.user.cutbackCategory === name) {
+      updated.user.cutbackCategory = 'Other';
+    }
     saveState(updated);
   };
 

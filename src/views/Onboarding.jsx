@@ -116,7 +116,12 @@ export default function Onboarding() {
     setIsSaving(true);
     try {
       if (isAuthenticated) {
-        await SupabaseService.updateProfile({ displayName: valName });
+        try {
+          await SupabaseService.updateProfile({ displayName: valName });
+        } catch (sErr) {
+          console.warn('Supabase remote profile update failed:', sErr);
+          window.toast('Profile saved locally (Offline mode).');
+        }
       }
 
       completeOnboarding({

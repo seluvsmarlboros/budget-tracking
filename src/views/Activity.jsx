@@ -5,6 +5,8 @@ export default function Activity() {
   const { state, addFriend, settleUp, addSpike, addGroupSplit, deleteSpike } = useStateContext();
   const { friends, spikes, transactions, user } = state;
   const sym = user.currency || '₹';
+  const friendsList = friends?.list || [];
+  const friendBalances = friends?.balances || {};
 
   // State filters
   const [activeFilter, setActiveFilter] = useState('all'); // all, expense, commute, split, income
@@ -110,7 +112,7 @@ export default function Activity() {
 
   // Handle Settle up click
   const handleSettleClick = (friend) => {
-    const bal = friends.balances[friend] || 0;
+    const bal = friendBalances[friend] || 0;
     setSettleFriend(friend);
     setSettleAmount(Math.abs(bal).toString());
     setSettleDesc(bal > 0 ? `${friend} owes you ${cur(bal)}` : `You owe ${friend} ${cur(Math.abs(bal))}`);
@@ -181,8 +183,8 @@ export default function Activity() {
     const debtors = [];
     const creditors = [];
 
-    friends.list.forEach(f => {
-      const bal = friends.balances[f] || 0;
+    friendsList.forEach(f => {
+      const bal = friendBalances[f] || 0;
       if (bal > 0) debtors.push({ name: f, amount: bal });
       else if (bal < 0) creditors.push({ name: f, amount: Math.abs(bal) });
     });
@@ -292,7 +294,7 @@ export default function Activity() {
     }
   };
 
-  const activeFriendBal = friends.list.filter(f => (friends.balances[f] || 0) !== 0);
+  const activeFriendBal = friendsList.filter(f => (friendBalances[f] || 0) !== 0);
 
   return (
     <section id="view-activity" className="view active">
@@ -313,11 +315,11 @@ export default function Activity() {
         </div>
 
         <div id="balances-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {friends.list.length === 0 ? (
+          {friendsList.length === 0 ? (
             <p className="empty-state" style={{ padding: '16px 0' }}>No friends added yet. Tap Add Friend to start!</p>
           ) : (
-            friends.list.map(f => {
-              const bal = friends.balances[f] || 0;
+            friendsList.map(f => {
+              const bal = friendBalances[f] || 0;
               let label = 'settled';
               let cls = 'muted';
               
@@ -567,7 +569,7 @@ export default function Activity() {
               <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', userSelect: 'none' }}>
                 <input type="checkbox" checked disabled /> {user.name || 'Me'}
               </label>
-              {friends.list.map(f => (
+              {friendsList.map(f => (
                 <label key={f} style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', userSelect: 'none', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
