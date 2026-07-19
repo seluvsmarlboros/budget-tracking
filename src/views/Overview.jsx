@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStateContext } from '../contexts/StateContext';
 import { askAI, askForBudgetAdvice } from '../services/ai';
+import { generatePulseCards } from '../services/PulseEngine';
+import PulseCard from '../components/PulseCard';
 
 export default function Overview() {
-  const { state, addTransaction, addCategory, addFriend, addSplitIOU, updateSettings } = useStateContext();
+  const { state, addTransaction, addCategory, addFriend, addSplitIOU, updateSettings, updatePulseCache } = useStateContext();
   const [aiInput, setAiInput] = useState('');
   const [aiResponse, setAiResponse] = useState(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isAdviceLoading, setIsAdviceLoading] = useState(false);
-  
+  const [visiblePulseCards, setVisiblePulseCards] = useState([]);
+
   // Dialog refs
   const iosDialogRef = useRef(null);
   
@@ -191,6 +194,49 @@ export default function Overview() {
     }
   }, [transactions.length, user.targetGoal, period, user.cutbackCategory]);
 
+  // 7. PULSE ENGINE — 12h cache check, re-scan on new transactions
+  useEffect(() => {
+    const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+    const lastScanned = user.pulseLastScanned || 0;
+    const stale = Date.now() - lastScanned > TWELVE_HOURS;
+    const noCachedCards = !user.pulseCards || user.pulseCards.length === 0;
+
+    if (stale || noCachedCards) {
+      try {
+        const fresh = generatePulseCards(state);
+        updatePulseCache(fresh);
+        // Load from sessionStorage dismissed set
+        const dismissed = JSON.parse(sessionStorage.getItem('pulse_dismissed') || '[]');
+        setVisiblePulseCards(fresh.filter(c => !dismissed.includes(c.id)));
+      } catch (e) {
+        console.warn('Pulse scan failed:', e);
+      }
+    } else {
+      const dismissed = JSON.parse(sessionStorage.getItem('pulse_dismissed') || '[]');
+      setVisiblePulseCards((user.pulseCards || []).filter(c => !dismissed.includes(c.id)));
+    }
+  }, [transactions.length]);
+
+  const handlePulseDismiss = (id) => {
+    const dismissed = JSON.parse(sessionStorage.getItem('pulse_dismissed') || '[]');
+    dismissed.push(id);
+    sessionStorage.setItem('pulse_dismissed', JSON.stringify(dismissed));
+    setVisiblePulseCards(prev => prev.filter(c => c.id !== id));
+  };
+
+  // 8. HEALTH SCORE (0–100)
+  const streakScore = Math.min((user.streak || 0), 14) / 14 * 35;
+  const budgetScore = adjustedBudget > 0
+    ? Math.max(0, (1 - periodExpenses / adjustedBudget)) * 40
+    : 40;
+  const savingsPct = savingsGoals.length > 0
+    ? savingsGoals.reduce((acc, g) => acc + Math.min(1, (g.saved || 0) / Math.max(1, g.target || 1)), 0) / savingsGoals.length
+    : 0;
+  const savingsScore = savingsPct * 25;
+  const healthScore = Math.round(Math.min(100, streakScore + budgetScore + savingsScore));
+  const healthColor = healthScore >= 80 ? '#4ADE80' : healthScore >= 50 ? '#FB923C' : '#F87171';
+
+
   // AI Command Form submission
   const handleAiSubmit = async (e) => {
     e.preventDefault();
@@ -263,6 +309,21 @@ export default function Overview() {
 
   return (
     <section id="view-home" className="view active">
+
+      {/* ── PULSE RAIL ─── Proactive insight cards ── */}
+      {visiblePulseCards.length > 0 && (
+        <div className="pulse-rail">
+          {visiblePulseCards.map((card, i) => (
+            <PulseCard
+              key={card.id}
+              card={card}
+              index={i}
+              onDismiss={handlePulseDismiss}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Over Budget Warning Banner */}
       {left < 0 && (
         <div id="over-budget-warning" className="card warning-card" style={{ display: 'flex', borderColor: 'var(--red)', background: 'rgba(200, 94, 58, 0.08)', marginBottom: '24px' }}>
@@ -482,6 +543,50 @@ export default function Overview() {
               </div>
             </div>
           )}
+
+          {/* ── Health Score Gauge ── */}
+          <div className="card pulse-card health-gauge-card" style={{ padding: '20px' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Financial Health</h3>
+            <div className="health-gauge-wrap">
+              <svg viewBox="0 0 120 80" className="health-gauge-svg">
+                {/* Track arc */}
+                <path
+                  d="M 15 75 A 50 50 0 1 1 105 75"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.06)"
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                />
+                {/* Fill arc — 220° sweep, dash = circumference × pct */}
+                <path
+                  d="M 15 75 A 50 50 0 1 1 105 75"
+                  fill="none"
+                  stroke={healthColor}
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(healthScore / 100) * 192} 192`}
+                  style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.4,0,0.2,1), stroke 0.4s ease', filter: `drop-shadow(0 0 6px ${healthColor}55)` }}
+                />
+                {/* Score text */}
+                <text x="60" y="58" textAnchor="middle" fill={healthColor} fontFamily="'Outfit', sans-serif" fontWeight="700" fontSize="22">{healthScore}</text>
+                <text x="60" y="72" textAnchor="middle" fill="#6B7C75" fontFamily="'Inter', sans-serif" fontSize="9">/ 100</text>
+              </svg>
+              <div className="health-gauge-legend">
+                <div className="health-gauge-row">
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Streak</span>
+                  <span style={{ color: 'var(--text)', fontSize: '11px', fontWeight: 600 }}>{user.streak || 0} days</span>
+                </div>
+                <div className="health-gauge-row">
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Budget</span>
+                  <span style={{ color: budgetScore > 20 ? 'var(--green)' : 'var(--red)', fontSize: '11px', fontWeight: 600 }}>{Math.round(budgetScore)}/40</span>
+                </div>
+                <div className="health-gauge-row">
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Savings</span>
+                  <span style={{ color: 'var(--text)', fontSize: '11px', fontWeight: 600 }}>{Math.round(savingsScore)}/25</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* AI Advisor Panel */}
           {user.targetGoal && (

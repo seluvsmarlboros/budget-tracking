@@ -71,6 +71,7 @@ export default function Friends() {
   // Dialog refs
   const settleDialogRef = useRef(null);
   const disconnectDialogRef = useRef(null);
+  const qrDialogRef = useRef(null);
 
   // Full screen notification popup
   const [fullscreenNotification, setFullscreenNotification] = useState('');
@@ -954,11 +955,16 @@ export default function Friends() {
               </h2>
             </div>
             
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {!isDebtor && balanceInfo.balance > 0 && (
-                <button type="button" className="btn btn-ghost btn-sm" id="send-reminder-btn" onClick={handleSendReminder} disabled={isReminderLoading}>
-                  {isReminderLoading ? 'Sending...' : '⚡ Send Reminder'}
-                </button>
+                <>
+                  <button type="button" className="btn btn-ghost btn-sm" id="send-reminder-btn" onClick={handleSendReminder} disabled={isReminderLoading}>
+                    {isReminderLoading ? 'Sending...' : '⚡ Send Reminder'}
+                  </button>
+                  <button type="button" className="btn btn-ghost btn-sm" id="generate-qr-btn" onClick={() => qrDialogRef.current?.showModal()}>
+                    📱 Generate UPI QR
+                  </button>
+                </>
               )}
               <button type="button" className="btn btn-primary btn-sm" id="settle-up-btn" onClick={handleSettleUpOpen}>🤝 Settle Up</button>
               <button type="button" className="btn btn-danger btn-sm" id="leave-partner-btn" onClick={handleLeavePartnershipTrigger}>Disconnect</button>
@@ -1435,6 +1441,77 @@ export default function Friends() {
             </button>
           </div>
         </form>
+      </dialog>
+
+      {/* UPI QR settlement dialog */}
+      <dialog id="dialog-upi-qr" className="dialog" ref={qrDialogRef}>
+        <div style={{ position: 'relative' }}>
+          <button type="button" className="btn-close-dialog" onClick={() => qrDialogRef.current?.close()} aria-label="Close dialog">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <h3 style={{ marginBottom: '12px' }}>Request Settle Payment</h3>
+          
+          {state?.user?.upiId ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '10px 0' }}>
+              <p className="muted" style={{ fontSize: '13px', textAlign: 'center', margin: 0 }}>
+                Scan this QR using any UPI app to settle the balance of <strong>{sym}{balanceInfo.balance.toFixed(2)}</strong>.
+              </p>
+              
+              <div style={{ background: '#fff', padding: '12px', borderRadius: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+                    `upi://pay?pa=${state.user.upiId}&am=${balanceInfo.balance.toFixed(2)}&tn=UniSpend_Settle`
+                  )}`}
+                  alt="UPI QR Code"
+                  style={{ width: '200px', height: '200px', display: 'block' }}
+                />
+              </div>
+
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Your UPI ID</div>
+                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                  <input
+                    type="text"
+                    value={state.user.upiId}
+                    readOnly
+                    style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--border)', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', color: 'var(--text)', fontSize: '13px', outline: 'none' }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    style={{ width: 'auto', height: 'auto', padding: '8px 16px' }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(state.user.upiId);
+                      window.toast('UPI ID copied to clipboard! 📋');
+                    }}
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: '20px 0', textAlign: 'center' }}>
+              <p className="muted" style={{ fontSize: '13px', marginBottom: '20px' }}>
+                You haven't set your UPI ID yet. Configure it in Settings to enable one-click QR code generation!
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  qrDialogRef.current?.close();
+                  window.location.hash = '#settings';
+                }}
+              >
+                Go to Settings
+              </button>
+            </div>
+          )}
+          
+          <div className="dialog-actions" style={{ marginTop: '16px' }}>
+            <button type="button" className="btn-ghost" onClick={() => qrDialogRef.current?.close()}>Dismiss</button>
+          </div>
+        </div>
       </dialog>
 
     </section>

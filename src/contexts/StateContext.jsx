@@ -20,7 +20,9 @@ const emptyState = {
     budgetPeriod: 'month',
     targetGoal: '',
     cutbackCategory: 'Canteen',
-    cachedAiAdvice: ''
+    cachedAiAdvice: '',
+    pulseCards: [],
+    pulseLastScanned: 0
   },
   categories: [...DEFAULT_CATEGORIES],
   transactions: [],
@@ -109,6 +111,14 @@ export const StateProvider = ({ children }) => {
         }
         if (parsed.user.cutbackCategory === undefined) {
           parsed.user.cutbackCategory = 'Canteen';
+          migrated = true;
+        }
+        if (!parsed.user.pulseCards) {
+          parsed.user.pulseCards = [];
+          migrated = true;
+        }
+        if (parsed.user.pulseLastScanned === undefined) {
+          parsed.user.pulseLastScanned = 0;
           migrated = true;
         }
         if (!parsed.ai) {
@@ -563,6 +573,13 @@ export const StateProvider = ({ children }) => {
     saveState(updated);
   };
 
+  const updatePulseCache = (cards) => {
+    const updated = JSON.parse(JSON.stringify(state));
+    updated.user.pulseCards = cards;
+    updated.user.pulseLastScanned = Date.now();
+    saveState(updated);
+  };
+
   const addAutoCategoryRule = (keyword, category) => {
     const updated = JSON.parse(JSON.stringify(state));
     updated.rules.push({
@@ -650,6 +667,7 @@ export const StateProvider = ({ children }) => {
       deleteCategory,
       updateSettings,
       updateAiSettings,
+      updatePulseCache,
       addAutoCategoryRule,
       deleteAutoCategoryRule,
       importData,
