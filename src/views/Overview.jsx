@@ -485,7 +485,7 @@ export default function Overview() {
 
           {/* AI Advisor Panel */}
           {user.targetGoal && (
-            <div className="card advice-card" style={{ padding: '16px', background: 'rgba(197, 160, 89, 0.02)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="advice-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: '600', color: 'var(--accent)' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>

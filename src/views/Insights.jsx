@@ -1,14 +1,13 @@
 import React, { useRef } from 'react';
 import { useStateContext } from '../contexts/StateContext';
 
-const COBALT_TEAL_PALETTE = [
-  '#b08d46', // Medium Gold
-  '#e6c27e', // Champagne Gold
-  '#8c6e3b', // Deep Amber Gold
-  '#d4b978', // Warm Gold
-  '#6e562c', // Dark Bronze
-  '#998052', // Sand Gold
-  '#bf9e65'  // Bronze Gold
+const FOREST_PALETTE = [
+  '#4ADE80', // Spring Mint
+  '#22C55E', // Forest Green
+  '#166534', // Deep Green
+  '#86EFAC', // Light Mint
+  '#14532D', // Darkest Pine
+  '#BBF7D0'  // Pale Mint
 ];
 
 export default function Insights() {
@@ -189,7 +188,7 @@ export default function Insights() {
             >
               {catEntries.map(([cat, amt], i) => {
                 const pct = (amt / catTotal) * 100;
-                const color = COBALT_TEAL_PALETTE[i % COBALT_TEAL_PALETTE.length];
+                const color = FOREST_PALETTE[i % FOREST_PALETTE.length];
                 return (
                   <div
                     key={cat}
@@ -212,7 +211,7 @@ export default function Insights() {
               }}
             >
               {catEntries.map(([cat, amt], i) => {
-                const color = COBALT_TEAL_PALETTE[i % COBALT_TEAL_PALETTE.length];
+                const color = FOREST_PALETTE[i % FOREST_PALETTE.length];
                 const pct = Math.round((amt / catTotal) * 100);
                 return (
                   <div

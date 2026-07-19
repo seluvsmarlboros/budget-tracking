@@ -1,4 +1,4 @@
-/* UniSpend — Premium Glassmorphic Obsidian Design System (src/index.css) */
+/* UniSpend — Nordic Forest Design System (src/index.css) */
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -6,31 +6,37 @@
   --font-title: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  /* Custom Color Tokens (Bronze Obsidian Theme) */
-  --bg: hsl(20, 15%, 2%);
-  --bg-body: hsl(20, 15%, 2%);
-  --bg-card: rgba(26, 22, 20, 0.45);
-  --border: rgba(197, 160, 89, 0.12);
-  --border-focus: hsl(38, 55%, 52%);
-  --text: hsl(38, 20%, 94%);
-  --text-secondary: hsl(38, 10%, 65%);
-  --text-muted: hsl(38, 8%, 45%);
+  /* Backgrounds: Deep organic greens */
+  --bg: #0D1A15;
+  --bg-body: #0D1A15;
+  --bg-card: rgba(26, 43, 36, 0.6);
 
-  /* Luxurious Gold Accent & Gradients */
-  --accent: hsl(38, 55%, 52%);
-  --accent-hover: hsl(38, 65%, 60%);
-  --accent-light: rgba(197, 160, 89, 0.08);
-  --accent-glow: rgba(197, 160, 89, 0.05);
-  --accent-gradient: linear-gradient(135deg, #b08d46 0%, #e6c27e 100%);
+  /* Borders */
+  --border: rgba(74, 222, 128, 0.15);
+  --border-focus: #4ADE80;
 
-  --green: hsl(78, 25%, 52%);
-  --red: hsl(18, 65%, 48%);
-  --orange: hsl(35, 60%, 45%);
+  /* Typography */
+  --text: #F0F4F2;
+  --text-secondary: #A3B3AC;
+  --text-muted: #6B7C75;
 
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-  --glass-blur: blur(24px) saturate(140%);
+  /* Accents */
+  --accent: #4ADE80;
+  --accent-hover: #22C55E;
+  --accent-light: rgba(74, 222, 128, 0.1);
+  --accent-glow: rgba(74, 222, 128, 0.2);
+  --accent-gradient: linear-gradient(135deg, #4ADE80 0%, #22C55E 100%);
+
+  /* Semantic */
+  --green: #4ADE80;
+  --red: #F87171;
+  --orange: #FB923C;
+
+  /* UI Constants */
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  --glass-blur: blur(20px) saturate(160%);
 
   --nav-h: 64px;
   --sidebar-w: 260px;
@@ -38,21 +44,19 @@
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Light Theme overrides - Clean warm ivory with gold/bronze details */
+/* Light Mode Overrides */
 body.light {
-  --bg: hsl(35, 20%, 96%);
-  --bg-body: hsl(35, 20%, 96%);
-  --bg-card: rgba(255, 250, 245, 0.8);
-  --border: rgba(197, 160, 89, 0.2);
-  --border-focus: hsl(38, 50%, 45%);
-  --text: hsl(20, 15%, 12%);
-  --text-secondary: hsl(20, 10%, 35%);
-  --text-muted: hsl(20, 8%, 55%);
-  
-  --bg-card-raw: #fffaf5;
-  --accent-light: rgba(197, 160, 89, 0.05);
-  --accent-glow: rgba(197, 160, 89, 0.05);
-  --shadow: 0 8px 24px rgba(197, 160, 89, 0.08);
+  --bg: #F0F4F2;
+  --bg-body: #F0F4F2;
+  --bg-card: #FFFFFF;
+  --border: rgba(13, 26, 21, 0.1);
+  --border-focus: #22C55E;
+  --text: #0D1A15;
+  --text-secondary: #3D4D46;
+  --text-muted: #6B7C75;
+  --accent-light: rgba(74, 222, 128, 0.08);
+  --accent-glow: rgba(74, 222, 128, 0.15);
+  --shadow: 0 8px 24px rgba(74, 222, 128, 0.06);
 }
 
 /* Reset & Global Styles */
@@ -74,6 +78,19 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Subtle grain texture overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
 }
 
 /* App Layout Shell */
@@ -135,7 +152,7 @@ p.muted {
 /* Top Nav / Desktop Sidebar */
 .top-nav {
   height: var(--nav-h);
-  background: rgba(26, 22, 20, 0.6);
+  background: rgba(13, 26, 21, 0.9);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--border);
@@ -146,7 +163,7 @@ p.muted {
 }
 
 body.light .top-nav {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(240, 244, 242, 0.9);
 }
 
 .nav-inner {
@@ -200,10 +217,11 @@ body.light .top-nav {
 }
 
 .nav-link.active {
-  color: var(--text);
-  background: var(--bg-card);
+  color: var(--accent);
+  background: var(--accent-light);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  border-left: 3px solid var(--accent);
+  padding-left: 11px;
 }
 
 .nav-link.active svg {
@@ -218,18 +236,18 @@ body.light .top-nav {
   left: 16px;
   right: 16px;
   height: var(--bnav-h);
-  background: rgba(26, 22, 20, 0.75);
+  background: rgba(13, 26, 21, 0.85);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 24px;
   box-shadow: var(--shadow);
   z-index: 50;
   padding: 0 10px;
 }
 
 body.light .bottom-nav {
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(240, 244, 242, 0.9);
 }
 
 .bnav {
@@ -283,7 +301,7 @@ body.light .bottom-nav {
     border-bottom: none;
     border-right: 1px solid var(--border);
     flex-shrink: 0;
-    background: rgba(18, 23, 37, 0.4);
+    background: rgba(13, 26, 21, 0.95);
   }
 
   .nav-inner {
@@ -365,7 +383,7 @@ body.light .bottom-nav {
 
 .card:hover {
   transform: translateY(-2px);
-  border-color: rgba(197, 160, 89, 0.25);
+  border-color: rgba(74, 222, 128, 0.3);
   box-shadow: 0 12px 40px var(--accent-glow);
 }
 
@@ -374,30 +392,30 @@ body.light .bottom-nav {
   display: flex;
   align-items: center;
   border-radius: 99px;
-  background: rgba(15, 12, 10, 0.7);
-  border: 1px solid rgba(197, 160, 89, 0.25);
+  background: rgba(13, 26, 21, 0.8);
+  border: 1px solid rgba(74, 222, 128, 0.2);
   padding: 6px 6px 6px 16px;
   margin-bottom: 20px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   transition: var(--transition);
 }
 .ai-capsule:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 12px rgba(197, 160, 89, 0.15);
+  box-shadow: 0 0 0 2px var(--border-focus), 0 4px 20px rgba(74, 222, 128, 0.15);
 }
 .ai-capsule input {
   flex: 1;
   background: transparent !important;
   border: none !important;
   outline: none !important;
-  color: var(--text-primary);
+  color: var(--text);
   font-size: 13.5px;
   padding: 8px 0;
 }
 .ai-capsule button {
   border-radius: 99px;
   background: var(--accent-gradient);
-  color: #000 !important;
+  color: #0D1A15 !important;
   font-weight: 700;
   border: none;
   padding: 8px 20px;
@@ -836,7 +854,8 @@ body.light .feed-icon {
 
 .field input:focus, .field select:focus, .field textarea:focus {
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 1px var(--border-focus);
+  box-shadow: 0 0 0 2px var(--border-focus);
+  outline: none;
 }
 
 .field-row {
@@ -896,9 +915,10 @@ button, .btn {
 }
 
 .btn-primary {
-  background: var(--accent);
-  color: hsl(222, 25%, 8%);
+  background: var(--accent-gradient);
+  color: #0D1A15;
   border-color: var(--accent);
+  font-weight: 700;
   box-shadow: 0 4px 14px var(--accent-glow);
 }
 
@@ -985,7 +1005,7 @@ button, .btn {
 /* Modal Dialog Styles */
 .dialog {
   border: 1px solid var(--border);
-  background: hsl(222, 25%, 10%);
+  background: #0D1A15;
   border-radius: var(--radius);
   padding: 24px;
   color: var(--text);
@@ -1066,7 +1086,7 @@ button, .btn {
 }
 
 .toast {
-  background: rgba(18, 23, 37, 0.95);
+  background: rgba(13, 26, 21, 0.97);
   border: 1px solid var(--border-focus);
   color: var(--text);
   padding: 10px 16px;
@@ -1074,7 +1094,7 @@ button, .btn {
   font-size: 12.5px;
   font-weight: 500;
   text-align: center;
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 20px rgba(74, 222, 128, 0.15);
   animation: toastSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -1114,7 +1134,7 @@ button, .btn {
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(197, 160, 89, 0.07) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(74, 222, 128, 0.07) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -1346,4 +1366,22 @@ button, .btn {
   color: var(--text-secondary);
   font-style: italic;
   margin: 0;
+}
+
+/* AI Advisor card — mint intelligence glow */
+.advice-card {
+  background: rgba(26, 43, 36, 0.5);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.08), var(--shadow);
+  transition: var(--transition);
+}
+
+.advice-card:hover {
+  box-shadow: 0 0 32px rgba(74, 222, 128, 0.15), var(--shadow);
+  border-color: rgba(74, 222, 128, 0.35);
 }
