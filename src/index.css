@@ -2517,3 +2517,16 @@ body.light .health-gauge-row {
   background: rgba(74, 222, 128, 0.25);
   transform: translateY(-1px);
 }
+
+.cmd-k-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 640px) {
+  .cmd-k-btn {
+    display: none !important;
+  }
+}
+

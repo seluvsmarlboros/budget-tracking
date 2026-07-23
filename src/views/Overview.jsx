@@ -345,11 +345,11 @@ export default function Overview() {
         </div>
       )}
 
-      {/* 2. TWO-COLUMN / SINGLE-COLUMN GRID */}
+      {/* 2. OVERVIEW LAYOUT GRID */}
       <div className="overview-grid">
         
-        {/* LEFT COLUMN: Hero balance, AI, and Activities */}
-        <div className="overview-column">
+        {/* MAIN COLUMN */}
+        <div className="overview-column" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* 1. HERO BALANCE SECTION CARD — Main Focus */}
           <div className="hero-balance-section">
@@ -357,6 +357,7 @@ export default function Overview() {
               <span className="hero-greeting">{greet}, {user.name || 'Student'}</span>
               <button
                 type="button"
+                className="cmd-k-btn"
                 onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
                 style={{
                   background: 'rgba(197, 160, 89, 0.12)',
@@ -367,7 +368,6 @@ export default function Overview() {
                   fontSize: '12px',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  display: 'flex',
                   alignItems: 'center',
                   gap: '6px'
                 }}
@@ -443,26 +443,7 @@ export default function Overview() {
             </div>
           </div>
 
-
-          {/* ── PULSE RAIL ─── Proactive Insight & Notification Banner Cards (Positioned below Hero Balance) ── */}
-          {visiblePulseCards.length > 0 && (
-            <div className="pulse-rail" style={{ marginTop: '8px', marginBottom: '24px' }}>
-              {visiblePulseCards.map((card, i) => (
-                <PulseCard
-                  key={card.id}
-                  card={card}
-                  index={i}
-                  onDismiss={handlePulseDismiss}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Interactive What-If Financial Simulator */}
-          <WhatIfSimulator />
-
-
-          {/* AI Command capsule */}
+          {/* 2. AI TYPE BAR */}
           {widgetSettings.showAiBar !== false && (
             <div id="widget-aibar">
               <form id="ai-command-form" className="ai-capsule" onSubmit={handleAiSubmit}>
@@ -499,7 +480,7 @@ export default function Overview() {
             </div>
           )}
 
-          {/* Recent Feed Widget (Shows 5 on desktop, 3 on mobile) */}
+          {/* 3. RECENT ACTIVITY WIDGET */}
           {widgetSettings.showRecent !== false && (
             <div id="widget-recent">
               <div className="section-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -528,12 +509,21 @@ export default function Overview() {
               </div>
             </div>
           )}
-        </div>
 
-        {/* RIGHT COLUMN: Consolidated Stats, Goals, Spikes, & Advice */}
-        <div className="overview-column">
-          
-          {/* Financial Pulse Consolidated Card */}
+          {/* 4. FINANCIAL PULSE RAIL & FINANCIAL PULSE CARD */}
+          {visiblePulseCards.length > 0 && (
+            <div className="pulse-rail">
+              {visiblePulseCards.map((card, i) => (
+                <PulseCard
+                  key={card.id}
+                  card={card}
+                  index={i}
+                  onDismiss={handlePulseDismiss}
+                />
+              ))}
+            </div>
+          )}
+
           <div className="card pulse-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Financial Pulse</h3>
             
@@ -576,7 +566,7 @@ export default function Overview() {
             <p className="pulse-forecast-summary" dangerouslySetInnerHTML={{ __html: forecastHtml }} />
           </div>
 
-          {/* Student Savings Goals Progress Card */}
+          {/* Student Savings Goals & Spikes (Auxiliary cards) */}
           {savingsGoals.length > 0 && (
             <div className="card pulse-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Savings Progress</h3>
@@ -599,7 +589,6 @@ export default function Overview() {
             </div>
           )}
 
-          {/* Upcoming Spike Expenses Card */}
           {spikes.length > 0 && (
             <div className="card pulse-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Upcoming Spikes</h3>
@@ -624,7 +613,7 @@ export default function Overview() {
             </div>
           )}
 
-          {/* ── Health Score Gauge ── */}
+          {/* 5. FINANCIAL HEALTH GAUGE */}
           <div className="card pulse-card health-gauge-card" style={{ padding: '20px' }}>
             <h3 style={{ margin: '0 0 16px 0', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Financial Health</h3>
             <div className="health-gauge-wrap">
@@ -668,6 +657,9 @@ export default function Overview() {
             </div>
           </div>
 
+          {/* 6. WHAT-IF FINANCIAL SIMULATOR */}
+          <WhatIfSimulator />
+
           {/* AI Advisor Panel */}
           {user.targetGoal && (
             <div className="advice-card">
@@ -686,8 +678,10 @@ export default function Overview() {
               </p>
             </div>
           )}
+
         </div>
       </div>
+
 
       {/* iOS Webhook setup dialog modal */}
       <dialog id="dialog-ios-shortcut" className="dialog" ref={iosDialogRef}>
