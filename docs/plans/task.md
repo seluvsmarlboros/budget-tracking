@@ -19,8 +19,9 @@
 | 15: Fix PWA Service Worker caching & place static assets in `public/` | [x] |
 | 16: Configure Vercel deployment settings in `vercel.json` | [x] |
 | 17: Add explicit **Enable Push Notifications** button with browser permission request & registration | [x] |
-| 18: Add live **iOS Shortcut Webhook URL** card with Copy URL & Test Webhook ⚡ buttons | [x] |
+| 18: Add live **iOS Shortcut Webhook URL** card with Copy URL & Test Webhook buttons | [x] |
 | 19: Rehaul & verify settlement sign math so paying debt reduces debt to 0 | [x] |
 | 20: Convert Vercel serverless API functions (`api/*.js`) to ES Modules syntax to fix `FUNCTION_INVOCATION_FAILED` | [x] |
-| 21: Rehaul Settle Modal in `Circles.jsx` to support dual directions: **💸 I Paid (Repaid Debt)** vs **📥 I Received (Collected)** + **Send Nudge 🔔** feature | [x] |
-| 22: Build verification & push changes to GitHub `main` (`26cc823`) | [x] |
+| 21: Rehaul Settle Modal in `Circles.jsx` to support dual directions: **I Paid (Repaid Debt)** vs **I Received (Collected)** + **Send Nudge** feature | [x] |
+| 22: Clean up and remove ALL emojis across entire codebase (`src/`, `api/`, toasts, buttons, card headers), replacing with sleek inline SVGs & typography | [x] |
+| 23: Build verification & push changes to GitHub `main` (`1edce51`) | [x] |
