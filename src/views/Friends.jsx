@@ -3,7 +3,7 @@ import { useStateContext } from '../contexts/StateContext';
 import { SupabaseService, supabase } from '../services/supabase';
 
 export default function Friends() {
-  const { state, syncSupabaseBalances, syncPartnerHistory } = useStateContext();
+  const { state, syncSupabaseBalances, syncPartnerHistory, addTransaction } = useStateContext();
   const sym = state?.user?.currency || '₹';
   const [currentUserId, setCurrentUserId] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -719,6 +719,29 @@ export default function Friends() {
 
     try {
       await SupabaseService.settleBalance(activePartnership.id, amt, details);
+
+      // Log transaction to update available cash liquidity balance
+      const isDebtor = (balanceInfo?.balance || 0) < 0;
+      if (isDebtor) {
+        addTransaction({
+          type: 'expense',
+          category: 'Other',
+          amount: amt,
+          paymentMethod: settleMethod || 'UPI',
+          date: new Date().toISOString().split('T')[0],
+          description: `Settlement paid to ${partnerProfile?.display_name || 'Partner'}`
+        });
+      } else {
+        addTransaction({
+          type: 'income',
+          category: 'Other',
+          amount: amt,
+          paymentMethod: settleMethod || 'UPI',
+          date: new Date().toISOString().split('T')[0],
+          description: `Collected repayment from ${partnerProfile?.display_name || 'Partner'}`
+        });
+      }
+
       window.toast('Settlement payment recorded.');
       if (settleDialogRef.current) settleDialogRef.current.close();
       checkAuthState();

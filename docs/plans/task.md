@@ -25,4 +25,5 @@
 | 21: Rehaul Settle Modal in `Circles.jsx` to support dual directions: **I Paid (Repaid Debt)** vs **I Received (Collected)** + **Send Nudge** feature | [x] |
 | 22: Clean up and remove ALL emojis across entire codebase (`src/`, `api/`, toasts, buttons, card headers), replacing with sleek inline SVGs & typography | [x] |
 | 23: Rehaul `Activity.jsx` layout: Summary Stat Grid, Live Search, Horizontal Scroll Filters, Collapsible Peer IOUs Drawer, and Glassmorphism Modal Sheets | [x] |
-| 24: Build verification & push changes to GitHub `main` (`a90f6d6`) | [x] |
+| 24: Rehaul `Settings.jsx` layout: Responsive Profile Hero Banner, Horizontal Scroll Navigation Tabs, Liquid Glass Panels, and Modal Sheet Overlays | [x] |
+| 25: Build verification & push changes to GitHub `main` (`9ac96a3`) | [x] |

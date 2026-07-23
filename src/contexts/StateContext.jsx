@@ -662,33 +662,33 @@ export const StateProvider = ({ children }) => {
     return true;
   };
 
-  const settleUp = (friend, amount, method) => {
+  const settleUp = (friend, amount, method, direction) => {
     const amt = parseFloat(amount);
     const bal = state.friends.balances[friend] || 0;
     const today = new Date().toISOString().split('T')[0];
-    const meReceive = bal > 0;
-    
+    const meReceive = direction ? direction === 'receive' : bal > 0;
+
     const updated = structuredClone(state);
     if (meReceive) {
-      updated.friends.balances[friend] -= amt;
+      updated.friends.balances[friend] = (updated.friends.balances[friend] || 0) - amt;
       const t = {
         id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
         type: 'income',
         category: 'Other',
         amount: amt,
-        paymentMethod: method,
+        paymentMethod: method || 'UPI',
         date: today,
         description: `Settle: ${friend} paid me back`
       };
       updated.transactions.unshift(t);
     } else {
-      updated.friends.balances[friend] += amt;
+      updated.friends.balances[friend] = (updated.friends.balances[friend] || 0) + amt;
       const t = {
         id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
         type: 'expense',
         category: 'Other',
         amount: amt,
-        paymentMethod: method,
+        paymentMethod: method || 'UPI',
         date: today,
         description: `Settle: Paid back ${friend}`
       };
@@ -1015,6 +1015,7 @@ export const StateProvider = ({ children }) => {
     if (!trans || trans.length === 0) return;
     const updated = structuredClone(state);
     const today = new Date().toISOString().split('T')[0];
+    const myName = (state.user?.name || '').trim().toLowerCase();
 
     trans.forEach(t => {
       const amt = parseFloat(t.amount);
@@ -1023,6 +1024,31 @@ export const StateProvider = ({ children }) => {
       }
       if (updated.friends.balances[t.to] !== undefined) {
         updated.friends.balances[t.to] += amt;
+      }
+
+      // Mirror user involvement in equalized settlement into transactions
+      const fromLower = (t.from || '').trim().toLowerCase();
+      const toLower = (t.to || '').trim().toLowerCase();
+      if (fromLower === myName) {
+        updated.transactions.unshift({
+          id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          type: 'expense',
+          category: 'Other',
+          amount: amt,
+          paymentMethod: 'UPI',
+          date: today,
+          description: `Equalized settlement paid to ${t.to}`
+        });
+      } else if (toLower === myName) {
+        updated.transactions.unshift({
+          id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          type: 'income',
+          category: 'Other',
+          amount: amt,
+          paymentMethod: 'UPI',
+          date: today,
+          description: `Equalized settlement received from ${t.from}`
+        });
       }
 
       updated.friends.history.unshift({
@@ -1034,17 +1060,7 @@ export const StateProvider = ({ children }) => {
         description: `Equalized: Paid ${t.to} directly`,
         direction: 'settled'
       });
-      updated.friends.history.unshift({
-        id: 'iou_eq_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-        type: 'settlement',
-        friend: t.to,
-        amount: amt,
-        date: today,
-        description: `Equalized: Received from ${t.from} directly`,
-        direction: 'settled'
-      });
     });
-
     saveState(updated);
   };
 
@@ -1132,11 +1148,46 @@ export const StateProvider = ({ children }) => {
     if (!circle.transactions) circle.transactions = [];
     circle.transactions.unshift(newTxn);
 
-    // Global transaction mirroring (only for regular expenses, not debt settlements)
-    if (!newTxn.isSettlement) {
-      const myName = state.user.name || 'Arjun';
-      const myShare = newTxn.splits[myName] || 0;
-      if (newTxn.paidBy === myName) {
+    // Global transaction mirroring (updates available cash liquidity balance)
+    const myName = (state.user.name || 'Arjun').trim().toLowerCase();
+    const paidByLower = (newTxn.paidBy || '').trim().toLowerCase();
+    const recipientLower = (newTxn.recipient || '').trim().toLowerCase();
+
+    if (newTxn.isSettlement) {
+      if (paidByLower === myName) {
+        // User paid debt -> Expense (-cash)
+        updated.transactions.unshift({
+          id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          type: 'expense',
+          category: 'Other',
+          amount: newTxn.totalAmount,
+          paymentMethod: 'UPI',
+          date: newTxn.date,
+          description: `Settlement paid to ${newTxn.recipient || 'member'} (${circle.name})`
+        });
+      } else if (recipientLower === myName) {
+        // User collected repayment -> Income (+cash)
+        updated.transactions.unshift({
+          id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          type: 'income',
+          category: 'Other',
+          amount: newTxn.totalAmount,
+          paymentMethod: 'UPI',
+          date: newTxn.date,
+          description: `Collected repayment from ${newTxn.paidBy} (${circle.name})`
+        });
+      }
+    } else {
+      let myShare = 0;
+      if (newTxn.splits) {
+        Object.entries(newTxn.splits).forEach(([k, val]) => {
+          if (k.trim().toLowerCase() === myName) {
+            myShare = parseFloat(val || 0);
+          }
+        });
+      }
+
+      if (paidByLower === myName) {
         updated.transactions.unshift({
           id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
           type: 'expense',
