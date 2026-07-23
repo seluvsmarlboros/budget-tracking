@@ -156,6 +156,36 @@ export default function Settings() {
       window.toast('Please sign in to Supabase first to activate personalized auto-tracking.');
       return;
     }
+
+    // Auto-sync push subscription if permission is granted
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          let sub = await reg.pushManager.getSubscription();
+          if (!sub) {
+            const vapidPublicKey = 'BF7IgezFiN_M2HBCufmwj2yionG4AbT91NDwBZj5tqmrLK5U7pnL-de7DrPiFYZIW5FgFfzSvyQTGZGd5s2bdeQ';
+            const padding = '='.repeat((4 - (vapidPublicKey.length % 4)) % 4);
+            const base64 = (vapidPublicKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const convertedKey = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+              convertedKey[i] = rawData.charCodeAt(i);
+            }
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: convertedKey
+            });
+          }
+          if (sub) {
+            await SupabaseService.savePushSubscription(sub);
+          }
+        }
+      } catch (subErr) {
+        console.warn('Auto-sync push on test webhook warning:', subErr);
+      }
+    }
+
     try {
       const res = await fetch(`/api/sms-log?userId=${user.id}`, {
         method: 'POST',

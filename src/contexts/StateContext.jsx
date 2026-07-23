@@ -458,9 +458,33 @@ export const StateProvider = ({ children }) => {
             (payload) => {
               if (payload.new && payload.new.type === 'pending_transaction') {
                 try {
-                  const txn = JSON.parse(payload.new.message);
-                  addTransaction(txn);
-                  window.toast(`Auto-tracked: ${txn.description} (${state.user.currency}${txn.amount})`);
+                  let txn = null;
+                  if (typeof payload.new.message === 'string' && payload.new.message.trim().startsWith('{')) {
+                    txn = JSON.parse(payload.new.message);
+                  }
+                  if (txn && txn.amount) {
+                    addTransaction(txn);
+                    window.toast(`Auto-tracked: ${txn.description} (${state.user.currency}${txn.amount})`);
+
+                    // Trigger native system notification banner even when app is in foreground
+                    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                      try {
+                        new Notification('UniSpend Auto-Track', {
+                          body: `Auto-tracked: ${state.user.currency}${txn.amount} for ${txn.description}`,
+                          icon: './assets/icon-192.png'
+                        });
+                      } catch (nErr) {
+                        if ('serviceWorker' in navigator) {
+                          navigator.serviceWorker.ready.then(reg => {
+                            reg.showNotification('UniSpend Auto-Track', {
+                              body: `Auto-tracked: ${state.user.currency}${txn.amount} for ${txn.description}`,
+                              icon: './assets/icon-192.png'
+                            });
+                          }).catch(() => {});
+                        }
+                      }
+                    }
+                  }
                 } catch (e) {
                   console.error('Failed to parse auto-track notification:', e);
                 }
