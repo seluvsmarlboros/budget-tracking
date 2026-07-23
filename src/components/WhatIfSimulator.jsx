@@ -47,9 +47,16 @@ export default function WhatIfSimulator() {
 
   // Tab 1 Math: Purchase Impact
   const cost = parseFloat(purchaseAmount) || 0;
-  const currentDailyLimit = Math.round(availableCash / remainingDays);
+  const currentDailyLimit = Math.max(1, Math.round(availableCash / remainingDays));
   const remainingCashAfterPurchase = availableCash - cost;
   const afterPurchaseDailyLimit = Math.round(remainingCashAfterPurchase / remainingDays);
+
+  // Dynamic threshold based on user's current baseline pace:
+  // Safe/Comfortable: >= 65% of current daily limit retained
+  // Tight: 35% - 64% of current daily limit retained
+  // Critical: < 35% of current daily limit retained
+  const comfortableThreshold = Math.max(30, Math.round(currentDailyLimit * 0.65));
+  const tightThreshold = Math.max(10, Math.round(currentDailyLimit * 0.35));
 
   let verdictType = 'safe'; // 'safe' | 'tight' | 'over'
   let verdictTitle = '';
@@ -60,15 +67,20 @@ export default function WhatIfSimulator() {
     const deficit = cost - availableCash;
     verdictTitle = 'Exceeds Available Cash';
     verdictDesc = `This purchase exceeds your remaining balance by ${sym}${deficit.toLocaleString()}.`;
-  } else if (afterPurchaseDailyLimit < 100) {
+  } else if (afterPurchaseDailyLimit < tightThreshold) {
+    verdictType = 'over';
+    verdictTitle = 'Critical Budget Impact';
+    verdictDesc = `Reduces your daily limit down to ${sym}${Math.max(0, afterPurchaseDailyLimit)}/day (drops below 35% of your normal daily pace).`;
+  } else if (afterPurchaseDailyLimit < comfortableThreshold) {
     verdictType = 'tight';
     verdictTitle = 'Tight Budget Ahead';
-    verdictDesc = `Leaves you with a tight daily limit of ${sym}${Math.max(0, afterPurchaseDailyLimit)}/day for the next ${remainingDays} days.`;
+    verdictDesc = `Reduces your daily allowance from ${sym}${currentDailyLimit}/day to ${sym}${Math.max(0, afterPurchaseDailyLimit)}/day for the next ${remainingDays} days.`;
   } else {
     verdictType = 'safe';
-    verdictTitle = 'Safe Purchase!';
-    verdictDesc = `You will still have a comfortable ${sym}${afterPurchaseDailyLimit}/day for the remaining ${remainingDays} days.`;
+    verdictTitle = 'Safe & Comfortable Purchase!';
+    verdictDesc = `You preserve a healthy ${sym}${afterPurchaseDailyLimit}/day allowance (${Math.round((afterPurchaseDailyLimit / currentDailyLimit) * 100)}% of your normal pace) for the next ${remainingDays} days.`;
   }
+
 
   // Tab 2 Math: Savings Goal Target
   const targetGoalVal = parseFloat(goalAmount) || 0;
