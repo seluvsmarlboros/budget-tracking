@@ -626,14 +626,14 @@ export default function Overview() {
           <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', padding: '14px', borderRadius: 'var(--radius)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--accent)', letterSpacing: '0.5px' }}>Step 1: Copy Webhook URL</span>
             <div id="ios-dialog-webhook-display" style={{ fontSize: '11.5px', fontFamily: 'monospace', wordBreak: 'break-all', padding: '6px 8px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-secondary)' }}>
-              {`https://${window.location.host}/api/sms-log?userId=${user.upiId || 'local'}`}
+              {`https://${window.location.host}/api/sms-log?userId=${state.user.id || 'local'}`}
             </div>
             <button
               type="button"
               className="btn-ghost btn-sm"
               style={{ width: 'auto' }}
               onClick={async () => {
-                const urlText = `https://${window.location.host}/api/sms-log?userId=${user.upiId || 'local'}`;
+                const urlText = `https://${window.location.host}/api/sms-log?userId=${state.user.id || 'local'}`;
                 await navigator.clipboard.writeText(urlText);
                 window.toast('Copied webhook URL! 📋');
               }}

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { supabase } from '../services/supabase';
 
 const StateContext = createContext(null);
 
@@ -186,15 +187,46 @@ export const StateProvider = ({ children }) => {
     return updated;
   };
 
-  // Run streak update on mount
+  // Run streak update and global notification listener on mount
+  const notificationSub = useRef(null);
+  
   useEffect(() => {
     if (state.user.onboarded) {
       const updated = updateStreak(state);
       if (updated.user.streak !== state.user.streak || updated.user.lastActiveDate !== state.user.lastActiveDate) {
         saveState(updated);
       }
+      
+      // Global listener for auto-track webhooks (pending_transaction notifications)
+      if (state.user.id && !notificationSub.current) {
+        notificationSub.current = supabase
+          .channel(`user-notifications:${state.user.id}`)
+          .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${state.user.id}` },
+            (payload) => {
+              if (payload.new && payload.new.type === 'pending_transaction') {
+                try {
+                  const txn = JSON.parse(payload.new.message);
+                  addTransaction(txn);
+                  window.toast(`Auto-tracked: ${txn.description} (${state.user.currency}${txn.amount}) 💸`);
+                } catch (e) {
+                  console.error('Failed to parse auto-track notification:', e);
+                }
+              }
+            }
+          )
+          .subscribe();
+      }
     }
-  }, []);
+    
+    return () => {
+      if (notificationSub.current) {
+        notificationSub.current.unsubscribe();
+        notificationSub.current = null;
+      }
+    };
+  }, [state.user.onboarded, state.user.id]);
 
   const resetState = () => {
     localStorage.removeItem(STATE_KEY);
