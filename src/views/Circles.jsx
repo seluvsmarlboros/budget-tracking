@@ -472,7 +472,14 @@ export default function Circles() {
         {/* Activity Cards Feed */}
         <div className="activity-feed-card">
           {displayedActivities.length === 0 ? (
-            <div className="empty-feed">No transactions logged in your circles yet.</div>
+            <div className="empty-feed">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>No transactions logged in your circles yet</span>
+            </div>
           ) : (
             displayedActivities.map((act, idx) => (
               <div key={act.id || idx} className="activity-row" onClick={() => setShowCircleDetail(true)}>
