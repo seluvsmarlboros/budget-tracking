@@ -34,4 +34,5 @@
 | 30: Force Service Worker cache update via `reg.update()` and add instant local notification verification on Re-sync tap | [x] |
 | 31: Restored pure JSON payload in `api/sms-log.js` and updated Service Worker (`unispend-cache-v5`) to extract `amount` & `description` directly | [x] |
 | 32: Eliminated triple duplicate notifications by bypassing `pending_transaction` in `send-reminder.js`, removing redundant triggers in `StateContext.jsx`, and adding `tag` deduplication in `sw.js` | [x] |
-| 33: Dynamically re-generate Overview pulse cards on state changes so settled bills disappear instantly, and enhance recurring charge cards with explicit merchant names & charge details (`1bfa4c1`) | [x] |
+| 33: Dynamically re-generate Overview pulse cards on state changes so settled bills disappear instantly, and enhance recurring charge cards with explicit merchant names & charge details | [x] |
+| 34: Reposition Overview pulse notification cards directly below the Hero Available Balance card so main balance remains the top focal point (`c71f953`) | [x] |

@@ -19,6 +19,7 @@ export default function Overview() {
   const txnHash = transactions.reduce((h, t) => h + t.id + t.amount + t.category, '');
   const sym = user?.currency || '₹';
   const friendBalances = friends?.balances || {};
+  const circlesList = state.circles?.list || [];
   const savingsGoals = wallet?.savingsGoals || [];
   const activeSources = wallet?.sources || [];
 
