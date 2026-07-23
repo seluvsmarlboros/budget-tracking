@@ -38,53 +38,57 @@ export default function Settings() {
   } = useStateContext();
 
   const { user, categories, wallet, ai, rules, widgetSettings } = state;
-  const sym = user.currency || '₹';
+  const sym = user?.currency || '₹';
 
-  // Navigation within settings
-  const [activeTab, setActiveTab] = useState('profile'); // profile, ai, widgets, categories, goals, system
+  // Active tab state
+  const [activeTab, setActiveTab] = useState('profile');
 
-  // Custom modal dialog refs and states replacing window.prompt/confirm
-  const addFundsDialogRef = useRef(null);
-  const deleteGoalDialogRef = useRef(null);
-  const resetSystemDialogRef = useRef(null);
+  // Modal Visibility States
+  const [showCatModal, setShowCatModal] = useState(false);
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [showFundsModal, setShowFundsModal] = useState(false);
+  const [showDeleteGoalModal, setShowDeleteGoalModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+
+  // Goal & funds selected indexes
   const [selectedGoalIdx, setSelectedGoalIdx] = useState(null);
   const [selectedGoalName, setSelectedGoalName] = useState('');
   const [fundsAmount, setFundsAmount] = useState('');
 
   // Profile Settings Form State
-  const [name, setName] = useState(user.name || '');
-  const [currency, setCurrency] = useState(user.currency || '₹');
-  const [pocketMoney, setPocketMoney] = useState(user.weeklyPocketMoney || '');
-  const [commuteType, setCommuteType] = useState(user.commuteType || 'metro');
-  const [upiId, setUpiId] = useState(user.upiId || '');
-  const [budgetPeriod, setBudgetPeriod] = useState(user.budgetPeriod || 'week');
-  const [targetGoal, setTargetGoal] = useState(user.targetGoal || '');
-  const [cutbackCategory, setCutbackCategory] = useState(user.cutbackCategory || 'Canteen');
+  const [name, setName] = useState(user?.name || '');
+  const [currency, setCurrency] = useState(user?.currency || '₹');
+  const [pocketMoney, setPocketMoney] = useState(user?.weeklyPocketMoney || '');
+  const [commuteType, setCommuteType] = useState(user?.commuteType || 'metro');
+  const [upiId, setUpiId] = useState(user?.upiId || '');
+  const [budgetPeriod, setBudgetPeriod] = useState(user?.budgetPeriod || 'week');
+  const [targetGoal, setTargetGoal] = useState(user?.targetGoal || '');
+  const [cutbackCategory, setCutbackCategory] = useState(user?.cutbackCategory || 'Canteen');
 
   // AI Settings Form State
-  const [aiProvider, setAiProvider] = useState(ai.provider || 'groq');
-  const [aiKey, setAiKey] = useState(ai.apiKey || '');
-  const [aiModel, setAiModel] = useState(ai.model || 'llama-3.3-70b-versatile');
+  const [aiProvider, setAiProvider] = useState(ai?.provider || 'groq');
+  const [aiKey, setAiKey] = useState(ai?.apiKey || '');
+  const [aiModel, setAiModel] = useState(ai?.model || 'llama-3.3-70b-versatile');
 
   // Sync state values on load or context updates
   useEffect(() => {
-    setName(user.name || '');
-    setCurrency(user.currency || '₹');
-    setPocketMoney(user.weeklyPocketMoney || '');
-    setCommuteType(user.commuteType || 'metro');
-    setUpiId(user.upiId || '');
-    setBudgetPeriod(user.budgetPeriod || 'week');
-    setTargetGoal(user.targetGoal || '');
-    setCutbackCategory(user.cutbackCategory || 'Canteen');
-    
-    setAiProvider(ai.provider || 'groq');
-    setAiKey(ai.apiKey || '');
-    setAiModel(ai.model || 'llama-3.3-70b-versatile');
+    setName(user?.name || '');
+    setCurrency(user?.currency || '₹');
+    setPocketMoney(user?.weeklyPocketMoney || '');
+    setCommuteType(user?.commuteType || 'metro');
+    setUpiId(user?.upiId || '');
+    setBudgetPeriod(user?.budgetPeriod || 'week');
+    setTargetGoal(user?.targetGoal || '');
+    setCutbackCategory(user?.cutbackCategory || 'Canteen');
+
+    setAiProvider(ai?.provider || 'groq');
+    setAiKey(ai?.apiKey || '');
+    setAiModel(ai?.model || 'llama-3.3-70b-versatile');
   }, [state]);
 
   // Dark mode toggle status
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('unispend_dark') !== '0');
-  
+
   const handleThemeToggleChange = (e) => {
     const checked = e.target.checked;
     setIsDarkMode(checked);
@@ -99,7 +103,7 @@ export default function Settings() {
 
   // Sync Supabase user email label and dynamic webhook URL
   const [supabaseEmail, setSupabaseEmail] = useState('');
-  const activeUserId = user.id || '';
+  const activeUserId = user?.id || '';
   const currentWebhookUrl = `https://${window.location.host}/api/sms-log?userId=${activeUserId || 'local'}`;
 
   const [pushStatus, setPushStatus] = useState(() => {
@@ -137,7 +141,7 @@ export default function Settings() {
           applicationServerKey: convertedKey
         });
       }
-      if (user.id) {
+      if (user?.id) {
         await SupabaseService.savePushSubscription(sub);
       }
       window.toast('Web Push Notifications Activated Successfully!');
@@ -148,8 +152,8 @@ export default function Settings() {
   };
 
   const handleTestWebhook = async () => {
-    if (!user.id) {
-      window.toast('Please sign in to Supabase first to activate personalized auto-tracking!');
+    if (!user?.id) {
+      window.toast('Please sign in to Supabase first to activate personalized auto-tracking.');
       return;
     }
     try {
@@ -222,7 +226,6 @@ export default function Settings() {
 
   // Category Add
   const [newCatName, setNewCatName] = useState('');
-  const catDialogRef = useRef(null);
 
   const handleAddCatSubmit = (e) => {
     e.preventDefault();
@@ -232,7 +235,7 @@ export default function Settings() {
     if (addCategory(cleanName)) {
       window.toast(`Category "${cleanName}" created!`);
       setNewCatName('');
-      if (catDialogRef.current) catDialogRef.current.close();
+      setShowCatModal(false);
     } else {
       window.toast('Category already exists');
     }
@@ -242,7 +245,6 @@ export default function Settings() {
   const [newGoalName, setNewGoalName] = useState('');
   const [newGoalTarget, setNewGoalTarget] = useState('');
   const [newGoalSaved, setNewGoalSaved] = useState('');
-  const goalDialogRef = useRef(null);
 
   const handleAddGoalSubmit = (e) => {
     e.preventDefault();
@@ -257,14 +259,14 @@ export default function Settings() {
     setNewGoalName('');
     setNewGoalTarget('');
     setNewGoalSaved('');
-    if (goalDialogRef.current) goalDialogRef.current.close();
+    setShowGoalModal(false);
   };
 
   const handleAddGoalFunds = (idx, gName) => {
     setSelectedGoalIdx(idx);
     setSelectedGoalName(gName);
     setFundsAmount('');
-    addFundsDialogRef.current?.showModal();
+    setShowFundsModal(true);
   };
 
   const handleAddGoalFundsSubmit = (e) => {
@@ -273,21 +275,21 @@ export default function Settings() {
     if (!isNaN(val) && val > 0 && selectedGoalIdx !== null) {
       addSavingsAmount(selectedGoalIdx, val);
       window.toast('Saved successfully.');
-      addFundsDialogRef.current?.close();
+      setShowFundsModal(false);
     }
   };
 
   const handleDeleteGoal = (idx, gName) => {
     setSelectedGoalIdx(idx);
     setSelectedGoalName(gName);
-    deleteGoalDialogRef.current?.showModal();
+    setShowDeleteGoalModal(true);
   };
 
   const handleDeleteGoalConfirm = () => {
     if (selectedGoalIdx !== null) {
       deleteSavingsGoal(selectedGoalIdx);
       window.toast('Savings goal deleted.');
-      deleteGoalDialogRef.current?.close();
+      setShowDeleteGoalModal(false);
     }
   };
 
@@ -346,17 +348,12 @@ export default function Settings() {
     reader.readAsText(file);
   };
 
-  const handleResetAllData = () => {
-    resetSystemDialogRef.current?.showModal();
-  };
-
   const handleResetAllDataConfirm = () => {
     resetState();
     window.toast('System reset complete.');
-    resetSystemDialogRef.current?.close();
+    setShowResetModal(false);
   };
 
-  // Resolve API Key Label
   const getApiKeyLabel = () => {
     if (aiProvider === 'openrouter') return 'OpenRouter API Key';
     if (aiProvider === 'gemini') return 'Google AI Studio API Key';
@@ -369,97 +366,159 @@ export default function Settings() {
     return 'gsk_...';
   };
 
-  // Settings Tabs List
   const tabsList = [
-    { id: 'profile', label: 'User Profile' },
-    { id: 'ai', label: 'AI Configurations' },
-    { id: 'widgets', label: 'Dashboard widgets' },
-    { id: 'categories', label: 'Category Editor' },
+    { id: 'profile', label: 'Profile Settings' },
+    { id: 'ai', label: 'AI Models' },
+    { id: 'widgets', label: 'Widgets' },
+    { id: 'categories', label: 'Categories' },
     { id: 'goals', label: 'Savings Goals' },
-    { id: 'rules', label: 'Auto Category Rules' },
-    { id: 'system', label: 'System Recovery' }
+    { id: 'rules', label: 'Auto Rules' },
+    { id: 'system', label: 'System & Webhooks' }
   ];
 
   return (
-    <section id="view-settings" className="view active">
-      {/* Header Profile summary */}
-      <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '24px', background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(197, 160, 89, 0.03) 100%)', borderLeft: '4px solid var(--accent)' }}>
-        <div id="set-profile-avatar" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--accent-light)', color: 'var(--accent)', fontSize: '20px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {name.charAt(0).toUpperCase() || 'S'}
+    <section id="view-settings" className="view active" style={{ maxWidth: '960px', margin: '0 auto', paddingBottom: '40px' }}>
+      
+      {/* Header Profile Banner */}
+      <div
+        className="card"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '20px',
+          padding: '24px',
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(197, 160, 89, 0.06) 100%)',
+          borderLeft: '4px solid var(--accent)',
+          marginBottom: '20px',
+          flexWrap: 'wrap'
+        }}
+      >
+        <div
+          style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            background: 'var(--accent-light)',
+            color: 'var(--accent)',
+            fontSize: '22px',
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}
+        >
+          {name.charAt(0).toUpperCase() || 'U'}
         </div>
-        <div style={{ flex: 1 }}>
-          <h2 id="set-profile-name" style={{ margin: 0, fontSize: '20px', fontWeight: 800 }}>{name || 'Student'}</h2>
-          <div id="set-profile-email" style={{ marginTop: '4px' }}>
+
+        <div style={{ flex: 1, minWidth: '200px' }}>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 800 }}>{name || 'Student User'}</h2>
+          <div style={{ marginTop: '6px' }}>
             {supabaseEmail ? (
-              <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--green)', border: '1px solid rgba(16, 185, 129, 0.2)', fontSize: '11px', padding: '2px 8px', borderRadius: '12px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <span
+                style={{
+                  background: 'rgba(74, 222, 128, 0.12)',
+                  color: 'var(--green)',
+                  border: '1px solid rgba(74, 222, 128, 0.3)',
+                  fontSize: '11.5px',
+                  padding: '3px 10px',
+                  borderRadius: '12px',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}
+              >
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                 Sync Connected ({supabaseEmail})
               </span>
             ) : (
-              <span className="badge" style={{ background: 'rgba(107, 114, 128, 0.1)', color: 'var(--text-muted)', border: '1px solid var(--border)', fontSize: '11px', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+              <span
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: 'var(--text-muted)',
+                  border: '1px solid var(--border)',
+                  fontSize: '11.5px',
+                  padding: '3px 10px',
+                  borderRadius: '12px',
+                  fontWeight: 600
+                }}
+              >
                 Local Offline Mode
               </span>
             )}
           </div>
         </div>
-        <div style={{ textAlign: 'right', display: 'flex', gap: '16px' }}>
-          <div>
-            <div style={{ fontSize: '10.5px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Streak</div>
-            <strong id="set-streak" style={{ fontSize: '20px', color: 'var(--accent)' }}>{user.streak || 0}</strong>d
+
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '10.5px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.5px' }}>Streak</div>
+            <strong style={{ fontSize: '20px', color: 'var(--accent)', fontWeight: 800 }}>{user?.streak || 0}d</strong>
           </div>
-          <div>
-            <div style={{ fontSize: '10.5px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Active</div>
-            <strong id="set-active-days" style={{ fontSize: '20px' }}>{user.totalDaysActive || 0}</strong>d
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '10.5px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.5px' }}>Active</div>
+            <strong style={{ fontSize: '20px', color: 'var(--text)', fontWeight: 800 }}>{user?.totalDaysActive || 0}d</strong>
           </div>
         </div>
       </div>
 
-      {/* Settings layout structure */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
-        
-        {/* Navigation Tabs bar */}
-        <div className="pill-row wrap" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
-          {tabsList.map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              className={`pill small ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      {/* Horizontal Scrollable Tabs Navigation */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '8px',
+          overflowX: 'auto',
+          paddingBottom: '8px',
+          marginBottom: '20px',
+          borderBottom: '1px solid var(--border)',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}
+      >
+        {tabsList.map(tab => (
+          <button
+            key={tab.id}
+            type="button"
+            className={`pill small ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+            style={{ flexShrink: 0 }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-        {/* Global Dark Theme Toggle (renders in Profile tab) */}
-        {activeTab === 'profile' && (
+      {/* 1. PROFILE TAB */}
+      {activeTab === 'profile' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          
+          {/* Dark Theme Toggle Card */}
           <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px' }}>
-            <span style={{ fontSize: '14px', fontWeight: 600 }}>Dark Theme Mode</span>
-            <label className="check-row" style={{ margin: 0 }}>
+            <div>
+              <span style={{ fontSize: '14px', fontWeight: 600, display: 'block' }}>Dark Glass Theme</span>
+              <span className="muted" style={{ fontSize: '12px' }}>Toggle between dark liquid glass and light mode</span>
+            </div>
+            <label className="check-row" style={{ margin: 0, cursor: 'pointer' }}>
               <input
                 type="checkbox"
-                id="toggle-dark"
                 checked={isDarkMode}
                 onChange={handleThemeToggleChange}
               />
             </label>
           </div>
-        )}
 
-        {/* PROFILE CONFIG */}
-        {activeTab === 'profile' && (
-          <div className="card settings-group-card" id="settings-group-profile">
-            <h3 style={{ marginBottom: '16px' }}>Adjust Profile Settings</h3>
-            <form id="settings-form" onSubmit={handleProfileSubmit}>
-              <div className="field">
-                <label htmlFor="set-name">Display Name</label>
-                <input type="text" id="set-name" value={name} onChange={(e) => setName(e.target.value)} required />
+          <div className="card" style={{ padding: '24px' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 700 }}>Profile Parameters</h3>
+            <form onSubmit={handleProfileSubmit}>
+              <div className="field" style={{ marginBottom: '16px' }}>
+                <label>Display Name</label>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
               </div>
-              
-              <div className="field-row">
+
+              <div className="field-row" style={{ marginBottom: '16px' }}>
                 <div className="field">
-                  <label htmlFor="set-currency">Currency Symbol</label>
-                  <select id="set-currency" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                  <label>Currency Symbol</label>
+                  <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
                     <option value="₹">Rupee (₹)</option>
                     <option value="$">Dollar ($)</option>
                     <option value="€">Euro (€)</option>
@@ -467,25 +526,25 @@ export default function Settings() {
                   </select>
                 </div>
                 <div className="field">
-                  <label htmlFor="set-budget">{budgetPeriod === 'month' ? `Monthly Allowance (${currency})` : `Weekly Allowance (${currency})`}</label>
-                  <input type="number" id="set-budget" value={pocketMoney} onChange={(e) => setPocketMoney(e.target.value)} required />
+                  <label>{budgetPeriod === 'month' ? `Monthly Allowance (${currency})` : `Weekly Allowance (${currency})`}</label>
+                  <input type="number" value={pocketMoney} onChange={(e) => setPocketMoney(e.target.value)} required />
                 </div>
               </div>
 
-              <div className="field-row">
+              <div className="field-row" style={{ marginBottom: '16px' }}>
                 <div className="field">
-                  <label htmlFor="set-period">Budget Duration</label>
-                  <select id="set-period" value={budgetPeriod} onChange={(e) => setBudgetPeriod(e.target.value)}>
+                  <label>Budget Reset Duration</label>
+                  <select value={budgetPeriod} onChange={(e) => setBudgetPeriod(e.target.value)}>
                     <option value="week">Weekly Pocket Money</option>
                     <option value="month">Monthly Pocket Money</option>
                   </select>
-                  <span className="hint" style={{ fontSize: '11px', marginTop: '4px', display: 'block', color: 'var(--text-secondary)' }}>
-                    Your allowance budget resets every {budgetPeriod === 'month' ? 'calendar month' : 'Monday'}.
+                  <span className="hint" style={{ fontSize: '11px', marginTop: '4px', display: 'block', color: 'var(--text-muted)' }}>
+                    Allowance resets every {budgetPeriod === 'month' ? 'calendar month' : 'Monday'}.
                   </span>
                 </div>
                 <div className="field">
-                  <label htmlFor="set-commute">Default Commute Mode</label>
-                  <select id="set-commute" value={commuteType} onChange={(e) => setCommuteType(e.target.value)}>
+                  <label>Default Commute Mode</label>
+                  <select value={commuteType} onChange={(e) => setCommuteType(e.target.value)}>
                     <option value="metro">Metro return (₹60)</option>
                     <option value="bus">Bus return (₹30)</option>
                     <option value="petrol">Bike fuel (₹100)</option>
@@ -495,347 +554,340 @@ export default function Settings() {
                 </div>
               </div>
 
-              <div className="field">
-                <label htmlFor="set-upi">Your UPI Address (For settlement QR codes)</label>
-                <input type="text" id="set-upi" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="username@upi" />
+              <div className="field" style={{ marginBottom: '16px' }}>
+                <label>Your UPI Address (For settlement QR codes)</label>
+                <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="username@upi" />
               </div>
 
-              <div className="field-row" style={{ borderTop: '1px dashed var(--border)', paddingTop: '16px', marginTop: '12px' }}>
+              <div className="field-row" style={{ borderTop: '1px dashed var(--border)', paddingTop: '16px', marginTop: '16px' }}>
                 <div className="field">
-                  <label htmlFor="set-target-goal">AI Target Savings Goal</label>
-                  <input type="text" id="set-target-goal" value={targetGoal} onChange={(e) => setTargetGoal(e.target.value)} placeholder="e.g. Save 1000 for exam passes" />
+                  <label>AI Target Savings Goal</label>
+                  <input type="text" value={targetGoal} onChange={(e) => setTargetGoal(e.target.value)} placeholder="e.g. Save 1000 for exam passes" />
                 </div>
                 <div className="field">
-                  <label htmlFor="set-cutback-category">Cutback Target Category</label>
-                  <select id="set-cutback-category" value={cutbackCategory} onChange={(e) => setCutbackCategory(e.target.value)}>
+                  <label>Cutback Target Category</label>
+                  <select value={cutbackCategory} onChange={(e) => setCutbackCategory(e.target.value)}>
                     {categories.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
 
-              <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '16px' }}>Save Profile Details</button>
+              <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '20px' }}>Save Profile Details</button>
             </form>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* AI CONFIG */}
-        {activeTab === 'ai' && (
-          <div className="card settings-group-card" id="settings-group-ai">
-            <h3 style={{ marginBottom: '16px' }}>Model & API Configurations</h3>
-            <form id="ai-settings-form" onSubmit={handleAiSubmit}>
-              <div className="field">
-                <label htmlFor="set-ai-provider">AI Service Provider</label>
-                <select id="set-ai-provider" value={aiProvider} onChange={(e) => {
-                  const p = e.target.value;
-                  setAiProvider(p);
-                  setAiModel(PROVIDER_MODELS[p][0].val);
-                }}>
-                  <option value="groq">Groq Console (Fastest)</option>
-                  <option value="gemini">Google Gemini API</option>
-                  <option value="openrouter">OpenRouter Router</option>
-                </select>
-              </div>
-
-              <div className="field">
-                <label htmlFor="set-ai-model">AI Model Selection</label>
-                <select id="set-ai-model" value={aiModel} onChange={(e) => setAiModel(e.target.value)}>
-                  {(PROVIDER_MODELS[aiProvider] || []).map(m => (
-                    <option key={m.val} value={m.val}>{m.txt}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="field">
-                <label id="ai-key-label" htmlFor="set-ai-key">{getApiKeyLabel()}</label>
-                <input
-                  type="password"
-                  id="set-ai-key"
-                  value={aiKey}
-                  onChange={(e) => setAiKey(e.target.value)}
-                  placeholder={getApiKeyPlaceholder()}
-                />
-              </div>
-
-              <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '16px' }}>Save AI Provider Settings</button>
-            </form>
-          </div>
-        )}
-
-        {/* WIDGETS CONFIG */}
-        {activeTab === 'widgets' && (
-          <div className="card settings-group-card" id="settings-group-widgets">
-            <h3 style={{ marginBottom: '16px' }}>Dashboard Widget Settings</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <label className="check-row" style={{ cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  id="widget-toggle-budget"
-                  checked={widgetSettings.showBudget !== false}
-                  onChange={(e) => handleWidgetToggle('showBudget', e.target.checked)}
-                />
-                Show Allowance Budget remaining progress fill
-              </label>
-              <label className="check-row" style={{ cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  id="widget-toggle-burnrate"
-                  checked={widgetSettings.showBurnRate !== false}
-                  onChange={(e) => handleWidgetToggle('showBurnRate', e.target.checked)}
-                />
-                Show Spend Burn Rate velocity & runway forecast
-              </label>
-              <label className="check-row" style={{ cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  id="widget-toggle-aibar"
-                  checked={widgetSettings.showAiBar !== false}
-                  onChange={(e) => handleWidgetToggle('showAiBar', e.target.checked)}
-                />
-                Show Natural Language Command processor bar
-              </label>
-              <label className="check-row" style={{ cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  id="widget-toggle-stats"
-                  checked={widgetSettings.showStats !== false}
-                  onChange={(e) => handleWidgetToggle('showStats', e.target.checked)}
-                />
-                Show Quick statistics row (commute, friend owes)
-              </label>
-              <label className="check-row" style={{ cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  id="widget-toggle-recent"
-                  checked={widgetSettings.showRecent !== false}
-                  onChange={(e) => handleWidgetToggle('showRecent', e.target.checked)}
-                />
-                Show Recent activities logs checklist feed
-              </label>
-            </div>
-          </div>
-        )}
-
-        {/* CATEGORIES CONFIG */}
-        {activeTab === 'categories' && (
-          <div className="card settings-group-card" id="settings-group-categories">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0 }}>Category Editor</h3>
-              <button type="button" className="btn btn-ghost btn-sm" id="btn-add-cat" onClick={() => catDialogRef.current?.showModal()}>+ Add Category</button>
-            </div>
-            
-            <div id="cat-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {categories.map(c => (
-                <span
-                  key={c}
-                  className="tag"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-sm)',
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    fontWeight: 500
-                  }}
-                >
-                  {c}
-                  <button
-                    type="button"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1, padding: 0 }}
-                    onClick={() => {
-                      deleteCategory(c);
-                      window.toast(`Category "${c}" removed`);
-                    }}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* SAVINGS GOALS CONFIG */}
-        {activeTab === 'goals' && (
-          <div className="card settings-group-card" id="settings-group-goals">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0 }}>Savings Goals runway</h3>
-              <button type="button" className="btn btn-ghost btn-sm" id="btn-add-goal" onClick={() => goalDialogRef.current?.showModal()}>+ New Goal</button>
-            </div>
-
-            <div id="goals-list" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {(!wallet.savingsGoals || wallet.savingsGoals.length === 0) ? (
-                <p className="empty-state" style={{ padding: '16px 0' }}>No active goals. Add one above!</p>
-              ) : (
-                wallet.savingsGoals.map((g, idx) => {
-                  const pct = g.target > 0 ? Math.min((g.saved / g.target) * 100, 100) : 0;
-                  return (
-                    <div key={idx} className="goal-item" style={{ background: 'rgba(0,0,0,0.1)', border: '1px solid var(--border)', padding: '16px', borderRadius: 'var(--radius)' }}>
-                      <div className="goal-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <strong style={{ fontSize: '14.5px' }}>{g.name}</strong>
-                        <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>{cur(g.saved)} / {cur(g.target)}</span>
-                      </div>
-                      <div className="goal-bar" style={{ height: '6px', background: 'rgba(255,255,255,0.03)', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px', border: '1px solid var(--border)' }}>
-                        <div className="goal-fill" style={{ height: '100%', background: 'var(--accent-gradient)', width: `${pct}%` }}></div>
-                      </div>
-                      <div className="goal-actions" style={{ display: 'flex', gap: '8px' }}>
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleAddGoalFunds(idx, g.name)}>+ Add funds</button>
-                        <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteGoal(idx, g.name)}>Delete</button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* RULES CONFIG */}
-        {activeTab === 'rules' && (
-          <div className="card settings-group-card" id="settings-group-rules">
-            <h3 style={{ marginBottom: '12px' }}>Automatic Category Mapping Rules</h3>
-            <p className="muted" style={{ fontSize: '12.5px', lineHeight: 1.4, marginBottom: '16px' }}>Map transaction descriptions containing specific keywords directly to categories (e.g. mapping "Samosa" to "Food").</p>
-            
-            <form id="auto-rule-form" onSubmit={handleRuleSubmit} style={{ marginBottom: '20px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <input
-                type="text"
-                id="rule-keyword"
-                value={ruleKeyword}
-                onChange={(e) => setRuleKeyword(e.target.value)}
-                placeholder="Description Keyword (e.g. Samosa)"
-                required
-                style={{ flex: 2, padding: '8px 10px', minWidth: '150px' }}
-              />
-              <select
-                id="rule-category"
-                value={ruleCat}
-                onChange={(e) => setRuleCat(e.target.value)}
-                style={{ flex: 1, padding: '8px 10px', minWidth: '120px' }}
-              >
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+      {/* 2. AI CONFIG TAB */}
+      {activeTab === 'ai' && (
+        <div className="card" style={{ padding: '24px' }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 700 }}>AI Engine & LLM Configurations</h3>
+          <form onSubmit={handleAiSubmit}>
+            <div className="field" style={{ marginBottom: '16px' }}>
+              <label>AI Provider Service</label>
+              <select value={aiProvider} onChange={(e) => {
+                const p = e.target.value;
+                setAiProvider(p);
+                setAiModel(PROVIDER_MODELS[p][0].val);
+              }}>
+                <option value="groq">Groq Console (Ultra Fast)</option>
+                <option value="gemini">Google Gemini API</option>
+                <option value="openrouter">OpenRouter Router</option>
               </select>
-              <button type="submit" className="btn-primary" style={{ height: '38px', padding: '0 16px' }}>Add Mapping Rule</button>
-            </form>
-
-            <div id="rules-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {(!rules || rules.length === 0) ? (
-                <div className="empty-state" style={{ padding: '12px 0', width: '100%' }}>No active rules. Add one above!</div>
-              ) : (
-                rules.map(r => (
-                  <span
-                    key={r.id || r.keyword}
-                    className="tag"
-                    style={{
-                      border: '1px solid var(--border)',
-                      background: 'rgba(255,255,255,0.02)',
-                      fontSize: '12.5px',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '6px 12px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    <strong>{r.keyword}</strong> &rarr; <span className="muted">{r.category}</span>
-                    <button
-                      type="button"
-                      style={{ background: 'none', border: 'none', fontSize: '15px', cursor: 'pointer', color: 'var(--text-muted)', padding: 0 }}
-                      onClick={() => {
-                        deleteAutoCategoryRule(r.id || r.keyword);
-                        window.toast('Rule removed');
-                      }}
-                    >
-                      &times;
-                    </button>
-                  </span>
-                ))
-              )}
             </div>
+
+            <div className="field" style={{ marginBottom: '16px' }}>
+              <label>Model Architecture</label>
+              <select value={aiModel} onChange={(e) => setAiModel(e.target.value)}>
+                {(PROVIDER_MODELS[aiProvider] || []).map(m => (
+                  <option key={m.val} value={m.val}>{m.txt}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="field" style={{ marginBottom: '16px' }}>
+              <label>{getApiKeyLabel()}</label>
+              <input
+                type="password"
+                value={aiKey}
+                onChange={(e) => setAiKey(e.target.value)}
+                placeholder={getApiKeyPlaceholder()}
+              />
+            </div>
+
+            <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '16px' }}>Save AI Settings</button>
+          </form>
+        </div>
+      )}
+
+      {/* 3. WIDGETS TAB */}
+      {activeTab === 'widgets' && (
+        <div className="card" style={{ padding: '24px' }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 700 }}>Dashboard Widget Visibility</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <label className="check-row" style={{ cursor: 'pointer', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+              <input
+                type="checkbox"
+                checked={widgetSettings.showBudget !== false}
+                onChange={(e) => handleWidgetToggle('showBudget', e.target.checked)}
+              />
+              Show Allowance Budget progress fill card
+            </label>
+            <label className="check-row" style={{ cursor: 'pointer', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+              <input
+                type="checkbox"
+                checked={widgetSettings.showBurnRate !== false}
+                onChange={(e) => handleWidgetToggle('showBurnRate', e.target.checked)}
+              />
+              Show Spend Burn Rate velocity & forecast
+            </label>
+            <label className="check-row" style={{ cursor: 'pointer', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+              <input
+                type="checkbox"
+                checked={widgetSettings.showAiBar !== false}
+                onChange={(e) => handleWidgetToggle('showAiBar', e.target.checked)}
+              />
+              Show Natural Language AI Command bar
+            </label>
+            <label className="check-row" style={{ cursor: 'pointer', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+              <input
+                type="checkbox"
+                checked={widgetSettings.showStats !== false}
+                onChange={(e) => handleWidgetToggle('showStats', e.target.checked)}
+              />
+              Show Quick Statistics row (commute, IOUs)
+            </label>
+            <label className="check-row" style={{ cursor: 'pointer', padding: '8px 0' }}>
+              <input
+                type="checkbox"
+                checked={widgetSettings.showRecent !== false}
+                onChange={(e) => handleWidgetToggle('showRecent', e.target.checked)}
+              />
+              Show Recent Activity feed logs
+            </label>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* SYSTEM ACTIONS & WEBHOOK CONFIG */}
-        {activeTab === 'system' && (
-          <div className="card settings-group-card" id="settings-group-system">
-            
-            {/* Notifications & Background Automation Card */}
-            <div className="card" style={{ display: 'block', background: 'rgba(197, 160, 89, 0.02)', border: '1px solid var(--border)', padding: '18px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700 }}>Push Notifications & Auto-Track Webhook</h4>
-                  <p className="muted" style={{ fontSize: '12px', margin: '4px 0 0 0' }}>Activate background alerts and copy your iOS auto-log webhook link.</p>
-                </div>
-                <span className="badge" style={{
-                  background: pushStatus === 'granted' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                  color: pushStatus === 'granted' ? 'var(--green)' : 'var(--red)',
-                  border: '1px solid var(--border)', fontSize: '11px', padding: '3px 8px', borderRadius: '12px'
-                }}>
-                  {pushStatus === 'granted' ? 'Push Granted' : 'Push Disabled'}
-                </span>
-              </div>
+      {/* 4. CATEGORIES TAB */}
+      {activeTab === 'categories' && (
+        <div className="card" style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Custom Budget Categories</h3>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowCatModal(true)}>+ Add Category</button>
+          </div>
 
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {categories.map(c => (
+              <span
+                key={c}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '6px 12px',
+                  fontSize: '13px',
+                  fontWeight: 600
+                }}
+              >
+                {c}
                 <button
                   type="button"
-                  className="btn-primary"
-                  onClick={handleActivatePush}
-                  style={{ height: '36px', fontSize: '12.5px', padding: '0 16px', fontWeight: 600 }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1, padding: 0 }}
+                  onClick={() => {
+                    deleteCategory(c);
+                    window.toast(`Category "${c}" removed`);
+                  }}
                 >
-                  {pushStatus === 'granted' ? 'Re-sync Push Notifications' : 'Enable Push Notifications'}
+                  ✕
                 </button>
-              </div>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
-              <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', padding: '12px', borderRadius: '6px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    iOS Shortcut Webhook URL
-                  </span>
-                  {user.id ? (
-                    <span style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 600 }}>
-                      ✓ UUID Synced ({user.id.substring(0, 8)}...)
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                      (Sign in to sync custom UUID)
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <div id="ios-webhook-display" style={{ flex: 1, padding: '8px 10px', fontSize: '11px', fontFamily: 'monospace', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: '4px', wordBreak: 'break-all', color: 'var(--text-secondary)' }}>
-                    {currentWebhookUrl}
+      {/* 5. SAVINGS GOALS TAB */}
+      {activeTab === 'goals' && (
+        <div className="card" style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Savings Goals Runway</h3>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowGoalModal(true)}>+ New Goal</button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {(!wallet?.savingsGoals || wallet.savingsGoals.length === 0) ? (
+              <p className="empty-state" style={{ padding: '20px 0', fontSize: '13px' }}>No active goals. Click + New Goal to start!</p>
+            ) : (
+              wallet.savingsGoals.map((g, idx) => {
+                const pct = g.target > 0 ? Math.min((g.saved / g.target) * 100, 100) : 0;
+                return (
+                  <div key={idx} style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border)', padding: '16px', borderRadius: 'var(--radius)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '14.5px' }}>{g.name}</strong>
+                      <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>{cur(g.saved)} / {cur(g.target)} ({Math.round(pct)}%)</span>
+                    </div>
+                    <div style={{ height: '6px', background: 'rgba(255,255,255,0.03)', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px', border: '1px solid var(--border)' }}>
+                      <div style={{ height: '100%', background: 'var(--accent-gradient)', width: `${pct}%` }}></div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleAddGoalFunds(idx, g.name)}>+ Add Funds</button>
+                      <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteGoal(idx, g.name)}>Delete</button>
+                    </div>
                   </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 6. AUTO RULES TAB */}
+      {activeTab === 'rules' && (
+        <div className="card" style={{ padding: '24px' }}>
+          <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 700 }}>Auto Category Mapping Rules</h3>
+          <p className="muted" style={{ fontSize: '12.5px', lineHeight: 1.4, marginBottom: '16px' }}>Automatically map incoming transaction keywords (e.g., "Uber" → "Travel").</p>
+
+          <form onSubmit={handleRuleSubmit} style={{ marginBottom: '20px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              value={ruleKeyword}
+              onChange={(e) => setRuleKeyword(e.target.value)}
+              placeholder="Keyword (e.g. Samosa)"
+              required
+              style={{ flex: 2, padding: '8px 12px', minWidth: '150px' }}
+            />
+            <select
+              value={ruleCat}
+              onChange={(e) => setRuleCat(e.target.value)}
+              style={{ flex: 1, padding: '8px 12px', minWidth: '120px' }}
+            >
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <button type="submit" className="btn-primary" style={{ height: '38px', padding: '0 16px' }}>Add Rule</button>
+          </form>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {(!rules || rules.length === 0) ? (
+              <div className="empty-state" style={{ padding: '16px 0', width: '100%', fontSize: '13px' }}>No mapping rules added yet.</div>
+            ) : (
+              rules.map(r => (
+                <span
+                  key={r.id || r.keyword}
+                  style={{
+                    border: '1px solid var(--border)',
+                    background: 'rgba(255,255,255,0.02)',
+                    fontSize: '12.5px',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '6px 12px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <strong>{r.keyword}</strong> &rarr; <span className="muted">{r.category}</span>
                   <button
                     type="button"
-                    className="btn-ghost btn-sm"
-                    id="btn-copy-webhook"
-                    onClick={async () => {
-                      await navigator.clipboard.writeText(currentWebhookUrl);
-                      window.toast('Copied webhook URL.');
+                    style={{ background: 'none', border: 'none', fontSize: '14px', cursor: 'pointer', color: 'var(--text-muted)', padding: 0 }}
+                    onClick={() => {
+                      deleteAutoCategoryRule(r.id || r.keyword);
+                      window.toast('Rule removed');
                     }}
-                    style={{ flexShrink: 0, height: '34px', width: 'auto' }}
                   >
-                    Copy URL
+                    ✕
                   </button>
-                  <button
-                    type="button"
-                    className="btn-ghost btn-sm"
-                    onClick={handleTestWebhook}
-                    style={{ flexShrink: 0, height: '34px', width: 'auto', color: 'var(--accent)' }}
-                  >
-                    Test Webhook
-                  </button>
-                </div>
+                </span>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 7. SYSTEM & WEBHOOKS TAB */}
+      {activeTab === 'system' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          
+          {/* Push & Webhooks Card */}
+          <div className="card" style={{ padding: '24px', background: 'rgba(197, 160, 89, 0.02)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Push Notifications & Auto-Track Webhook</h3>
+                <p className="muted" style={{ fontSize: '12.5px', margin: '4px 0 0 0' }}>Background Web Push alerts & iOS Shortcut auto-logger URL.</p>
               </div>
+              <span
+                style={{
+                  background: pushStatus === 'granted' ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)',
+                  color: pushStatus === 'granted' ? 'var(--green)' : 'var(--red)',
+                  border: '1px solid var(--border)', fontSize: '11px', padding: '3px 8px', borderRadius: '12px', fontWeight: 600
+                }}
+              >
+                {pushStatus === 'granted' ? 'Push Granted' : 'Push Disabled'}
+              </span>
             </div>
 
-            <h3 style={{ marginBottom: '12px' }}>System Maintenance & Recovery</h3>
-            <p className="muted" style={{ fontSize: '12.5px', lineHeight: 1.45, marginBottom: '20px' }}>Back up all transactions and category structures to a JSON file locally, or perform a hard reset.</p>
-            
+            <div style={{ marginBottom: '16px' }}>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleActivatePush}
+                style={{ height: '36px', fontSize: '12.5px', padding: '0 16px', fontWeight: 600 }}
+              >
+                {pushStatus === 'granted' ? 'Re-sync Push Notifications' : 'Enable Push Notifications'}
+              </button>
+            </div>
+
+            <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--border)', padding: '14px', borderRadius: 'var(--radius)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  iOS Shortcut Webhook URL
+                </span>
+                {user?.id ? (
+                  <span style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 600 }}>
+                    ✓ UUID Synced ({user.id.substring(0, 8)}...)
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    (Sign in to sync UUID)
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, padding: '8px 10px', fontSize: '11px', fontFamily: 'monospace', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: '4px', wordBreak: 'break-all', color: 'var(--text-secondary)', minWidth: '200px' }}>
+                  {currentWebhookUrl}
+                </div>
+                <button
+                  type="button"
+                  className="btn-ghost btn-sm"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(currentWebhookUrl);
+                    window.toast('Copied webhook URL.');
+                  }}
+                  style={{ flexShrink: 0, height: '34px' }}
+                >
+                  Copy URL
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost btn-sm"
+                  onClick={handleTestWebhook}
+                  style={{ flexShrink: 0, height: '34px', color: 'var(--accent)' }}
+                >
+                  Test Webhook
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Backup & System Reset Card */}
+          <div className="card" style={{ padding: '24px' }}>
+            <h3 style={{ margin: '0 0 6px 0', fontSize: '16px', fontWeight: 700 }}>Data Recovery & Reset</h3>
+            <p className="muted" style={{ fontSize: '12.5px', lineHeight: 1.45, marginBottom: '20px' }}>Export local data backup, restore JSON state, or reset database.</p>
+
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <button type="button" className="btn btn-ghost" onClick={handleExportBackup}>Export Local Backup</button>
-              
               <button
                 type="button"
                 className="btn btn-ghost"
@@ -849,141 +901,161 @@ export default function Settings() {
               >
                 Import Local Backup
               </button>
-              
-              <button type="button" className="btn btn-danger" id="btn-reset" onClick={handleResetAllData}>Hard Reset System Data</button>
+              <button type="button" className="btn btn-danger" onClick={() => setShowResetModal(true)}>Hard Reset Data</button>
             </div>
           </div>
-        )}
 
-      </div>
-
-      {/* Dialog: Add Category */}
-      <dialog id="dialog-cat" className="dialog" ref={catDialogRef}>
-        <form onSubmit={handleAddCatSubmit}>
-          <button type="button" className="btn-close-dialog" onClick={() => catDialogRef.current?.close()} aria-label="Close dialog">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-          <h3>Create Budget Category</h3>
-          <p className="muted" style={{ fontSize: '12.5px', marginBottom: '14px' }}>Add a new category name for transaction log groupings.</p>
-          <div className="field">
-            <label htmlFor="inp-cat-name">Category Name</label>
-            <input
-              type="text"
-              id="inp-cat-name"
-              value={newCatName}
-              onChange={(e) => setNewCatName(e.target.value)}
-              placeholder="e.g. Subscriptions"
-              required
-            />
-          </div>
-          <div className="dialog-actions">
-            <button type="button" className="btn-ghost" onClick={() => catDialogRef.current?.close()}>Cancel</button>
-            <button type="submit" className="btn-primary">Add Category</button>
-          </div>
-        </form>
-      </dialog>
-
-      {/* Dialog: Add Savings Goal */}
-      <dialog id="dialog-goal" className="dialog" ref={goalDialogRef}>
-        <form onSubmit={handleAddGoalSubmit}>
-          <button type="button" className="btn-close-dialog" onClick={() => goalDialogRef.current?.close()} aria-label="Close dialog">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-          <h3>Create Savings Goal</h3>
-          <p className="muted" style={{ fontSize: '12.5px', marginBottom: '14px' }}>Configure target parameters to build savings funds.</p>
-          
-          <div className="field">
-            <label htmlFor="goal-name">Savings Goal Name</label>
-            <input
-              type="text"
-              id="goal-name"
-              value={newGoalName}
-              onChange={(e) => setNewGoalName(e.target.value)}
-              placeholder="e.g. Laptop Fund"
-              required
-            />
-          </div>
-
-          <div className="field-row">
-            <div className="field">
-              <label htmlFor="goal-target">Target Sum ({sym})</label>
-              <input
-                type="number"
-                id="goal-target"
-                value={newGoalTarget}
-                onChange={(e) => setNewGoalTarget(e.target.value)}
-                placeholder="Target value"
-                required
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="goal-saved">Already Saved ({sym})</label>
-              <input
-                type="number"
-                id="goal-saved"
-                value={newGoalSaved}
-                onChange={(e) => setNewGoalSaved(e.target.value)}
-                placeholder="Default is 0"
-              />
-            </div>
-          </div>
-        </form>
-      </dialog>
-
-      {/* Dialog: Add Savings Goal Funds */}
-      <dialog id="dialog-goal-add-funds" className="dialog" ref={addFundsDialogRef}>
-        <form onSubmit={handleAddGoalFundsSubmit}>
-          <button type="button" className="btn-close-dialog" onClick={() => addFundsDialogRef.current?.close()} aria-label="Close dialog">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-          <h3>Add Funds to Goal</h3>
-          <p className="muted" style={{ fontSize: '12.5px', marginBottom: '14px' }}>Log savings contribution to build the <strong>{selectedGoalName}</strong> fund.</p>
-          <div className="field">
-            <label htmlFor="inp-funds-amount">Contribution Amount ({sym})</label>
-            <input
-              type="number"
-              id="inp-funds-amount"
-              value={fundsAmount}
-              onChange={(e) => setFundsAmount(e.target.value)}
-              placeholder="e.g. 500"
-              required
-              min="0.01"
-              step="any"
-              autoFocus
-            />
-          </div>
-          <div className="dialog-actions">
-            <button type="button" className="btn-ghost" onClick={() => addFundsDialogRef.current?.close()}>Cancel</button>
-            <button type="submit" className="btn-primary">Add Funds</button>
-          </div>
-        </form>
-      </dialog>
-
-      {/* Dialog: Confirm Delete Savings Goal */}
-      <dialog id="dialog-goal-delete-confirm" className="dialog" ref={deleteGoalDialogRef} style={{ maxWidth: '360px' }}>
-        <button type="button" className="btn-close-dialog" onClick={() => deleteGoalDialogRef.current?.close()} aria-label="Close dialog">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-        <h3>Delete Savings Goal</h3>
-        <p className="muted" style={{ fontSize: '13px', marginBottom: '20px', lineHeight: 1.45 }}>Are you sure you want to delete the savings goal <strong>"{selectedGoalName}"</strong>? This action cannot be undone.</p>
-        <div className="dialog-actions" style={{ display: 'flex', gap: '10px' }}>
-          <button type="button" className="btn-ghost" onClick={() => deleteGoalDialogRef.current?.close()} style={{ flex: 1 }}>Cancel</button>
-          <button type="button" className="btn-danger" onClick={handleDeleteGoalConfirm} style={{ flex: 1 }}>Delete Goal</button>
         </div>
-      </dialog>
+      )}
 
-      {/* Dialog: Confirm Reset System Data */}
-      <dialog id="dialog-system-reset-confirm" className="dialog" ref={resetSystemDialogRef} style={{ maxWidth: '400px' }}>
-        <button type="button" className="btn-close-dialog" onClick={() => resetSystemDialogRef.current?.close()} aria-label="Close dialog">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-        <h3 style={{ color: 'var(--red)' }}>Reset System Data</h3>
-        <p className="muted" style={{ fontSize: '13px', marginBottom: '20px', lineHeight: 1.45 }}><strong>WARNING:</strong> This will permanently delete ALL transactions, category configurations, savings goals, local settings, and connected credentials. There is no going back.</p>
-        <div className="dialog-actions" style={{ display: 'flex', gap: '10px' }}>
-          <button type="button" className="btn-ghost" onClick={() => resetSystemDialogRef.current?.close()} style={{ flex: 1 }}>Cancel</button>
-          <button type="button" className="btn-danger" onClick={handleResetAllDataConfirm} style={{ flex: 1 }}>Reset Everything</button>
+      {/* Modal: Add Category */}
+      {showCatModal && (
+        <div className="modal-overlay" onClick={() => setShowCatModal(false)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Create Budget Category</h3>
+              <button className="close-btn" onClick={() => setShowCatModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleAddCatSubmit}>
+              <div className="field">
+                <label>Category Name</label>
+                <input
+                  type="text"
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  placeholder="e.g. Subscriptions"
+                  required
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                <button type="button" className="btn-ghost" onClick={() => setShowCatModal(false)} style={{ flex: 1 }}>Cancel</button>
+                <button type="submit" className="btn-primary" style={{ flex: 1 }}>Add Category</button>
+              </div>
+            </form>
+          </div>
         </div>
-      </dialog>
+      )}
+
+      {/* Modal: Add Savings Goal */}
+      {showGoalModal && (
+        <div className="modal-overlay" onClick={() => setShowGoalModal(false)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Create Savings Goal</h3>
+              <button className="close-btn" onClick={() => setShowGoalModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleAddGoalSubmit}>
+              <div className="field" style={{ marginBottom: '14px' }}>
+                <label>Goal Name</label>
+                <input
+                  type="text"
+                  value={newGoalName}
+                  onChange={(e) => setNewGoalName(e.target.value)}
+                  placeholder="e.g. Laptop Fund"
+                  required
+                />
+              </div>
+              <div className="field-row">
+                <div className="field">
+                  <label>Target Sum ({sym})</label>
+                  <input
+                    type="number"
+                    value={newGoalTarget}
+                    onChange={(e) => setNewGoalTarget(e.target.value)}
+                    placeholder="Target"
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label>Already Saved ({sym})</label>
+                  <input
+                    type="number"
+                    value={newGoalSaved}
+                    onChange={(e) => setNewGoalSaved(e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                <button type="button" className="btn-ghost" onClick={() => setShowGoalModal(false)} style={{ flex: 1 }}>Cancel</button>
+                <button type="submit" className="btn-primary" style={{ flex: 1 }}>Create Goal</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Add Funds to Goal */}
+      {showFundsModal && (
+        <div className="modal-overlay" onClick={() => setShowFundsModal(false)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Add Funds to Goal</h3>
+              <button className="close-btn" onClick={() => setShowFundsModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleAddGoalFundsSubmit}>
+              <p className="muted" style={{ fontSize: '12.5px', marginBottom: '14px' }}>
+                Log savings contribution for <strong>{selectedGoalName}</strong>.
+              </p>
+              <div className="field">
+                <label>Contribution Amount ({sym})</label>
+                <input
+                  type="number"
+                  value={fundsAmount}
+                  onChange={(e) => setFundsAmount(e.target.value)}
+                  placeholder="e.g. 500"
+                  required
+                  min="0.01"
+                  step="any"
+                  autoFocus
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                <button type="button" className="btn-ghost" onClick={() => setShowFundsModal(false)} style={{ flex: 1 }}>Cancel</button>
+                <button type="submit" className="btn-primary" style={{ flex: 1 }}>Add Funds</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Confirm Delete Savings Goal */}
+      {showDeleteGoalModal && (
+        <div className="modal-overlay" onClick={() => setShowDeleteGoalModal(false)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()} style={{ maxWidth: '360px' }}>
+            <div className="modal-header">
+              <h3>Delete Savings Goal</h3>
+              <button className="close-btn" onClick={() => setShowDeleteGoalModal(false)}>✕</button>
+            </div>
+            <p className="muted" style={{ fontSize: '13px', marginBottom: '20px', lineHeight: 1.45 }}>
+              Are you sure you want to delete <strong>"{selectedGoalName}"</strong>? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" className="btn-ghost" onClick={() => setShowDeleteGoalModal(false)} style={{ flex: 1 }}>Cancel</button>
+              <button type="button" className="btn-danger" onClick={handleDeleteGoalConfirm} style={{ flex: 1 }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Confirm Reset System Data */}
+      {showResetModal && (
+        <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3 style={{ color: 'var(--red)' }}>Reset System Data</h3>
+              <button className="close-btn" onClick={() => setShowResetModal(false)}>✕</button>
+            </div>
+            <p className="muted" style={{ fontSize: '13px', marginBottom: '20px', lineHeight: 1.45 }}>
+              <strong>WARNING:</strong> This will permanently delete ALL transactions, category configurations, savings goals, local settings, and credentials.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" className="btn-ghost" onClick={() => setShowResetModal(false)} style={{ flex: 1 }}>Cancel</button>
+              <button type="button" className="btn-danger" onClick={handleResetAllDataConfirm} style={{ flex: 1 }}>Reset Everything</button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </section>
   );
