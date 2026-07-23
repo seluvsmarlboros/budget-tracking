@@ -656,6 +656,13 @@ export const StateProvider = ({ children }) => {
     return t;
   };
 
+  const deleteTransaction = (id) => {
+    const updated = structuredClone(state);
+    updated.transactions = (updated.transactions || []).filter(t => t.id !== id);
+    saveState(updated);
+  };
+
+
   const addCommuteLog = (log, isCollegeDay) => {
     const updated = structuredClone(state);
     const date = log.date || new Date().toISOString().split('T')[0];
