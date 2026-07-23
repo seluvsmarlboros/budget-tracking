@@ -56,14 +56,24 @@ self.addEventListener('fetch', (e) => {
 
 // Push Event: Listen for incoming web push notifications
 self.addEventListener('push', (e) => {
-  let data = { title: 'UniSpend Alert', body: 'You have a new update.' };
-  
+  let data = { title: 'UniSpend Alert', body: 'New notification received' };
   if (e.data) {
     try {
       data = e.data.json();
     } catch (err) {
       data = { title: 'UniSpend Alert', body: e.data.text() };
     }
+  }
+
+  // Defensive formatting fallback if payload text is raw JSON
+  if (typeof data.body === 'string' && data.body.trim().startsWith('{')) {
+    try {
+      const parsedBody = JSON.parse(data.body);
+      if (parsedBody.amount) {
+        data.title = 'UniSpend Auto-Track';
+        data.body = `Auto-tracked: ₹${parsedBody.amount} for ${parsedBody.description || 'UPI Payment'}`;
+      }
+    } catch (err) {}
   }
 
   const options = {

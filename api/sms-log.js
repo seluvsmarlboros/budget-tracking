@@ -1,5 +1,18 @@
 /* Vercel Serverless Function: api/sms-log.js */
+import webpush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
+
+// VAPID keys matching send-reminder.js and client
+const VAPID_KEYS = {
+  publicKey: process.env.VAPID_PUBLIC_KEY || 'BF7IgezFiN_M2HBCufmwj2yionG4AbT91NDwBZj5tqmrLK5U7pnL-de7DrPiFYZIW5FgFfzSvyQTGZGd5s2bdeQ',
+  privateKey: process.env.VAPID_PRIVATE_KEY || '3OFFjZPnQvqOXYwPGtyhd_5d8xEQt7_KtyLImNcNVzk'
+};
+
+webpush.setVapidDetails(
+  'mailto:support@unispend.app',
+  VAPID_KEYS.publicKey,
+  VAPID_KEYS.privateKey
+);
 
 // Parse SMS using same logic as client
 function parseUPIAndSMS(text) {
@@ -103,7 +116,7 @@ export default async function handler(req, res) {
       return res.status(422).json({ error: 'Failed to extract transaction details or amount from text' });
     }
 
-    // Insert a notification record of type 'pending_transaction'
+    // 1. Insert a notification record of type 'pending_transaction'
     const { data, error } = await supabase
       .from('notifications')
       .insert({
@@ -118,8 +131,36 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: `Database write failed: ${error.message}` });
     }
 
+    // 2. Direct Web Push Notification dispatch to user's registered device
+    let pushResult = 'Push sub not registered';
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('push_subscription')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profile && profile.push_subscription) {
+        const sub = typeof profile.push_subscription === 'string'
+          ? JSON.parse(profile.push_subscription)
+          : profile.push_subscription;
+
+        const notificationPayload = JSON.stringify({
+          title: 'UniSpend Auto-Track',
+          body: `Auto-tracked: ₹${parsed.amount} for ${parsed.description}`,
+          url: './index.html#activity'
+        });
+
+        await webpush.sendNotification(sub, notificationPayload);
+        pushResult = 'Web Push notification sent!';
+      }
+    } catch (pushErr) {
+      console.error('[sms-log] Direct webpush error:', pushErr.message);
+      pushResult = `Push: ${pushErr.message}`;
+    }
+
     res.setHeader('Content-Type', 'text/plain');
-    return res.status(200).send(`Logged ₹${parsed.amount} for ${parsed.description}!`);
+    return res.status(200).send(`Logged ₹${parsed.amount} for ${parsed.description}! (${pushResult})`);
   } catch (err) {
     console.error('[sms-log] Exception:', err);
     return res.status(500).json({ error: `Function Exception: ${err.message}` });

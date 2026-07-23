@@ -1,13 +1,14 @@
-/* Progressive Web App Service Worker (sw.js) */
-
-const CACHE_NAME = 'unispend-cache-v14';
+// Service Worker for UniSpend PWA & Push Notifications
+const CACHE_NAME = 'unispend-cache-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './assets/icon-192.png',
+  './assets/icon-510.png'
 ];
 
-// Install: Cache essential assets for offline-first support
+// Install Event: Pre-cache static assets
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -16,7 +17,7 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// Activate: Clean up old caches
+// Activate Event: Clean up old caches
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -31,39 +32,55 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch: Serve cached assets offline, fallback to network
+// Fetch Event: Stale-while-revalidate strategy for quick loading and background updates
 self.addEventListener('fetch', (e) => {
-  // Only handle GET requests and local scope
-  if (e.request.method !== 'GET' || !e.request.url.startsWith(self.location.origin)) {
+  // Only handle GET requests for http/https
+  if (e.request.method !== 'GET' || !e.request.url.startsWith('http')) {
+    return;
+  }
+
+  // Bypass cache for API calls to Supabase or internal /api serverless endpoints
+  if (e.request.url.includes('/api/') || e.request.url.includes('.supabase.co')) {
     return;
   }
 
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Fetch fresh copy in the background to update cache (stale-while-revalidate)
-        fetch(e.request).then((networkResponse) => {
-          if (networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, networkResponse));
-          }
-        }).catch(() => {/* ignore background fetch errors */});
-        return cachedResponse;
-      }
-      return fetch(e.request);
+      const fetchPromise = fetch(e.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      }).catch(() => cachedResponse);
+
+      return cachedResponse || fetchPromise;
     })
   );
 });
 
 // Push Event: Listen for incoming web push notifications
 self.addEventListener('push', (e) => {
-  let data = { title: 'UniSpend Alert', body: 'You have a new update.' };
-  
+  let data = { title: 'UniSpend Alert', body: 'New notification received' };
   if (e.data) {
     try {
       data = e.data.json();
     } catch (err) {
       data = { title: 'UniSpend Alert', body: e.data.text() };
     }
+  }
+
+  // Defensive formatting fallback if payload text is raw JSON
+  if (typeof data.body === 'string' && data.body.trim().startsWith('{')) {
+    try {
+      const parsedBody = JSON.parse(data.body);
+      if (parsedBody.amount) {
+        data.title = 'UniSpend Auto-Track';
+        data.body = `Auto-tracked: ₹${parsedBody.amount} for ${parsedBody.description || 'UPI Payment'}`;
+      }
+    } catch (err) {}
   }
 
   const options = {
