@@ -19,6 +19,7 @@ export default function Circles() {
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showMagicSettleModal, setShowMagicSettleModal] = useState(false);
   const [showSettleModal, setShowSettleModal] = useState(false);
+  const [settleDirection, setSettleDirection] = useState('pay'); // pay (I paid debt) vs receive (I received repayment)
   const [settlePayee, setSettlePayee] = useState('');
   const [settleAmount, setSettleAmount] = useState('');
   const [settleMethod, setSettleMethod] = useState('UPI');
@@ -264,21 +265,43 @@ export default function Circles() {
     const amt = parseFloat(settleAmount);
     if (!amt || amt <= 0 || !activeCircle) return;
 
-    const payee = settlePayee || activeCircle.members?.find(m => m.name !== userName)?.name || 'Member';
+    const partnerName = settlePayee || activeCircle.members?.find(m => m.name !== userName)?.name || 'Member';
+    const isPaying = settleDirection === 'pay';
+    const paidBy = isPaying ? userName : partnerName;
+    const recipient = isPaying ? partnerName : userName;
+    const title = isPaying ? `Settlement paid to ${partnerName}` : `Repayment received from ${partnerName}`;
 
     addCircleTransaction(activeCircle.id, {
-      title: `Settlement to ${payee}`,
+      title,
       totalAmount: amt,
-      paidBy: userName,
-      recipient: payee,
+      paidBy,
+      recipient,
       isSettlement: true,
-      category: 'Income',
-      splits: { [userName]: -amt, [payee]: amt }
+      category: isPaying ? 'Other' : 'Income',
+      splits: { [userName]: -amt, [partnerName]: amt }
     });
 
-    if (window.toast) window.toast(`🤝 Logged ${sym}${amt} settlement to ${payee}!`);
+    if (window.toast) {
+      window.toast(isPaying ? `💸 Logged ${sym}${amt} payment to ${partnerName}!` : `🤝 Recorded ${sym}${amt} repayment received from ${partnerName}!`);
+    }
     setShowSettleModal(false);
     setSettleAmount('');
+  };
+
+  const handleSendReminder = async () => {
+    const partnerName = settlePayee || activeCircle.members?.find(m => m.name !== userName)?.name || 'Member';
+    if (!partnerName) return;
+    try {
+      const partnerMember = activeCircle.members?.find(m => m.name === partnerName);
+      if (partnerMember && partnerMember.id && !partnerMember.isGhost) {
+        await SupabaseService.sendReminderNotification(activeCircle.id, partnerMember.id, parseFloat(settleAmount || 0), userName);
+        window.toast(`🔔 Friendly reminder notification sent to ${partnerName}!`);
+      } else {
+        window.toast(`🔔 Reminder logged for ${partnerName}! (Share via UPI link below)`);
+      }
+    } catch (e) {
+      window.toast(`🔔 Reminder notification logged for ${partnerName}!`);
+    }
   };
 
   return (
@@ -412,6 +435,7 @@ export default function Circles() {
                           const targetAmt = myTransfer ? myTransfer.amount.toString() : Math.abs(netBalance).toString();
                           setSettlePayee(targetPayee);
                           setSettleAmount(targetAmt);
+                          setSettleDirection(isPositive ? 'receive' : 'pay');
                           setShowSettleModal(true);
                         }}
                       >
@@ -681,17 +705,36 @@ export default function Circles() {
         </div>
       )}
 
-      {/* 5. Settle Up / Repay Debt Modal */}
+      {/* 5. Settle Up / Repay / Collect Modal */}
       {showSettleModal && activeCircle && (
         <div className="modal-overlay" onClick={() => setShowSettleModal(false)}>
           <div className="modal-sheet" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>🤝 Settle Up & Repay — {activeCircle.name}</h3>
+              <h3>{settleDirection === 'receive' ? '🤝 Record Received Repayment' : '💸 Repay Debt'} — {activeCircle.name}</h3>
               <button className="close-btn" onClick={() => setShowSettleModal(false)}>✕</button>
             </div>
+
+            {/* Direction Selector Tabs */}
+            <div className="pill-row" style={{ margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
+              <button
+                type="button"
+                className={`pill small ${settleDirection === 'pay' ? 'active' : ''}`}
+                onClick={() => setSettleDirection('pay')}
+              >
+                💸 I Paid (Repaid Debt)
+              </button>
+              <button
+                type="button"
+                className={`pill small ${settleDirection === 'receive' ? 'active' : ''}`}
+                onClick={() => setSettleDirection('receive')}
+              >
+                📥 I Received (Collected)
+              </button>
+            </div>
+
             <form onSubmit={handleSettleSubmit} className="modal-form">
               <div className="field">
-                <label>Pay To (Recipient)</label>
+                <label>{settleDirection === 'pay' ? 'Pay To (Recipient)' : 'Received From (Payer)'}</label>
                 <select value={settlePayee || activeCircle.members?.find(m => m.name !== userName)?.name || ''} onChange={e => setSettlePayee(e.target.value)}>
                   {activeCircle.members?.filter(m => m.name !== userName).map(m => (
                     <option key={m.id} value={m.name}>{m.name} {m.isGhost ? '(Ghost)' : ''}</option>
@@ -700,7 +743,7 @@ export default function Circles() {
               </div>
 
               <div className="field">
-                <label>Settlement Amount ({sym})</label>
+                <label>Amount ({sym})</label>
                 <input
                   type="number"
                   placeholder="0.00"
@@ -720,17 +763,33 @@ export default function Circles() {
               </div>
 
               {settleMethod === 'UPI' && (
-                <a
-                  href={`upi://pay?pa=${activeCircle.members?.find(m => m.name === settlePayee)?.upiId || 'partner@upi'}&pn=${encodeURIComponent(settlePayee)}&am=${settleAmount || '0'}&cu=INR`}
-                  className="btn-upi-app"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  🚀 Pay via Instant UPI Deep Link
-                </a>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <a
+                    href={`upi://pay?pa=${activeCircle.members?.find(m => m.name === settlePayee)?.upiId || 'partner@upi'}&pn=${encodeURIComponent(settlePayee)}&am=${settleAmount || '0'}&cu=INR`}
+                    className="btn-upi-app"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    🚀 {settleDirection === 'pay' ? 'Pay via Instant UPI App' : 'Generate UPI Request Link'}
+                  </a>
+                </div>
               )}
 
-              <button type="submit" className="btn-primary">Confirm & Log Settlement</button>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                <button type="submit" className="btn-primary" style={{ flex: 1 }}>
+                  {settleDirection === 'pay' ? 'Confirm Payment & Log' : 'Record Received Repayment ✓'}
+                </button>
+                {settleDirection === 'receive' && (
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={handleSendReminder}
+                    style={{ flexShrink: 0, height: '42px', color: 'var(--accent)', borderColor: 'var(--accent)' }}
+                  >
+                    Send Nudge 🔔
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         </div>

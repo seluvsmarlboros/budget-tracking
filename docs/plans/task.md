@@ -21,4 +21,5 @@
 | 17: Add explicit **Enable Push Notifications** button with browser permission request & registration | [x] |
 | 18: Add live **iOS Shortcut Webhook URL** card with Copy URL & Test Webhook ⚡ buttons | [x] |
 | 19: Rehaul & verify settlement sign math so paying debt reduces debt to 0 | [x] |
-| 20: Build verification & push changes to GitHub `main` | [x] |
+| 20: Convert Vercel serverless API functions (`api/*.js`) to ES Modules syntax to fix `FUNCTION_INVOCATION_FAILED` | [x] |
+| 21: Build verification & push changes to GitHub `main` (`abdaaed`) | [x] |
