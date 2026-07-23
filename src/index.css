@@ -2273,24 +2273,65 @@ body.light .health-gauge-row {
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
+.btn-action-pill,
 .action-pill {
   flex: 1;
-  padding: 10px 8px;
+  padding: 10px 10px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--text);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  min-width: 75px;
 }
 
+.btn-action-pill:hover,
+.action-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-action-pill.primary,
 .action-pill.highlight {
   background: rgba(74, 222, 128, 0.15);
-  border-color: #4ADE80;
-  color: #4ADE80;
+  border-color: rgba(74, 222, 128, 0.4);
+  color: var(--green);
+}
+
+.btn-action-pill.primary:hover {
+  background: rgba(74, 222, 128, 0.25);
+}
+
+.circle-history-card {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 14px;
+}
+
+.txn-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.txn-history-row:last-child {
+  border-bottom: none;
 }
 
 .members-chips {

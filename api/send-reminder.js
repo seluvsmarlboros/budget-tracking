@@ -67,7 +67,19 @@ export default async function handler(req, res) {
         });
       }
 
-      notificationBody = message || notificationBody;
+      let formattedBody = message || notificationBody;
+      if (typeof formattedBody === 'string' && formattedBody.trim().startsWith('{')) {
+        try {
+          const parsedObj = JSON.parse(formattedBody);
+          if (parsedObj.amount) {
+            notificationTitle = 'UniSpend Auto-Track';
+            formattedBody = `Auto-tracked: ₹${parsedObj.amount} for ${parsedObj.description || 'UPI Payment'}`;
+            notificationUrl = './index.html#activity';
+          }
+        } catch (e) {}
+      }
+
+      notificationBody = formattedBody;
       
       if (type === 'reminder') {
         notificationTitle = 'UniSpend Budget Reminder';

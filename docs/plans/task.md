@@ -26,4 +26,4 @@
 | 22: Clean up and remove ALL emojis across entire codebase (`src/`, `api/`, toasts, buttons, card headers), replacing with sleek inline SVGs & typography | [x] |
 | 23: Rehaul `Activity.jsx` layout: Summary Stat Grid, Live Search, Horizontal Scroll Filters, Collapsible Peer IOUs Drawer, and Glassmorphism Modal Sheets | [x] |
 | 24: Rehaul `Settings.jsx` layout: Responsive Profile Hero Banner, Horizontal Scroll Navigation Tabs, Liquid Glass Panels, and Modal Sheet Overlays | [x] |
-| 25: Build verification & push changes to GitHub `main` (`9ac96a3`) | [x] |
+| 25: Fix debt settlement cashflow mirroring across Circles, Friends, and Peer IOUs so collecting debt instantly updates main available cash balance (`48c9353`) | [x] |

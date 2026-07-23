@@ -642,19 +642,93 @@ export default function Circles() {
 
             {/* Circle Expense Log History */}
             <div className="circle-history-section">
-              <h4>Circle Expenses</h4>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px', fontWeight: 700 }}>
+                Circle Transactions ({activeCircle.transactions?.length || 0})
+              </h4>
               {(!activeCircle.transactions || activeCircle.transactions.length === 0) ? (
-                <p className="muted">No expenses recorded yet.</p>
+                <div className="card" style={{ textAlign: 'center', padding: '24px' }}>
+                  <p className="muted" style={{ margin: 0, fontSize: '13px' }}>No expenses recorded in this circle yet.</p>
+                </div>
               ) : (
-                activeCircle.transactions.map(t => (
-                  <div key={t.id} className="txn-history-row">
-                    <div>
-                      <strong>{t.title}</strong>
-                      <div className="muted">{t.paidBy} paid • {t.date}</div>
-                    </div>
-                    <span className="txn-amt">{sym}{t.totalAmount}</span>
-                  </div>
-                ))
+                <div className="circle-history-card">
+                  {activeCircle.transactions.map((t, idx) => {
+                    const isMePayer = (t.paidBy || '').toLowerCase() === (userName || '').toLowerCase();
+                    const isMeRecipient = (t.recipient || '').toLowerCase() === (userName || '').toLowerCase();
+
+                    return (
+                      <div key={t.id || idx} className="txn-history-row">
+                        {/* Left Icon Badge */}
+                        {t.isSettlement ? (
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '10px',
+                            background: isMeRecipient ? 'rgba(74, 222, 128, 0.15)' : 'rgba(167, 139, 250, 0.15)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            {isMeRecipient ? (
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+                              </svg>
+                            ) : (
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="17 11 21 7 17 3"/><line x1="21" y1="7" x2="9" y2="7"/><polyline points="7 13 3 17 7 21"/><line x1="3" y1="17" x2="15" y2="17"/>
+                              </svg>
+                            )}
+                          </div>
+                        ) : (
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '10px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                            </svg>
+                          </div>
+                        )}
+
+                        {/* Title & Metadata */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: '13.5px', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {t.title}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>{t.paidBy === userName ? 'You' : t.paidBy} paid</span>
+                            <span>• {t.date}</span>
+                            {t.isSettlement && <span style={{ background: 'rgba(74, 222, 128, 0.1)', color: 'var(--green)', padding: '1px 6px', borderRadius: '4px', fontSize: '10.5px', fontWeight: 600 }}>Settlement</span>}
+                            {!t.isSettlement && t.category && <span style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 6px', borderRadius: '4px', fontSize: '10.5px' }}>{t.category}</span>}
+                          </div>
+                        </div>
+
+                        {/* Amount Badge */}
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          {t.isSettlement ? (
+                            <span style={{
+                              fontWeight: 700,
+                              fontSize: '14px',
+                              color: isMeRecipient ? 'var(--green)' : isMePayer ? 'var(--red)' : 'var(--text-secondary)'
+                            }}>
+                              {isMeRecipient ? `+${sym}${t.totalAmount}` : isMePayer ? `-${sym}${t.totalAmount}` : `${sym}${t.totalAmount}`}
+                            </span>
+                          ) : (
+                            <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>
+                              {sym}{t.totalAmount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>
