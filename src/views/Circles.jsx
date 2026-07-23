@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useStateContext, calculateCircleNetBalance, calculateMagicSettle } from '../contexts/StateContext';
 
 export default function Circles() {
