@@ -1,5 +1,7 @@
 import React, { useRef } from 'react';
 import { useStateContext } from '../contexts/StateContext';
+import WhatIfSimulator from '../components/WhatIfSimulator';
+import FinancialRadar from '../components/FinancialRadar';
 
 const FOREST_PALETTE = [
   '#4ADE80', // Spring Mint
@@ -95,6 +97,13 @@ export default function Insights() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1 style={{ margin: 0 }}>Analytics & Insights</h1>
       </div>
+
+      {/* Interactive What-If Simulator */}
+      <WhatIfSimulator />
+
+      {/* Financial Anomaly Radar */}
+      <FinancialRadar />
+
 
       {/* Month-over-Month Cards */}
       <div className="stat-row" style={{ marginBottom: '20px' }}>

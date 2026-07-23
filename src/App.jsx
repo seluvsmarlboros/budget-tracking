@@ -10,6 +10,8 @@ import Activity from './views/Activity';
 import Insights from './views/Insights';
 import Settings from './views/Settings';
 import Onboarding from './views/Onboarding';
+import CommandPalette from './components/CommandPalette';
+
 
 export class ErrorBoundary extends Component {
   constructor(props) {
@@ -59,6 +61,7 @@ export default function App() {
   const [currentHash, setCurrentHash] = useState(() => (location.hash || '#home').replace('#', ''));
   const [showSplash, setShowSplash] = useState(true);
   const [toasts, setToasts] = useState([]);
+  const [isCmdPaletteOpen, setIsCmdPaletteOpen] = useState(false);
 
   // Toast notifier binding
   const triggerToast = (msg) => {
@@ -72,12 +75,22 @@ export default function App() {
   useEffect(() => {
     window.toast = triggerToast;
 
+    // Listen for global Cmd+K keydown
+    const handleGlobalKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCmdPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+
     // Handle hash change routing
     const handleHashChange = () => {
       const hash = (location.hash || '#home').replace('#', '');
       setCurrentHash(hash);
     };
     window.addEventListener('hashchange', handleHashChange);
+
 
     // Initial dark mode theme validation
     const localDark = localStorage.getItem('unispend_dark');
@@ -93,10 +106,12 @@ export default function App() {
     }, 450);
 
     return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
       window.removeEventListener('hashchange', handleHashChange);
       clearTimeout(timer);
     };
   }, []);
+
 
   if (showSplash) {
     return (
@@ -213,6 +228,10 @@ export default function App() {
           </div>
         ))}
       </div>
+
+      {/* Global Command Palette (Cmd + K) */}
+      <CommandPalette isOpen={isCmdPaletteOpen} onClose={() => setIsCmdPaletteOpen(false)} />
     </div>
   );
 }
+

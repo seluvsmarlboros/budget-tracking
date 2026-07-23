@@ -3,6 +3,7 @@ import { useStateContext } from '../contexts/StateContext';
 import { askAI, askForBudgetAdvice } from '../services/ai';
 import { generatePulseCards } from '../services/PulseEngine';
 import PulseCard from '../components/PulseCard';
+import WhatIfSimulator from '../components/WhatIfSimulator';
 
 export default function Overview() {
   const { state, addTransaction, addCategory, addFriend, addSplitIOU, updateSettings, updatePulseCache, addSpike, addSavingsGoal } = useStateContext();
@@ -352,11 +353,81 @@ export default function Overview() {
           
           {/* 1. HERO BALANCE SECTION CARD — Main Focus */}
           <div className="hero-balance-section">
-            <span className="hero-greeting">{greet}, {user.name || 'Student'}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <span className="hero-greeting">{greet}, {user.name || 'Student'}</span>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+                style={{
+                  background: 'rgba(197, 160, 89, 0.12)',
+                  border: '1px solid rgba(197, 160, 89, 0.3)',
+                  color: 'var(--accent, #c5a059)',
+                  padding: '5px 12px',
+                  borderRadius: '99px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>⚡ Cmd + K Spotlight</span>
+              </button>
+            </div>
+
             <h1 className="hero-amount">{cur(left)}</h1>
             <span className="hero-subtitle">
               {left >= 0 ? 'remaining' : 'overdraft'} of {cur(adjustedBudget)} budget
             </span>
+
+            {/* Dynamic Safe-to-Spend & Velocity Gauge Badge */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '12px',
+              padding: '10px 14px',
+              marginTop: '14px',
+              marginBottom: '12px'
+            }}>
+              <div>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+                  Safe-To-Spend Today
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--accent, #c5a059)' }}>
+                  {cur(daysRemaining > 0 ? Math.max(0, Math.round(left / daysRemaining)) : 0)} <span style={{ fontSize: '12px', fontWeight: 400, color: 'rgba(255,255,255,0.5)' }}>/ day</span>
+                </div>
+              </div>
+
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+                  Spend Velocity
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: burnStatus === 'Healthy' || burnStatus === 'Perfect' ? '#4caf50' : burnStatus === 'Warning' ? '#ff9800' : '#ef5350',
+                  marginTop: '2px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  justifyContent: 'flex-end'
+                }}>
+                  <span style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: burnStatus === 'Healthy' || burnStatus === 'Perfect' ? '#4caf50' : burnStatus === 'Warning' ? '#ff9800' : '#ef5350',
+                    display: 'inline-block'
+                  }} />
+                  {burnStatus === 'Healthy' || burnStatus === 'Perfect' ? 'Cruising (Safe)' : burnStatus === 'Warning' ? 'Caution Pace' : 'Overheating!'}
+                </div>
+              </div>
+            </div>
+
             <div className="hero-progress-container">
               <div className="progress-track" style={{ height: '8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '99px', overflow: 'hidden' }}>
                 <div
@@ -372,6 +443,7 @@ export default function Overview() {
             </div>
           </div>
 
+
           {/* ── PULSE RAIL ─── Proactive Insight & Notification Banner Cards (Positioned below Hero Balance) ── */}
           {visiblePulseCards.length > 0 && (
             <div className="pulse-rail" style={{ marginTop: '8px', marginBottom: '24px' }}>
@@ -385,6 +457,10 @@ export default function Overview() {
               ))}
             </div>
           )}
+
+          {/* Interactive What-If Financial Simulator */}
+          <WhatIfSimulator />
+
 
           {/* AI Command capsule */}
           {widgetSettings.showAiBar !== false && (

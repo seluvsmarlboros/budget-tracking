@@ -37,3 +37,11 @@
 | 33: Dynamically re-generate Overview pulse cards on state changes so settled bills disappear instantly, and enhance recurring charge cards with explicit merchant names & charge details | [x] |
 | 34: Reposition Overview pulse notification cards directly below the Hero Available Balance card so main balance remains the top focal point | [x] |
 | 35: Defined missing `circlesList` variable at top of `Overview.jsx` to resolve `ReferenceError: circlesList is not defined` (`4774659`) | [x] |
+| 36: Build Command Palette (`src/components/CommandPalette.jsx`) with keyboard listener (`Cmd+K`), spotlight search, and natural language parser | [x] |
+| 37: Build Interactive "What-If" Financial Simulator (`src/components/WhatIfSimulator.jsx`) with pure-math runway projection and interactive sliders | [x] |
+| 38: Build Financial Anomaly & Subscriptions Radar (`src/components/FinancialRadar.jsx`) to auto-detect recurring bills and spending spikes | [x] |
+| 39: Integrate Dynamic "Safe-to-Spend" Hero Badge & Velocity Indicator in `Overview.jsx` | [x] |
+| 40: Integrate full What-If Simulator & Financial Radar into `Insights.jsx` and `Overview.jsx` | [x] |
+| 41: Mount Command Palette globally in `App.jsx` | [x] |
+| 42: Create Playwright E2E test suite (`e2e/finance-ai.spec.js`) and verify build | [x] |
+
