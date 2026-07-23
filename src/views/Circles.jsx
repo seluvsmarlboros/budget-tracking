@@ -326,7 +326,7 @@ export default function Circles() {
   return (
     <div className="circles-hub-view">
       {/* Header & Main Controls */}
-      <section className="circles-hero-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <section className="circles-hero-section">
         <div>
           <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800 }}>UniSpend Circles</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
@@ -334,23 +334,11 @@ export default function Circles() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="circles-hero-actions">
           <button
             type="button"
             className="btn-new-circle"
             onClick={() => setShowCreateModal(true)}
-            style={{
-              background: 'var(--accent-gradient, linear-gradient(135deg, #c5a059, #dfb76c))',
-              color: '#0d1a15',
-              fontWeight: 700,
-              padding: '8px 16px',
-              borderRadius: '99px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -360,19 +348,10 @@ export default function Circles() {
 
           <button
             type="button"
+            className="btn-join-circle"
             onClick={() => setShowJoinModal(true)}
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid var(--border)',
-              color: 'var(--text)',
-              fontWeight: 600,
-              padding: '8px 14px',
-              borderRadius: '99px',
-              cursor: 'pointer',
-              fontSize: '13px'
-            }}
           >
-            Join with Code
+            <span>Join with Code</span>
           </button>
         </div>
       </section>
@@ -389,19 +368,10 @@ export default function Circles() {
             return (
               <div
                 key={circle.id}
+                className={`circle-card-box ${isActive ? 'active' : ''}`}
                 onClick={() => {
                   setActiveCircle(circle.id);
                   setShowCircleDetail(true);
-                }}
-                style={{
-                  background: isActive ? 'linear-gradient(135deg, rgba(20, 18, 15, 0.95), rgba(12, 10, 8, 0.98))' : 'rgba(18, 16, 14, 0.8)',
-                  border: isActive ? '1.5px solid var(--accent, #c5a059)' : '1px solid rgba(255, 255, 255, 0.08)',
-                  borderRadius: '16px',
-                  padding: '16px',
-                  position: 'relative',
-                  cursor: 'pointer',
-                  boxShadow: isActive ? '0 8px 24px rgba(197, 160, 89, 0.15)' : 'none',
-                  transition: 'all 0.2s ease'
                 }}
               >
                 {/* Top Row: Icon + 3 Dots Menu Button */}
@@ -442,8 +412,8 @@ export default function Circles() {
                           position: 'absolute',
                           right: 0,
                           top: '38px',
-                          background: 'rgba(22, 20, 18, 0.98)',
-                          border: '1px solid var(--accent, #c5a059)',
+                          background: 'rgba(18, 32, 26, 0.98)',
+                          border: '1px solid rgba(74, 222, 128, 0.25)',
                           borderRadius: '12px',
                           boxShadow: '0 10px 30px rgba(0,0,0,0.8)',
                           zIndex: 99,
@@ -513,7 +483,7 @@ export default function Circles() {
                 </div>
 
                 {/* Balance & Settle Bar */}
-                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div className="circle-balance-strip">
                   <div>
                     <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Your Net Balance</div>
                     <div style={{ fontSize: '15px', fontWeight: 800, color: netBalance === 0 ? 'var(--text-muted)' : isPositive ? '#4ADE80' : '#ef5350' }}>
