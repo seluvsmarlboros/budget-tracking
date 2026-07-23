@@ -5,7 +5,7 @@ import { generatePulseCards } from '../services/PulseEngine';
 import PulseCard from '../components/PulseCard';
 
 export default function Overview() {
-  const { state, addTransaction, addCategory, addFriend, addSplitIOU, updateSettings, updatePulseCache } = useStateContext();
+  const { state, addTransaction, addCategory, addFriend, addSplitIOU, updateSettings, updatePulseCache, addSpike, addSavingsGoal } = useStateContext();
   const [aiInput, setAiInput] = useState('');
   const [aiResponse, setAiResponse] = useState(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -16,6 +16,7 @@ export default function Overview() {
   const iosDialogRef = useRef(null);
   
   const { user, transactions, spikes = [], friends, widgetSettings, ai, wallet } = state;
+  const txnHash = transactions.reduce((h, t) => h + t.id + t.amount + t.category, '');
   const sym = user?.currency || '₹';
   const friendBalances = friends?.balances || {};
   const savingsGoals = wallet?.savingsGoals || [];
@@ -28,8 +29,8 @@ export default function Overview() {
     addFriend,
     addSplitIOU,
     updateSettings,
-    addSpike: () => {}, // placeholder if needed
-    addSavingsGoal: () => {} // placeholder if needed
+    addSpike,
+    addSavingsGoal
   };
 
   // Helper formatting functions
@@ -116,50 +117,30 @@ export default function Overview() {
   const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
 
   let burnStatus = 'Healthy';
-  let burnBadgeBg = 'rgba(16, 185, 129, 0.1)';
-  let burnBadgeColor = 'var(--green)';
   let forecastHtml = '';
-  let burnProgressWidth = '100%';
-  let burnProgressBg = 'var(--green)';
 
   if (left <= 0) {
     burnStatus = 'Critical';
-    burnBadgeBg = 'rgba(239, 68, 68, 0.1)';
-    burnBadgeColor = 'var(--red)';
     forecastHtml = `You have already <strong>exhausted</strong> your budget for this ${period}! You are operating on a deficit of <strong>${cur(left)}</strong>. Avoid all non-essential purchases.`;
-    burnProgressWidth = '0%';
-    burnProgressBg = 'var(--red)';
   } else if (periodExpenses === 0) {
     burnStatus = 'Perfect';
-    burnBadgeBg = 'rgba(16, 185, 129, 0.1)';
-    burnBadgeColor = 'var(--green)';
     forecastHtml = `No expenses logged this ${period} yet! Your entire budget of <strong>${cur(adjustedBudget)}</strong> is fully intact.`;
-    burnProgressWidth = '100%';
-    burnProgressBg = 'var(--green)';
   } else {
     const daysLeftOfFunds = left / dailyBurnRate;
     
     if (daysLeftOfFunds >= daysRemaining) {
       burnStatus = 'Healthy';
-      burnBadgeBg = 'rgba(16, 185, 129, 0.1)';
-      burnBadgeColor = 'var(--green)';
       const endSavings = left - dailyBurnRate * daysRemaining;
       forecastHtml = `At your current spending rate of <strong>${cur(dailyBurnRate)}/day</strong>, your funds are projected to last the entire ${period}. You will have about <strong>${cur(endSavings)}</strong> left.`;
-      burnProgressWidth = `${Math.min(100, (daysLeftOfFunds / daysRemaining) * 100)}%`;
-      burnProgressBg = 'var(--green)';
     } else {
       burnStatus = 'Warning';
-      burnBadgeBg = 'rgba(245, 158, 11, 0.1)';
-      burnBadgeColor = 'var(--accent)';
       
       const runoutTime = now.getTime() + daysLeftOfFunds * 24 * 60 * 60 * 1000;
       const runoutDate = new Date(runoutTime);
       const runoutDayName = runoutDate.toLocaleDateString(undefined, { weekday: 'long' });
       const runoutDateString = runoutDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       
-      forecastHtml = `At your current spending rate of <strong>${cur(dailyBurnRate)}/day</strong>, you are projected to exhaust your budget by <strong>${runoutDayName} (${runoutDateString})</strong>, which is <strong>${Math.ceil(daysRemaining - daysLeftOfFunds)} days</strong> before the period ends.`;
-      burnProgressWidth = `${Math.min(100, (daysLeftOfFunds / daysRemaining) * 100)}%`;
-      burnProgressBg = 'var(--accent)';
+      forecastHtml = `At your current spending rate of <strong>${cur(dailyBurnRate)}/day</strong>, you are projected to exhaust your budget by <strong>${runoutDayName} (${runoutDateString})</strong>, which is <strong>${Math.ceil(daysRemaining - daysLeftOfFunds)} ${Math.ceil(daysRemaining - daysLeftOfFunds) === 1 ? 'day' : 'days'}</strong> before the period ends.`;
     }
   }
 
@@ -194,7 +175,7 @@ export default function Overview() {
       };
       fetchAdvice();
     }
-  }, [transactions.length, user.targetGoal, period, user.cutbackCategory]);
+  }, [txnHash, user.targetGoal, period, user.cutbackCategory]);
 
   // 7. PULSE ENGINE — 12h cache check, re-scan on new transactions
   useEffect(() => {
@@ -217,7 +198,7 @@ export default function Overview() {
       const dismissed = JSON.parse(sessionStorage.getItem('pulse_dismissed') || '[]');
       setVisiblePulseCards((user.pulseCards || []).filter(c => !dismissed.includes(c.id)));
     }
-  }, [transactions.length]);
+  }, [txnHash]);
 
   const handlePulseDismiss = (id) => {
     const dismissed = JSON.parse(sessionStorage.getItem('pulse_dismissed') || '[]');
@@ -432,8 +413,8 @@ export default function Overview() {
                 {transactions.length === 0 ? (
                   <p className="empty-state" style={{ padding: '16px 0', textAlign: 'center' }}>No entries yet. Ask AI or tap Log below!</p>
                 ) : (
-                  transactions.slice(0, window.innerWidth >= 768 ? 5 : 3).map(t => (
-                    <div className="recent-item-clean" key={t.id}>
+                  transactions.slice(0, 5).map((t, idx) => (
+                    <div className={`recent-item-clean ${idx >= 3 ? 'desktop-only' : ''}`} key={t.id}>
                       <div className="item-left">
                         <div className="item-icon">{getTransactionIcon(t)}</div>
                         <div className="item-details">
@@ -536,7 +517,7 @@ export default function Overview() {
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: 600 }}>{s.title}</span>
-                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>In {diffDays} days ({new Date(s.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})</span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>In {diffDays} {diffDays === 1 ? 'day' : 'days'} ({new Date(s.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})</span>
                         </div>
                         <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{cur(s.amount)}</span>
                       </div>
@@ -576,7 +557,7 @@ export default function Overview() {
               <div className="health-gauge-legend">
                 <div className="health-gauge-row">
                   <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Streak</span>
-                  <span style={{ color: 'var(--text)', fontSize: '11px', fontWeight: 600 }}>{user.streak || 0} days</span>
+                  <span style={{ color: 'var(--text)', fontSize: '11px', fontWeight: 600 }}>{user.streak || 0} {(user.streak || 0) === 1 ? 'day' : 'days'}</span>
                 </div>
                 <div className="health-gauge-row">
                   <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Budget</span>

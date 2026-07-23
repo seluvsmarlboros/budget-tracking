@@ -43,6 +43,14 @@ export default function Settings() {
   // Navigation within settings
   const [activeTab, setActiveTab] = useState('profile'); // profile, ai, widgets, categories, goals, system
 
+  // Custom modal dialog refs and states replacing window.prompt/confirm
+  const addFundsDialogRef = useRef(null);
+  const deleteGoalDialogRef = useRef(null);
+  const resetSystemDialogRef = useRef(null);
+  const [selectedGoalIdx, setSelectedGoalIdx] = useState(null);
+  const [selectedGoalName, setSelectedGoalName] = useState('');
+  const [fundsAmount, setFundsAmount] = useState('');
+
   // Profile Settings Form State
   const [name, setName] = useState(user.name || '');
   const [currency, setCurrency] = useState(user.currency || '₹');
@@ -185,18 +193,34 @@ export default function Settings() {
     if (goalDialogRef.current) goalDialogRef.current.close();
   };
 
-  const handleAddGoalFunds = (idx) => {
-    const val = window.prompt('Enter amount to save towards this goal:');
-    if (val && parseFloat(val) > 0) {
-      addSavingsAmount(idx, parseFloat(val));
+  const handleAddGoalFunds = (idx, gName) => {
+    setSelectedGoalIdx(idx);
+    setSelectedGoalName(gName);
+    setFundsAmount('');
+    addFundsDialogRef.current?.showModal();
+  };
+
+  const handleAddGoalFundsSubmit = (e) => {
+    e.preventDefault();
+    const val = parseFloat(fundsAmount);
+    if (!isNaN(val) && val > 0 && selectedGoalIdx !== null) {
+      addSavingsAmount(selectedGoalIdx, val);
       window.toast('Saved successfully! 🏦');
+      addFundsDialogRef.current?.close();
     }
   };
 
   const handleDeleteGoal = (idx, gName) => {
-    if (window.confirm(`Delete savings goal "${gName}"?`)) {
-      deleteSavingsGoal(idx);
+    setSelectedGoalIdx(idx);
+    setSelectedGoalName(gName);
+    deleteGoalDialogRef.current?.showModal();
+  };
+
+  const handleDeleteGoalConfirm = () => {
+    if (selectedGoalIdx !== null) {
+      deleteSavingsGoal(selectedGoalIdx);
       window.toast('Savings goal deleted.');
+      deleteGoalDialogRef.current?.close();
     }
   };
 
@@ -244,8 +268,7 @@ export default function Settings() {
       try {
         const parsed = JSON.parse(event.target.result);
         if (importData(parsed)) {
-          window.toast('Data restored! Reloading...');
-          setTimeout(() => location.reload(), 800);
+          window.toast('Data restored successfully! 🚀');
         } else {
           window.toast('Invalid backup file');
         }
@@ -257,11 +280,13 @@ export default function Settings() {
   };
 
   const handleResetAllData = () => {
-    if (window.confirm('WARNING: This will permanently delete ALL transactions, categories, and connected credentials. Continue?')) {
-      resetState();
-      window.toast('System reset complete.');
-      setTimeout(() => location.reload(), 500);
-    }
+    resetSystemDialogRef.current?.showModal();
+  };
+
+  const handleResetAllDataConfirm = () => {
+    resetState();
+    window.toast('System reset complete.');
+    resetSystemDialogRef.current?.close();
   };
 
   // Resolve API Key Label
@@ -375,7 +400,7 @@ export default function Settings() {
                   </select>
                 </div>
                 <div className="field">
-                  <label htmlFor="set-budget">Allowance Value</label>
+                  <label htmlFor="set-budget">{budgetPeriod === 'month' ? `Monthly Allowance (${currency})` : `Weekly Allowance (${currency})`}</label>
                   <input type="number" id="set-budget" value={pocketMoney} onChange={(e) => setPocketMoney(e.target.value)} required />
                 </div>
               </div>
@@ -387,6 +412,9 @@ export default function Settings() {
                     <option value="week">Weekly Pocket Money</option>
                     <option value="month">Monthly Pocket Money</option>
                   </select>
+                  <span className="hint" style={{ fontSize: '11px', marginTop: '4px', display: 'block', color: 'var(--text-secondary)' }}>
+                    Your allowance budget resets every {budgetPeriod === 'month' ? 'calendar month' : 'Monday'}.
+                  </span>
                 </div>
                 <div className="field">
                   <label htmlFor="set-commute">Default Commute Mode</label>
@@ -548,7 +576,7 @@ export default function Settings() {
                   {c}
                   <button
                     type="button"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '14px', lineheight: 1, padding: 0 }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1, padding: 0 }}
                     onClick={() => {
                       deleteCategory(c);
                       window.toast(`Category "${c}" removed`);
@@ -586,7 +614,7 @@ export default function Settings() {
                         <div className="goal-fill" style={{ height: '100%', background: 'var(--accent-gradient)', width: `${pct}%` }}></div>
                       </div>
                       <div className="goal-actions" style={{ display: 'flex', gap: '8px' }}>
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleAddGoalFunds(idx)}>+ Add funds</button>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleAddGoalFunds(idx, g.name)}>+ Add funds</button>
                         <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteGoal(idx, g.name)}>Delete</button>
                       </div>
                     </div>
@@ -787,12 +815,62 @@ export default function Settings() {
               />
             </div>
           </div>
+        </form>
+      </dialog>
 
+      {/* Dialog: Add Savings Goal Funds */}
+      <dialog id="dialog-goal-add-funds" className="dialog" ref={addFundsDialogRef}>
+        <form onSubmit={handleAddGoalFundsSubmit}>
+          <button type="button" className="btn-close-dialog" onClick={() => addFundsDialogRef.current?.close()} aria-label="Close dialog">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <h3>Add Funds to Goal</h3>
+          <p className="muted" style={{ fontSize: '12.5px', marginBottom: '14px' }}>Log savings contribution to build the <strong>{selectedGoalName}</strong> fund.</p>
+          <div className="field">
+            <label htmlFor="inp-funds-amount">Contribution Amount ({sym})</label>
+            <input
+              type="number"
+              id="inp-funds-amount"
+              value={fundsAmount}
+              onChange={(e) => setFundsAmount(e.target.value)}
+              placeholder="e.g. 500"
+              required
+              min="0.01"
+              step="any"
+              autoFocus
+            />
+          </div>
           <div className="dialog-actions">
-            <button type="button" className="btn-ghost" onClick={() => goalDialogRef.current?.close()}>Cancel</button>
-            <button type="submit" className="btn-primary">Save Goal</button>
+            <button type="button" className="btn-ghost" onClick={() => addFundsDialogRef.current?.close()}>Cancel</button>
+            <button type="submit" className="btn-primary">Add Funds</button>
           </div>
         </form>
+      </dialog>
+
+      {/* Dialog: Confirm Delete Savings Goal */}
+      <dialog id="dialog-goal-delete-confirm" className="dialog" ref={deleteGoalDialogRef} style={{ maxWidth: '360px' }}>
+        <button type="button" className="btn-close-dialog" onClick={() => deleteGoalDialogRef.current?.close()} aria-label="Close dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <h3>Delete Savings Goal</h3>
+        <p className="muted" style={{ fontSize: '13px', marginBottom: '20px', lineHeight: 1.45 }}>Are you sure you want to delete the savings goal <strong>"{selectedGoalName}"</strong>? This action cannot be undone.</p>
+        <div className="dialog-actions" style={{ display: 'flex', gap: '10px' }}>
+          <button type="button" className="btn-ghost" onClick={() => deleteGoalDialogRef.current?.close()} style={{ flex: 1 }}>Cancel</button>
+          <button type="button" className="btn-danger" onClick={handleDeleteGoalConfirm} style={{ flex: 1 }}>Delete Goal</button>
+        </div>
+      </dialog>
+
+      {/* Dialog: Confirm Reset System Data */}
+      <dialog id="dialog-system-reset-confirm" className="dialog" ref={resetSystemDialogRef} style={{ maxWidth: '400px' }}>
+        <button type="button" className="btn-close-dialog" onClick={() => resetSystemDialogRef.current?.close()} aria-label="Close dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <h3 style={{ color: 'var(--red)' }}>Reset System Data</h3>
+        <p className="muted" style={{ fontSize: '13px', marginBottom: '20px', lineHeight: 1.45 }}><strong>WARNING:</strong> This will permanently delete ALL transactions, category configurations, savings goals, local settings, and connected credentials. There is no going back.</p>
+        <div className="dialog-actions" style={{ display: 'flex', gap: '10px' }}>
+          <button type="button" className="btn-ghost" onClick={() => resetSystemDialogRef.current?.close()} style={{ flex: 1 }}>Cancel</button>
+          <button type="button" className="btn-danger" onClick={handleResetAllDataConfirm} style={{ flex: 1 }}>Reset Everything</button>
+        </div>
       </dialog>
 
     </section>

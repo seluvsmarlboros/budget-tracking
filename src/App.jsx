@@ -5,6 +5,7 @@ import { useStateContext } from './contexts/StateContext';
 import Overview from './views/Overview';
 import Log from './views/Log';
 import Friends from './views/Friends';
+import Circles from './views/Circles';
 import Activity from './views/Activity';
 import Insights from './views/Insights';
 import Settings from './views/Settings';
@@ -36,7 +37,7 @@ export class ErrorBoundary extends Component {
             {this.state.error?.message || 'An unexpected error occurred.'}
           </p>
           <button
-            onClick={() => { this.setState({ hasError: false, error: null }); window.location.hash = '#home'; }}
+            onClick={() => { this.setState({ hasError: false, error: null }); window.location.hash = '#partner'; }}
             style={{
               marginTop: '8px', padding: '10px 24px', borderRadius: '99px',
               background: 'var(--accent-gradient)',
@@ -121,7 +122,8 @@ export default function App() {
       case 'add':
         return <Log />;
       case 'partner':
-        return <Friends />;
+      case 'circles':
+        return <Circles />;
       case 'activity':
         return <Activity />;
       case 'insights':
@@ -129,16 +131,15 @@ export default function App() {
       case 'settings':
         return <Settings />;
       default:
-        return <Overview />;
+        return <Circles />;
     }
   };
 
   const navItems = [
     { view: 'home', label: 'Overview', icon: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></> },
-    { view: 'add', label: 'Log', icon: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></> },
-    { view: 'partner', label: 'Friends', icon: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></> },
+    { view: 'partner', label: 'Circles', icon: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></> },
+    { view: 'add', label: 'Add Expense', isFab: true, icon: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></> },
     { view: 'activity', label: 'Activity', icon: <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/> },
-    { view: 'insights', label: 'Insights', icon: <><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></> },
     { view: 'settings', label: 'Settings', icon: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></> }
   ];
 
@@ -147,7 +148,7 @@ export default function App() {
       {/* Top Nav / Desktop Sidebar */}
       <nav className="top-nav">
         <div className="nav-inner">
-          <span className="brand">UniSpend</span>
+          <span className="brand">UniSpend <span style={{ color: 'var(--accent)', fontWeight: 300 }}>Circle</span></span>
           <div className="nav-links">
             {navItems.map(item => (
               <a
@@ -165,20 +166,38 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Mobile Bottom Nav */}
-      <nav className="bottom-nav">
-        {navItems.map(item => (
-          <a
-            key={item.view}
-            href={`#${item.view}`}
-            className={`bnav ${currentHash === item.view ? 'active' : ''}`}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {item.icon}
-            </svg>
-            <span>{item.label}</span>
-          </a>
-        ))}
+      {/* Mobile Bottom Nav - Frosted Liquid Glass */}
+      <nav className="bottom-nav liquid-glass">
+        {navItems.map(item => {
+          if (item.isFab) {
+            return (
+              <a
+                key={item.view}
+                href={`#${item.view}`}
+                className={`bnav-fab ${currentHash === item.view ? 'active' : ''}`}
+              >
+                <div className="bnav-fab-btn">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    {item.icon}
+                  </svg>
+                </div>
+                <span className="bnav-fab-label">{item.label}</span>
+              </a>
+            );
+          }
+          return (
+            <a
+              key={item.view}
+              href={`#${item.view}`}
+              className={`bnav ${currentHash === item.view ? 'active' : ''}`}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {item.icon}
+              </svg>
+              <span>{item.label}</span>
+            </a>
+          );
+        })}
       </nav>
 
       {/* Main Content Area */}

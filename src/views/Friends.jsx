@@ -3,7 +3,7 @@ import { useStateContext } from '../contexts/StateContext';
 import { SupabaseService, supabase } from '../services/supabase';
 
 export default function Friends() {
-  const { state, syncSupabaseBalances } = useStateContext();
+  const { state, syncSupabaseBalances, syncPartnerHistory } = useStateContext();
   const sym = state?.user?.currency || '₹';
   const [currentUserId, setCurrentUserId] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -342,6 +342,43 @@ export default function Friends() {
 
     combined.sort((a, b) => b.date - a.date);
     setActivityLogs(combined);
+
+    // Sync to local friends history
+    try {
+      const isUserA = partnership.user_a && (typeof partnership.user_a === 'object' ? partnership.user_a.id === userId : partnership.user_a === userId);
+      const mappedEntries = combined.map(c => {
+        const dateStr = c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+        if (c.type === 'settlement') {
+          return {
+            remoteId: c.id,
+            type: 'settlement',
+            amount: c.total,
+            date: dateStr,
+            description: c.title,
+            direction: 'settled'
+          };
+        } else {
+          const addedByUserId = typeof c.added_by === 'object' ? c.added_by?.id : c.added_by;
+          const myUserId = typeof userId === 'object' ? userId?.id : userId;
+          const didIPay = addedByUserId === myUserId;
+          const myShare = isUserA ? c.user_a_owes : c.user_b_owes;
+          const partnerShare = isUserA ? c.user_b_owes : c.user_a_owes;
+          const amt = didIPay ? partnerShare : myShare;
+          const dir = didIPay ? 'lent' : 'borrowed';
+          return {
+            remoteId: c.id,
+            type: 'split',
+            amount: amt,
+            date: dateStr,
+            description: c.title,
+            direction: dir
+          };
+        }
+      });
+      syncPartnerHistory(pName, mappedEntries);
+    } catch (err) {
+      console.error("Failed to sync supabase history to state context:", err);
+    }
   };
 
   // 4. ACTION HANDLERS
@@ -840,11 +877,11 @@ export default function Friends() {
 
                 if (bal.balance > 0) {
                   if (partnerDebtor) {
-                    statusText = `you owe ₹${bal.balance.toFixed(2)}`;
+                    statusText = `you owe ${sym}${bal.balance.toFixed(2)}`;
                     statusColor = 'var(--red)';
                     avatarClass = 'owe';
                   } else {
-                    statusText = `owes you ₹${bal.balance.toFixed(2)}`;
+                    statusText = `owes you ${sym}${bal.balance.toFixed(2)}`;
                     statusColor = 'var(--green)';
                     avatarClass = 'owed';
                   }

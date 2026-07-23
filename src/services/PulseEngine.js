@@ -4,6 +4,8 @@
  * No API calls — runs instantly from local state.
  */
 
+import { calculateCircleNetBalance } from '../contexts/StateContext';
+
 /**
  * @param {object} state — full UniSpend state
  * @returns {Array<PulseCard>}
@@ -81,8 +83,33 @@ export function generatePulseCards(state) {
     });
   }
 
-  // ── 3. FRIEND RECEIVABLE ─────────────────────────────────────────────────
-  // Trigger: any friend balance > ₹500
+  // ── 3. CIRCLE & FRIEND RECEIVABLE ───────────────────────────────────────
+  // Trigger: any circle net balance < -100 or > 100
+  const circlesList = state?.circles?.list || [];
+  circlesList.forEach(circle => {
+    const circleNet = calculateCircleNetBalance(circle, user?.name || 'Arjun');
+
+    if (circleNet < -100 && cards.length < 4) {
+      cards.push({
+        id: `pulse_circle_owe_${circle.id}`,
+        type: 'circle_owe',
+        icon: '🔴',
+        title: `You owe ${sym}${Math.abs(Math.round(circleNet))} in ${circle.name}`,
+        body: `Use Magic Settle to clear your share with minimum transfers across ${circle.members?.length || 0} group members.`,
+        action: { label: `Settle ${circle.name}`, target: '#partner' }
+      });
+    } else if (circleNet > 100 && cards.length < 4) {
+      cards.push({
+        id: `pulse_circle_owed_${circle.id}`,
+        type: 'circle_owed',
+        icon: '🟢',
+        title: `You are owed ${sym}${Math.round(circleNet)} in ${circle.name}`,
+        body: `Group members have outstanding splits in ${circle.name}. Run Magic Settle to trigger one-click settlements.`,
+        action: { label: `View ${circle.name}`, target: '#partner' }
+      });
+    }
+  });
+
   const friendBalances = friends?.balances || {};
   const bigDebts = Object.entries(friendBalances).filter(([, b]) => b > 500);
   if (bigDebts.length > 0 && cards.length < 4) {
@@ -92,7 +119,7 @@ export function generatePulseCards(state) {
       type: 'friend_receivable',
       icon: '💸',
       title: `${name} owes you ${sym}${Math.round(amount).toLocaleString('en-IN')}`,
-      body: `That's real money sitting uncollected. Nudge ${name} to settle — use the QR in Friends to make it frictionless.`,
+      body: `That's real money sitting uncollected. Nudge ${name} to settle — use the QR in Circles to make it frictionless.`,
       action: { label: `Remind ${name}`, target: '#partner' }
     });
   }

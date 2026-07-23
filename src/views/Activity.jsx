@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStateContext } from '../contexts/StateContext';
 
 export default function Activity() {
-  const { state, addFriend, settleUp, addSpike, addGroupSplit, deleteSpike } = useStateContext();
+  const { state, addFriend, settleUp, addSpike, addGroupSplit, deleteSpike, executeEqualize } = useStateContext();
   const { friends, spikes, transactions, user } = state;
   const sym = user.currency || '₹';
   const friendsList = friends?.list || [];
@@ -216,6 +216,17 @@ export default function Activity() {
 
     setEqualizedTransactions(txs);
     if (equalizeDialogRef.current) equalizeDialogRef.current.showModal();
+  };
+
+  // Record all minimized transfers
+  const handleSettleAllEqualized = () => {
+    try {
+      executeEqualize(equalizedTransactions);
+      window.toast('All minimized transfers recorded! 🤝');
+      if (equalizeDialogRef.current) equalizeDialogRef.current.close();
+    } catch (err) {
+      window.toast(`Failed to equalize debts: ${err.message}`);
+    }
   };
 
   // Handle QR code display trigger
@@ -618,8 +629,11 @@ export default function Activity() {
           )}
         </div>
 
-        <div className="dialog-actions" style={{ marginTop: '20px' }}>
-          <button type="button" className="btn-primary" onClick={() => equalizeDialogRef.current?.close()} style={{ width: '100%' }}>Got it!</button>
+        <div className="dialog-actions" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+          <button type="button" className="btn-ghost" onClick={() => equalizeDialogRef.current?.close()} style={{ flex: 1 }}>Got it!</button>
+          {equalizedTransactions.length > 0 && (
+            <button type="button" className="btn-primary" onClick={handleSettleAllEqualized} style={{ flex: 1 }}>Settle All</button>
+          )}
         </div>
       </dialog>
 

@@ -7,6 +7,164 @@ const STATE_KEY = 'unispend_app_state';
 const DEFAULT_CATEGORIES = ['Food', 'Canteen', 'Printouts', 'Stationery', 'Travel', 'Hangout', 'Books', 'Other'];
 const getDefaultKey = () => ["gsk", "XvTW2HftoIAi0QOv8kETWGdyb3FYOq9lJm4DU2FR8S7IerDaJ9wn"].join("_");
 
+export const defaultCirclesSeed = (userName = 'Arjun') => [
+  {
+    id: 'circle_apt4b',
+    name: 'Apartment 4B',
+    icon: 'building',
+    inviteCode: 'APT4B8',
+    createdAt: new Date().toISOString().split('T')[0],
+    members: [
+      { id: 'u_user', name: userName, isGhost: false },
+      { id: 'u_priya', name: 'Priya', isGhost: false, upiId: 'priya@upi' },
+      { id: 'u_karan', name: 'Karan', isGhost: false, upiId: 'karan@upi' },
+      { id: 'u_rahul', name: 'Rahul', isGhost: true }
+    ],
+    transactions: [
+      { id: 'ctxn_1', title: 'Pizza', totalAmount: 600, paidBy: 'Priya', date: new Date().toISOString().split('T')[0], category: 'Food', splits: { [userName]: 150, 'Priya': 150, 'Karan': 150, 'Rahul': 150 } },
+      { id: 'ctxn_2', title: 'Wi-Fi bill settlement', totalAmount: 150, paidBy: 'Karan', recipient: userName, date: new Date(Date.now() - 2 * 864e5).toISOString().split('T')[0], category: 'Income', isSettlement: true, splits: { [userName]: -150 } }
+    ]
+  },
+  {
+    id: 'circle_goa',
+    name: 'Goa Trip',
+    icon: 'beach',
+    inviteCode: 'GOATRIP',
+    createdAt: new Date().toISOString().split('T')[0],
+    members: [
+      { id: 'u_user', name: userName, isGhost: false },
+      { id: 'u_neha', name: 'Neha', isGhost: false },
+      { id: 'u_rohit', name: 'Rohit', isGhost: false },
+      { id: 'u_m1', name: 'Simran', isGhost: true },
+      { id: 'u_m2', name: 'Aman', isGhost: true },
+      { id: 'u_m3', name: 'Vikas', isGhost: true }
+    ],
+    transactions: [
+      { id: 'ctxn_3', title: 'Resort pool booking', totalAmount: 1200, paidBy: 'Neha', date: new Date(Date.now() - 864e5).toISOString().split('T')[0], category: 'Travel', splits: { [userName]: 200, 'Neha': 200, 'Rohit': 200, 'Simran': 200, 'Aman': 200, 'Vikas': 200 } }
+    ]
+  },
+  {
+    id: 'circle_canteen',
+    name: 'Canteen Gang',
+    icon: 'coffee',
+    inviteCode: 'CANTEEN',
+    createdAt: new Date().toISOString().split('T')[0],
+    members: [
+      { id: 'u_user', name: userName, isGhost: false },
+      { id: 'u_rohit', name: 'Rohit', isGhost: false },
+      { id: 'u_m4', name: 'Kabir', isGhost: true },
+      { id: 'u_m5', name: 'Sneha', isGhost: true },
+      { id: 'u_m6', name: 'Dev', isGhost: true }
+    ],
+    transactions: [
+      { id: 'ctxn_4', title: 'Breakfast', totalAmount: 300, paidBy: 'Rohit', date: new Date(Date.now() - 864e5).toISOString().split('T')[0], category: 'Food', splits: { [userName]: 60, 'Rohit': 60, 'Kabir': 60, 'Sneha': 60, 'Dev': 60 } }
+    ]
+  }
+];
+
+export const calculateCircleNetBalance = (circle, userName = 'Arjun') => {
+  if (!circle || !circle.transactions || circle.transactions.length === 0) return 0;
+  let net = 0;
+  const targetUser = (userName || 'Arjun').trim().toLowerCase();
+
+  circle.transactions.forEach(t => {
+    const paidBy = (t.paidBy || '').trim().toLowerCase();
+    const recipient = (t.recipient || '').trim().toLowerCase();
+    const amt = parseFloat(t.totalAmount || 0);
+
+    if (t.isSettlement) {
+      if (paidBy === targetUser) {
+        net -= amt;
+      } else if (recipient === targetUser) {
+        net += amt;
+      }
+    } else {
+      let mySplit = 0;
+      if (t.splits) {
+        Object.entries(t.splits).forEach(([k, val]) => {
+          if (k.trim().toLowerCase() === targetUser) {
+            mySplit = parseFloat(val || 0);
+          }
+        });
+      }
+
+      if (paidBy === targetUser) {
+        net += (amt - mySplit);
+      } else {
+        net -= mySplit;
+      }
+    }
+  });
+
+  return Math.round(net);
+};
+
+export const calculateMagicSettle = (circle) => {
+  if (!circle || !circle.members || circle.members.length === 0) return [];
+  const memberBalances = {};
+  const nameMap = {};
+
+  circle.members.forEach(m => {
+    const canon = m.name.trim();
+    const lower = canon.toLowerCase();
+    memberBalances[lower] = 0;
+    nameMap[lower] = canon;
+  });
+
+  (circle.transactions || []).forEach(t => {
+    const amt = parseFloat(t.totalAmount || 0);
+    const paidByLower = (t.paidBy || '').trim().toLowerCase();
+    const recipientLower = (t.recipient || '').trim().toLowerCase();
+
+    if (t.isSettlement) {
+      if (memberBalances[paidByLower] !== undefined) memberBalances[paidByLower] -= amt;
+      if (recipientLower && memberBalances[recipientLower] !== undefined) memberBalances[recipientLower] += amt;
+    } else {
+      if (memberBalances[paidByLower] !== undefined) memberBalances[paidByLower] += amt;
+
+      Object.entries(t.splits || {}).forEach(([mName, share]) => {
+        const mLower = mName.trim().toLowerCase();
+        if (memberBalances[mLower] !== undefined) {
+          memberBalances[mLower] -= parseFloat(share || 0);
+        }
+      });
+    }
+  });
+
+  const debtors = [];
+  const creditors = [];
+
+  Object.entries(memberBalances).forEach(([lower, bal]) => {
+    const rounded = Math.round(bal * 100) / 100;
+    const name = nameMap[lower] || lower;
+    if (rounded < -0.5) debtors.push({ name, amount: -rounded });
+    else if (rounded > 0.5) creditors.push({ name, amount: rounded });
+  });
+
+  const settlements = [];
+  let dIdx = 0, cIdx = 0;
+
+  while (dIdx < debtors.length && cIdx < creditors.length) {
+    const debtor = debtors[dIdx];
+    const creditor = creditors[cIdx];
+    const amount = Math.min(debtor.amount, creditor.amount);
+
+    settlements.push({
+      from: debtor.name,
+      to: creditor.name,
+      amount: Math.round(amount * 100) / 100
+    });
+
+    debtor.amount -= amount;
+    creditor.amount -= amount;
+
+    if (debtor.amount < 0.5) dIdx++;
+    if (creditor.amount < 0.5) cIdx++;
+  }
+
+  return settlements;
+};
+
 const emptyState = {
   user: {
     name: '',
@@ -29,6 +187,7 @@ const emptyState = {
   transactions: [],
   commute: { type: 'metro', dailyCost: 60, passCost: 0, logs: [], maintenance: [], attendanceDays: [] },
   friends: { list: [], balances: {}, history: [] },
+  circles: { activeCircleId: null, list: [] },
   spikes: [],
   wallet: { sources: [], savingsGoals: [] },
   ai: {
@@ -134,6 +293,29 @@ export const StateProvider = ({ children }) => {
           parsed.friends.balances = {};
           migrated = true;
         }
+        if (!parsed.circles) {
+          parsed.circles = { activeCircleId: null, list: [] };
+          migrated = true;
+        } else if (parsed.circles.list && parsed.circles.list.length > 0) {
+          const currentUserName = parsed.user?.name || 'Arjun';
+          parsed.circles.list.forEach(c => {
+            c.members?.forEach(m => {
+              if (m.id === 'u_user' && m.name !== currentUserName) {
+                const oldName = m.name;
+                m.name = currentUserName;
+                migrated = true;
+                (c.transactions || []).forEach(t => {
+                  if (t.paidBy === oldName) t.paidBy = currentUserName;
+                  if (t.recipient === oldName) t.recipient = currentUserName;
+                  if (t.splits && t.splits[oldName] !== undefined) {
+                    t.splits[currentUserName] = t.splits[oldName];
+                    delete t.splits[oldName];
+                  }
+                });
+              }
+            });
+          });
+        }
         if (!parsed.ai) {
           parsed.ai = {
             provider: 'groq',
@@ -156,10 +338,10 @@ export const StateProvider = ({ children }) => {
         return parsed;
       } catch (err) {
         console.error('UniSpend State: Error parsing or migrating state, resetting to emptyState:', err);
-        return JSON.parse(JSON.stringify(emptyState));
+        return structuredClone(emptyState);
       }
     }
-    return JSON.parse(JSON.stringify(emptyState));
+    return structuredClone(emptyState);
   });
 
   // Save changes back to LocalStorage
@@ -172,7 +354,7 @@ export const StateProvider = ({ children }) => {
     if (!currentState.user.onboarded) return currentState;
     const today = new Date().toISOString().split('T')[0];
     const last = currentState.user.lastActiveDate;
-    const updated = JSON.parse(JSON.stringify(currentState));
+    const updated = structuredClone(currentState);
 
     if (!last) {
       Object.assign(updated.user, { streak: 1, totalDaysActive: 1, lastActiveDate: today });
@@ -187,17 +369,86 @@ export const StateProvider = ({ children }) => {
     return updated;
   };
 
-  // Run streak update and global notification listener on mount
+  // Run streak update, auth user ID sync, push subscription, and notification listener
   const notificationSub = useRef(null);
-  
+
+  useEffect(() => {
+    // 1. Sync Supabase Auth User ID to global state
+    const syncAuth = async () => {
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser?.id && authUser.id !== state.user.id) {
+          setState(prev => {
+            const next = { ...prev, user: { ...prev.user, id: authUser.id, email: authUser.email } };
+            saveState(next);
+            return next;
+          });
+        }
+      } catch (e) {
+        console.warn('Auth sync error:', e);
+      }
+    };
+    syncAuth();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user?.id && session.user.id !== state.user.id) {
+        setState(prev => {
+          const next = { ...prev, user: { ...prev.user, id: session.user.id, email: session.user.email } };
+          saveState(next);
+          return next;
+        });
+      }
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, [state.user.id]);
+
+  // 2. Service Worker Registration & Web Push Subscription
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        console.log('[PWA] Service Worker registered scope:', reg.scope);
+        if (state.user.id && 'PushManager' in window && reg.pushManager) {
+          reg.pushManager.getSubscription().then(async (sub) => {
+            if (!sub) {
+              try {
+                const vapidPublicKey = 'BF7IgezFiN_M2HBCufmwj2yionG4AbT91NDwBZj5tqmrLK5U7pnL-de7DrPiFYZIW5FgFfzSvyQTGZGd5s2bdeQ';
+                const padding = '='.repeat((4 - (vapidPublicKey.length % 4)) % 4);
+                const base64 = (vapidPublicKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
+                const rawData = window.atob(base64);
+                const convertedKey = new Uint8Array(rawData.length);
+                for (let i = 0; i < rawData.length; ++i) {
+                  convertedKey[i] = rawData.charCodeAt(i);
+                }
+                const newSub = await reg.pushManager.subscribe({
+                  userVisibleOnly: true,
+                  applicationServerKey: convertedKey
+                });
+                await SupabaseService.savePushSubscription(newSub);
+                console.log('[PWA] Push subscription saved to profile');
+              } catch (err) {
+                console.log('[PWA] Push subscription skipped or denied:', err.message);
+              }
+            } else {
+              await SupabaseService.savePushSubscription(sub).catch(() => {});
+            }
+          }).catch(err => console.log('[PWA] PushManager check error:', err));
+        }
+      }).catch(err => console.error('[PWA] SW registration failed:', err));
+    }
+  }, [state.user.id]);
+
+  // 3. Streak & Realtime Auto-Track Listener
   useEffect(() => {
     if (state.user.onboarded) {
       const updated = updateStreak(state);
       if (updated.user.streak !== state.user.streak || updated.user.lastActiveDate !== state.user.lastActiveDate) {
         saveState(updated);
       }
-      
-      // Global listener for auto-track webhooks (pending_transaction notifications)
+
+      // Realtime listener for auto-track webhooks (pending_transaction notifications)
       if (state.user.id && !notificationSub.current) {
         notificationSub.current = supabase
           .channel(`user-notifications:${state.user.id}`)
@@ -219,7 +470,7 @@ export const StateProvider = ({ children }) => {
           .subscribe();
       }
     }
-    
+
     return () => {
       if (notificationSub.current) {
         notificationSub.current.unsubscribe();
@@ -230,11 +481,11 @@ export const StateProvider = ({ children }) => {
 
   const resetState = () => {
     localStorage.removeItem(STATE_KEY);
-    saveState(JSON.parse(JSON.stringify(emptyState)));
+    saveState(structuredClone(emptyState));
   };
 
   const completeOnboarding = (setup) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     updated.user.name = setup.name;
     updated.user.currency = setup.currency;
     updated.user.weeklyPocketMoney = parseFloat(setup.weeklyPocketMoney);
@@ -313,6 +564,20 @@ export const StateProvider = ({ children }) => {
       updated.user.totalDaysActive = 9;
       updated.user.lastActiveDate = d(0);
     }
+
+    const newName = setup.name;
+    if (setup.seedData) {
+      updated.circles = {
+        activeCircleId: 'circle_apt4b',
+        list: defaultCirclesSeed(newName)
+      };
+    } else {
+      updated.circles = {
+        activeCircleId: null,
+        list: []
+      };
+    }
+
     saveState(updated);
   };
 
@@ -324,7 +589,7 @@ export const StateProvider = ({ children }) => {
         return exists;
       }
     }
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     let category = txn.category || 'Other';
     if (txn.type === 'expense' && updated.rules && updated.rules.length > 0) {
       const descLower = (txn.description || '').toLowerCase();
@@ -346,7 +611,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const addCommuteLog = (log, isCollegeDay) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     const date = log.date || new Date().toISOString().split('T')[0];
     updated.commute.logs.unshift({ date, type: log.type, amount: parseFloat(log.amount), details: log.details });
     if (isCollegeDay && !updated.commute.attendanceDays.includes(date)) {
@@ -368,7 +633,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const addMaintenanceLog = (log) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     const date = log.date || new Date().toISOString().split('T')[0];
     updated.commute.maintenance.unshift({ date, task: log.task, amount: parseFloat(log.amount) });
     updated.commute.logs.unshift({ date, type: 'repair', amount: parseFloat(log.amount), details: `Service: ${log.task}` });
@@ -390,7 +655,7 @@ export const StateProvider = ({ children }) => {
   const addFriend = (name) => {
     const n = name.trim();
     if (!n || state.friends.list.includes(n)) return false;
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     updated.friends.list.push(n);
     updated.friends.balances[n] = 0;
     saveState(updated);
@@ -403,7 +668,7 @@ export const StateProvider = ({ children }) => {
     const today = new Date().toISOString().split('T')[0];
     const meReceive = bal > 0;
     
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     if (meReceive) {
       updated.friends.balances[friend] -= amt;
       const t = {
@@ -447,7 +712,7 @@ export const StateProvider = ({ children }) => {
     const friendPart = splitHalf ? amt / 2 : amt;
     const myShare = splitHalf ? amt / 2 : 0;
 
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     if (direction === 'lent') {
       updated.friends.balances[friend] = (updated.friends.balances[friend] || 0) + friendPart;
       if (myShare > 0) {
@@ -493,7 +758,7 @@ export const StateProvider = ({ children }) => {
     if (members.length <= 1) return;
     const share = amt / members.length;
 
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     const t = {
       id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
       type: 'expense',
@@ -522,7 +787,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const addSpike = (s) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     updated.spikes.push({
       id: 'spike_' + Date.now(),
       title: s.title,
@@ -535,13 +800,13 @@ export const StateProvider = ({ children }) => {
   };
 
   const deleteSpike = (id) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     updated.spikes = updated.spikes.filter(s => s.id !== id);
     saveState(updated);
   };
 
   const addSavingsGoal = (g) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     updated.wallet.savingsGoals.push({
       name: g.name,
       target: parseFloat(g.target),
@@ -552,7 +817,7 @@ export const StateProvider = ({ children }) => {
 
   const addSavingsAmount = (idx, amount) => {
     const amt = parseFloat(amount);
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     const g = updated.wallet.savingsGoals[idx];
     if (!g) return;
     g.saved += amt;
@@ -571,7 +836,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const deleteSavingsGoal = (idx) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     updated.wallet.savingsGoals.splice(idx, 1);
     saveState(updated);
   };
@@ -579,14 +844,14 @@ export const StateProvider = ({ children }) => {
   const addCategory = (name) => {
     const n = name.trim();
     if (!n || state.categories.includes(n)) return false;
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     updated.categories.push(n);
     saveState(updated);
     return true;
   };
 
   const deleteCategory = (name) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     // 1. Remove from categories list
     updated.categories = updated.categories.filter(c => c !== name);
     // 2. Cascade update transactions
@@ -611,7 +876,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const updateSettings = (updates) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     if (updates.name !== undefined) updated.user.name = updates.name;
     if (updates.currency !== undefined) updated.user.currency = updates.currency;
     if (updates.weeklyPocketMoney !== undefined) updated.user.weeklyPocketMoney = parseFloat(updates.weeklyPocketMoney);
@@ -631,20 +896,20 @@ export const StateProvider = ({ children }) => {
   };
 
   const updateAiSettings = (updates) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     updated.ai = { ...updated.ai, ...updates };
     saveState(updated);
   };
 
   const updatePulseCache = (cards) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     updated.user.pulseCards = cards;
     updated.user.pulseLastScanned = Date.now();
     saveState(updated);
   };
 
   const addAutoCategoryRule = (keyword, category) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     updated.rules.push({
       id: 'rule_' + Date.now(),
       keyword,
@@ -654,7 +919,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const deleteAutoCategoryRule = (id) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     updated.rules = updated.rules.filter(r => r.id !== id);
     saveState(updated);
   };
@@ -669,7 +934,7 @@ export const StateProvider = ({ children }) => {
 
   // Sync Supabase partner details directly to State (net balances)
   const syncSupabaseBalances = (rawBalance, userA, userB) => {
-    const updated = JSON.parse(JSON.stringify(state));
+    const updated = structuredClone(state);
     const user = state.user;
     
     // Re-calculate friend balances based on partner state
@@ -709,6 +974,253 @@ export const StateProvider = ({ children }) => {
     }
   };
 
+  // Sync Supabase partner bill history into local friends.history (deduped by remoteId)
+  const syncPartnerHistory = (partnerName, entries) => {
+    if (!partnerName || !entries || entries.length === 0) return;
+    const updated = structuredClone(state);
+
+    // Ensure partner is in friends list
+    if (!updated.friends.list.includes(partnerName)) {
+      updated.friends.list.push(partnerName);
+      updated.friends.balances[partnerName] = 0;
+    }
+
+    // Merge entries, skipping any that already exist by remoteId
+    const existingRemoteIds = new Set(
+      updated.friends.history.filter(h => h.remoteId).map(h => h.remoteId)
+    );
+
+    let added = 0;
+    for (const entry of entries) {
+      if (entry.remoteId && existingRemoteIds.has(entry.remoteId)) continue;
+      updated.friends.history.unshift({
+        id: 'iou_sync_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        remoteId: entry.remoteId || null,
+        type: entry.type || 'split',
+        friend: partnerName,
+        amount: parseFloat(entry.amount) || 0,
+        date: entry.date || new Date().toISOString().split('T')[0],
+        description: entry.description || 'Synced expense',
+        direction: entry.direction || 'lent'
+      });
+      added++;
+    }
+
+    if (added > 0) {
+      saveState(updated);
+    }
+  };
+
+  const executeEqualize = (trans) => {
+    if (!trans || trans.length === 0) return;
+    const updated = structuredClone(state);
+    const today = new Date().toISOString().split('T')[0];
+
+    trans.forEach(t => {
+      const amt = parseFloat(t.amount);
+      if (updated.friends.balances[t.from] !== undefined) {
+        updated.friends.balances[t.from] -= amt;
+      }
+      if (updated.friends.balances[t.to] !== undefined) {
+        updated.friends.balances[t.to] += amt;
+      }
+
+      updated.friends.history.unshift({
+        id: 'iou_eq_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        type: 'settlement',
+        friend: t.from,
+        amount: amt,
+        date: today,
+        description: `Equalized: Paid ${t.to} directly`,
+        direction: 'settled'
+      });
+      updated.friends.history.unshift({
+        id: 'iou_eq_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        type: 'settlement',
+        friend: t.to,
+        amount: amt,
+        date: today,
+        description: `Equalized: Received from ${t.from} directly`,
+        direction: 'settled'
+      });
+    });
+
+    saveState(updated);
+  };
+
+  const createCircle = (name, icon = 'building', initialMembers = []) => {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    const updated = structuredClone(state);
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const myName = state.user.name || 'Arjun';
+
+    const members = [{ id: 'u_' + Date.now(), name: myName, isGhost: false }];
+    initialMembers.forEach(m => {
+      const mName = (typeof m === 'string' ? m : m.name || '').trim();
+      if (mName && mName !== myName && !members.some(existing => existing.name.toLowerCase() === mName.toLowerCase())) {
+        members.push({
+          id: 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          name: mName,
+          isGhost: typeof m === 'object' && m.isGhost !== undefined ? m.isGhost : true,
+          upiId: typeof m === 'object' ? m.upiId || '' : ''
+        });
+      }
+    });
+
+    const newCircle = {
+      id: 'circle_' + Date.now(),
+      name: trimmed,
+      icon,
+      inviteCode: code,
+      createdAt: new Date().toISOString().split('T')[0],
+      members,
+      transactions: []
+    };
+
+    if (!updated.circles) updated.circles = { activeCircleId: null, list: [] };
+    updated.circles.list.unshift(newCircle);
+    updated.circles.activeCircleId = newCircle.id;
+    saveState(updated);
+    return newCircle;
+  };
+
+  const joinCircle = (inviteCode) => {
+    const code = inviteCode.trim().toUpperCase();
+    if (!code) return false;
+    const updated = structuredClone(state);
+    if (!updated.circles) updated.circles = { activeCircleId: null, list: [] };
+
+    let found = updated.circles.list.find(c => c.inviteCode === code);
+    if (!found) {
+      found = {
+        id: 'circle_joined_' + Date.now(),
+        name: `Circle (${code})`,
+        icon: 'users',
+        inviteCode: code,
+        createdAt: new Date().toISOString().split('T')[0],
+        members: [
+          { id: 'u_me', name: state.user.name || 'Arjun', isGhost: false },
+          { id: 'u_host', name: 'Circle Host', isGhost: false }
+        ],
+        transactions: []
+      };
+      updated.circles.list.unshift(found);
+    }
+    updated.circles.activeCircleId = found.id;
+    saveState(updated);
+    return found;
+  };
+
+  const addCircleTransaction = (circleId, txn) => {
+    const updated = structuredClone(state);
+    const circle = (updated.circles?.list || []).find(c => c.id === circleId);
+    if (!circle) return false;
+
+    const newTxn = {
+      id: 'ctxn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      title: txn.title,
+      totalAmount: parseFloat(txn.totalAmount),
+      paidBy: txn.paidBy || state.user.name || 'Arjun',
+      recipient: txn.recipient || null,
+      isSettlement: txn.isSettlement || false,
+      date: txn.date || new Date().toISOString().split('T')[0],
+      category: txn.category || (txn.isSettlement ? 'Income' : 'Food'),
+      splits: txn.splits || {}
+    };
+
+    if (!circle.transactions) circle.transactions = [];
+    circle.transactions.unshift(newTxn);
+
+    // Global transaction mirroring (only for regular expenses, not debt settlements)
+    if (!newTxn.isSettlement) {
+      const myName = state.user.name || 'Arjun';
+      const myShare = newTxn.splits[myName] || 0;
+      if (newTxn.paidBy === myName) {
+        updated.transactions.unshift({
+          id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          type: 'expense',
+          category: newTxn.category,
+          amount: myShare,
+          paymentMethod: 'UPI',
+          date: newTxn.date,
+          description: `${newTxn.title} (${circle.name} Circle)`
+        });
+      } else if (myShare > 0) {
+        updated.transactions.unshift({
+          id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+          type: 'expense',
+          category: newTxn.category,
+          amount: myShare,
+          paymentMethod: 'UPI',
+          date: newTxn.date,
+          description: `${newTxn.title} (Your share in ${circle.name})`
+        });
+      }
+    }
+
+    saveState(updated);
+    return true;
+  };
+
+  const addCircleMember = (circleId, memberName, isGhost = true, upiId = '') => {
+    const name = memberName.trim();
+    if (!name) return false;
+    const updated = structuredClone(state);
+    const circle = (updated.circles?.list || []).find(c => c.id === circleId);
+    if (!circle) return false;
+
+    const existingMember = circle.members.find(m => m.name.toLowerCase() === name.toLowerCase());
+    if (existingMember) {
+      if (existingMember.isGhost && !isGhost) {
+        existingMember.isGhost = false;
+        if (upiId) existingMember.upiId = upiId;
+        saveState(updated);
+        return true;
+      }
+      return false;
+    }
+
+    circle.members.push({
+      id: 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      name,
+      isGhost,
+      upiId
+    });
+    saveState(updated);
+    return true;
+  };
+
+  const mergeGhostMember = (circleId, ghostName, realUserName) => {
+    const updated = structuredClone(state);
+    const circle = (updated.circles?.list || []).find(c => c.id === circleId);
+    if (!circle) return false;
+
+    const ghostIndex = circle.members.findIndex(m => m.name === ghostName && m.isGhost);
+    if (ghostIndex === -1) return false;
+
+    circle.members[ghostIndex].name = realUserName;
+    circle.members[ghostIndex].isGhost = false;
+
+    (circle.transactions || []).forEach(t => {
+      if (t.paidBy === ghostName) t.paidBy = realUserName;
+      if (t.splits && t.splits[ghostName] !== undefined) {
+        t.splits[realUserName] = t.splits[ghostName];
+        delete t.splits[ghostName];
+      }
+    });
+
+    saveState(updated);
+    return true;
+  };
+
+  const setActiveCircle = (circleId) => {
+    const updated = structuredClone(state);
+    if (!updated.circles) updated.circles = { activeCircleId: null, list: [] };
+    updated.circles.activeCircleId = circleId;
+    saveState(updated);
+  };
+
   return (
     <StateContext.Provider value={{
       state,
@@ -734,7 +1246,15 @@ export const StateProvider = ({ children }) => {
       addAutoCategoryRule,
       deleteAutoCategoryRule,
       importData,
-      syncSupabaseBalances
+      syncSupabaseBalances,
+      syncPartnerHistory,
+      executeEqualize,
+      createCircle,
+      joinCircle,
+      addCircleTransaction,
+      addCircleMember,
+      mergeGhostMember,
+      setActiveCircle
     }}>
       {children}
     </StateContext.Provider>

@@ -11,10 +11,9 @@ const FOREST_PALETTE = [
 ];
 
 export default function Insights() {
-  const { state, importData } = useStateContext();
+  const { state } = useStateContext();
   const { transactions, user, commute } = state;
   const sym = user.currency || '₹';
-  const importFileRef = useRef(null);
 
   const cur = (amount) => {
     return sym + Math.abs(amount).toLocaleString('en-IN', { maximumFractionDigits: 0 });
@@ -91,61 +90,10 @@ export default function Insights() {
     }
   });
 
-  // Export local state JSON backup
-  const handleExportBackup = () => {
-    const dataStr = JSON.stringify(state, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `unispend-backup-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    window.toast('Backup JSON downloaded! 📋');
-  };
-
-  // Import local state JSON backup
-  const handleImportBackupChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const parsed = JSON.parse(event.target.result);
-        if (importData(parsed)) {
-          window.toast('Backup data imported successfully! 🚀');
-          // Reload screen
-          setTimeout(() => location.reload(), 800);
-        } else {
-          window.toast('Invalid JSON backup file structure.');
-        }
-      } catch (err) {
-        window.toast(`Import failed: ${err.message}`);
-      }
-    };
-    reader.readAsText(file);
-  };
-
   return (
     <section id="view-insights" className="view active">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1 style={{ margin: 0 }}>Analytics & Insights</h1>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => importFileRef.current?.click()}>
-            Import Backup
-          </button>
-          <input
-            type="file"
-            ref={importFileRef}
-            onChange={handleImportBackupChange}
-            accept=".json"
-            style={{ display: 'none' }}
-          />
-          <button type="button" className="btn btn-ghost btn-sm" onClick={handleExportBackup}>
-            Export Backup
-          </button>
-        </div>
       </div>
 
       {/* Month-over-Month Cards */}

@@ -82,8 +82,8 @@ module.exports = async (req, res) => {
   }
 
   const { userId } = req.query;
-  if (!userId) {
-    return res.status(400).json({ error: 'userId is required' });
+  if (!userId || userId === 'local' || userId.length < 20) {
+    return res.status(400).json({ error: 'Valid authenticated userId UUID is required. Please sign in to UniSpend to generate your personalized webhook link.' });
   }
 
   const payload = req.body || {};
