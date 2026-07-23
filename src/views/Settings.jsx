@@ -97,17 +97,84 @@ export default function Settings() {
     }
   };
 
-  // Sync Supabase user email label
+  // Sync Supabase user email label and dynamic webhook URL
   const [supabaseEmail, setSupabaseEmail] = useState('');
-  const [webhookUrl, setWebhookUrl] = useState('...');
-  
+  const activeUserId = user.id || '';
+  const currentWebhookUrl = `https://${window.location.host}/api/sms-log?userId=${activeUserId || 'local'}`;
+
+  const [pushStatus, setPushStatus] = useState(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission;
+    }
+    return 'unsupported';
+  });
+
+  const handleActivatePush = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      window.toast('Web Push is not supported in this browser environment.');
+      return;
+    }
+    try {
+      const perm = await Notification.requestPermission();
+      setPushStatus(perm);
+      if (perm !== 'granted') {
+        window.toast('Notification permission was denied in browser settings.');
+        return;
+      }
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      const vapidPublicKey = 'BF7IgezFiN_M2HBCufmwj2yionG4AbT91NDwBZj5tqmrLK5U7pnL-de7DrPiFYZIW5FgFfzSvyQTGZGd5s2bdeQ';
+      const padding = '='.repeat((4 - (vapidPublicKey.length % 4)) % 4);
+      const base64 = (vapidPublicKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const convertedKey = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        convertedKey[i] = rawData.charCodeAt(i);
+      }
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedKey
+        });
+      }
+      if (user.id) {
+        await SupabaseService.savePushSubscription(sub);
+      }
+      window.toast('Web Push Notifications Activated Successfully! 🔔');
+    } catch (err) {
+      console.error(err);
+      window.toast(`Push activation error: ${err.message}`);
+    }
+  };
+
+  const handleTestWebhook = async () => {
+    if (!user.id) {
+      window.toast('Please sign in to Supabase first to activate personalized auto-tracking!');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/sms-log?userId=${user.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: 'Rs.150 debited via UPI paid to Canteen Cafe' })
+      });
+      const text = await res.text();
+      if (res.ok) {
+        window.toast(`Webhook Test Success: ${text}`);
+      } else {
+        window.toast(`Webhook Test Response: ${text}`);
+      }
+    } catch (err) {
+      window.toast(`Webhook Test Error: ${err.message}`);
+    }
+  };
+
   useEffect(() => {
     const fetchUserEmail = async () => {
       try {
         const u = await SupabaseService.getCurrentUser();
         if (u && u.email) {
           setSupabaseEmail(u.email);
-          setWebhookUrl(`https://${window.location.host}/api/sms-log?userId=${u.id}`);
         } else {
           setSupabaseEmail('');
         }
@@ -693,30 +760,75 @@ export default function Settings() {
         {activeTab === 'system' && (
           <div className="card settings-group-card" id="settings-group-system">
             
-            {/* iOS Webhook Card */}
-            {supabaseEmail && (
-              <div id="ios-automation-card" className="card" style={{ display: 'block', background: 'rgba(197, 160, 89, 0.02)', borderColor: 'var(--border-focus)', padding: '16px', marginBottom: '20px' }}>
-                <h4 style={{ margin: '0 0 4px 0' }}>iOS Webhook URL</h4>
-                <p className="muted" style={{ fontSize: '12px', margin: '0 0 10px 0', lineHeight: 1.4 }}>Paste this webhook URL into your iOS Shortcut to sync bank transaction texts in the background.</p>
+            {/* Notifications & Background Automation Card */}
+            <div className="card" style={{ display: 'block', background: 'rgba(197, 160, 89, 0.02)', border: '1px solid var(--border)', padding: '18px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700 }}>Push Notifications & Auto-Track Webhook</h4>
+                  <p className="muted" style={{ fontSize: '12px', margin: '4px 0 0 0' }}>Activate background alerts and copy your iOS auto-log webhook link.</p>
+                </div>
+                <span className="badge" style={{
+                  background: pushStatus === 'granted' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  color: pushStatus === 'granted' ? 'var(--green)' : 'var(--red)',
+                  border: '1px solid var(--border)', fontSize: '11px', padding: '3px 8px', borderRadius: '12px'
+                }}>
+                  {pushStatus === 'granted' ? '🔔 Push Granted' : '🔕 Push Disabled'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleActivatePush}
+                  style={{ height: '36px', fontSize: '12.5px', padding: '0 16px', fontWeight: 600 }}
+                >
+                  {pushStatus === 'granted' ? 'Re-sync Push Notifications 🔔' : 'Enable Push Notifications 🔔'}
+                </button>
+              </div>
+
+              <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', padding: '12px', borderRadius: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    iOS Shortcut Webhook URL
+                  </span>
+                  {user.id ? (
+                    <span style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 600 }}>
+                      ✓ UUID Synced ({user.id.substring(0, 8)}...)
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      (Sign in to sync custom UUID)
+                    </span>
+                  )}
+                </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <div id="ios-webhook-display" style={{ flex: 1, padding: '8px 10px', fontSize: '11px', fontFamily: 'monospace', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: '4px', wordBreak: 'break-all' }}>
-                    {webhookUrl}
+                  <div id="ios-webhook-display" style={{ flex: 1, padding: '8px 10px', fontSize: '11px', fontFamily: 'monospace', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: '4px', wordBreak: 'break-all', color: 'var(--text-secondary)' }}>
+                    {currentWebhookUrl}
                   </div>
                   <button
                     type="button"
                     className="btn-ghost btn-sm"
                     id="btn-copy-webhook"
                     onClick={async () => {
-                      await navigator.clipboard.writeText(webhookUrl);
+                      await navigator.clipboard.writeText(currentWebhookUrl);
                       window.toast('Copied webhook URL! 📋');
                     }}
                     style={{ flexShrink: 0, height: '34px', width: 'auto' }}
                   >
                     Copy URL
                   </button>
+                  <button
+                    type="button"
+                    className="btn-ghost btn-sm"
+                    onClick={handleTestWebhook}
+                    style={{ flexShrink: 0, height: '34px', width: 'auto', color: 'var(--accent)' }}
+                  >
+                    Test Webhook ⚡
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
 
             <h3 style={{ marginBottom: '12px' }}>System Maintenance & Recovery</h3>
             <p className="muted" style={{ fontSize: '12.5px', lineHeight: 1.45, marginBottom: '20px' }}>Back up all transactions and category structures to a JSON file locally, or perform a hard reset.</p>

@@ -22,7 +22,7 @@ export const defaultCirclesSeed = (userName = 'Arjun') => [
     ],
     transactions: [
       { id: 'ctxn_1', title: 'Pizza', totalAmount: 600, paidBy: 'Priya', date: new Date().toISOString().split('T')[0], category: 'Food', splits: { [userName]: 150, 'Priya': 150, 'Karan': 150, 'Rahul': 150 } },
-      { id: 'ctxn_2', title: 'Wi-Fi bill settlement', totalAmount: 150, paidBy: 'Karan', recipient: userName, date: new Date(Date.now() - 2 * 864e5).toISOString().split('T')[0], category: 'Income', isSettlement: true, splits: { [userName]: -150 } }
+      { id: 'ctxn_2', title: 'Wi-Fi bill settlement', totalAmount: 150, paidBy: userName, recipient: 'Priya', date: new Date(Date.now() - 2 * 864e5).toISOString().split('T')[0], category: 'Income', isSettlement: true, splits: { [userName]: -150, 'Priya': 150 } }
     ]
   },
   {
@@ -74,9 +74,9 @@ export const calculateCircleNetBalance = (circle, userName = 'Arjun') => {
 
     if (t.isSettlement) {
       if (paidBy === targetUser) {
-        net -= amt;
-      } else if (recipient === targetUser) {
         net += amt;
+      } else if (recipient === targetUser) {
+        net -= amt;
       }
     } else {
       let mySplit = 0;
@@ -117,8 +117,8 @@ export const calculateMagicSettle = (circle) => {
     const recipientLower = (t.recipient || '').trim().toLowerCase();
 
     if (t.isSettlement) {
-      if (memberBalances[paidByLower] !== undefined) memberBalances[paidByLower] -= amt;
-      if (recipientLower && memberBalances[recipientLower] !== undefined) memberBalances[recipientLower] += amt;
+      if (memberBalances[paidByLower] !== undefined) memberBalances[paidByLower] += amt;
+      if (recipientLower && memberBalances[recipientLower] !== undefined) memberBalances[recipientLower] -= amt;
     } else {
       if (memberBalances[paidByLower] !== undefined) memberBalances[paidByLower] += amt;
 

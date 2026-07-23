@@ -14,4 +14,8 @@
 | 10: Fix "1 days" grammar in `Overview.jsx` | [x] |
 | 11: Fix non-unique IDs in `addCircleTransaction` | [x] |
 | 12: Fix default hash route in `App.jsx` | [x] |
-| 13: Build verification | [x] |
+| 13: Fix mock data seed logic (no circles generated when seed data is OFF) | [x] |
+| 14: Sync `state.user.id` from Supabase Auth to enable Realtime Auto-Track Listener | [x] |
+| 15: Fix PWA Service Worker caching & place static assets in `public/` | [x] |
+| 16: Configure Vercel deployment settings in `vercel.json` | [x] |
+| 17: Build verification & push changes to GitHub `main` | [x] |
