@@ -199,7 +199,7 @@ export default function Friends() {
               }
               setConnectedPartnerName(partnerName);
               setShowCelebration(true);
-              window.toast(`🎉 Connected with ${partnerName}!`);
+              window.toast(`Connected with ${partnerName}!`);
             }
           }
         }
@@ -235,7 +235,7 @@ export default function Friends() {
           if (payload.new && payload.new.type === 'disconnect_code') {
             try {
               const info = JSON.parse(payload.new.message);
-              setFullscreenNotification(`🔒 Disconnect Request: ${info.senderName || 'Your partner'} wants to disconnect. Share this security authorization code with them to verify: ${info.code}`);
+              setFullscreenNotification(`Disconnect Request: ${info.senderName || 'Your partner'} wants to disconnect. Share this security authorization code with them to verify: ${info.code}`);
             } catch (err) {
               setFullscreenNotification(payload.new.message);
             }
@@ -250,7 +250,7 @@ export default function Friends() {
         { event: 'UPDATE', schema: 'public', table: 'partnerships', filter: `id=eq.${partnershipId}` },
         async (payload) => {
           if (payload.new.status === 'ended') {
-            window.toast('⚠️ Your partner has disconnected from the partnership.');
+            window.toast('Your partner has disconnected from the partnership.');
             setActivePartnership(null);
             setPartnerProfile(null);
             setAuthState('unlinked');
@@ -393,7 +393,7 @@ export default function Friends() {
     try {
       await SupabaseService.sendMagicLink(mail, name);
       setAuthMsg(`Magic link sent! Check your inbox at ${mail}.`);
-      window.toast('Link sent! 📧');
+      window.toast('Link sent!');
     } catch (err) {
       window.toast(`Failed to sign in: ${err.message}`);
     } finally {
@@ -422,7 +422,7 @@ export default function Friends() {
     try {
       const invite = await SupabaseService.generateInvite();
       setPendingInvite(invite);
-      window.toast('Invite code generated! 🔑');
+      window.toast('Invite code generated!');
     } catch (err) {
       window.toast(`Failed to create invite: ${err.message}`);
     }
@@ -466,7 +466,7 @@ export default function Friends() {
         balanceInfo.balance,
         senderName
       );
-      window.toast('Reminder notification sent! 🔔');
+      window.toast('Reminder notification sent!');
     } catch (err) {
       window.toast(`Failed to send reminder: ${err.message}`);
     } finally {
@@ -484,7 +484,7 @@ export default function Friends() {
         code,
         profile.display_name || 'Your partner'
       ).catch(err => console.error(err));
-      window.toast('Disconnect authorization code sent to partner! 🔒');
+      window.toast('Disconnect authorization code sent to partner!');
     }
 
     setDisconnectInputCode('');
@@ -621,9 +621,9 @@ export default function Friends() {
           category: sharedBillCat,
           frequency: sharedBillRecurring
         });
-        window.toast(`Template & shared bill added! 📅`);
+        window.toast(`Template & shared bill added!`);
       } else {
-        window.toast('Shared bill logged! 💸');
+        window.toast('Shared bill logged!');
       }
 
       // Reset Form
@@ -680,7 +680,7 @@ export default function Friends() {
 
     try {
       await SupabaseService.addSharedExpense(expenseData);
-      window.toast('Direct loan logged successfully! 🤝');
+      window.toast('Direct loan logged successfully.');
       setLoanTitle('');
       setLoanAmount('');
       setLoanDue('');
@@ -719,7 +719,7 @@ export default function Friends() {
 
     try {
       await SupabaseService.settleBalance(activePartnership.id, amt, details);
-      window.toast('Settlement payment recorded! 🤝');
+      window.toast('Settlement payment recorded.');
       if (settleDialogRef.current) settleDialogRef.current.close();
       checkAuthState();
     } catch (err) {
@@ -743,7 +743,7 @@ export default function Friends() {
         isRecurring: false
       };
       await SupabaseService.addSharedExpense(expenseData);
-      window.toast(`Logged recurring bill: ${t.title}! ⚡`);
+      window.toast(`Logged recurring bill: ${t.title}!`);
       checkAuthState();
     } catch (err) {
       window.toast(`Failed to log: ${err.message}`);
@@ -834,7 +834,7 @@ export default function Friends() {
         {showCelebration && (
           <div id="celebration-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10000, animation: 'fadeIn 0.3s' }}>
             <div className="card" style={{ maxWidth: '400px', textAlign: 'center', padding: '32px' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎉</div>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>Partnership Active</div>
               <h3 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '8px' }}>Connection Successful!</h3>
               <p className="muted" style={{ fontSize: '13.5px', marginBottom: '24px' }}>You are now linked with <strong style={{ color: 'var(--accent)' }}>{connectedPartnerName}</strong> in Supabase.</p>
               <button type="button" className="btn-primary" onClick={() => { setShowCelebration(false); checkAuthState(); }}>Go to Dashboard</button>
@@ -928,7 +928,7 @@ export default function Friends() {
                 <div id="invite-code-val" style={{ fontSize: '24px', fontWeight: 'bold', letterSpacing: '4px', margin: '6px 0', color: 'var(--accent)' }}>{pendingInvite.invite_code}</div>
                 <button type="button" className="btn-ghost btn-sm" id="copy-invite-link" onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/#partner-redeem?code=${pendingInvite.invite_code}`);
-                  window.toast('Invite code link copied! 📋');
+                  window.toast('Invite code link copied.');
                 }} style={{ width: '100%' }}>Copy Invite Link</button>
               </div>
             )}
@@ -968,7 +968,7 @@ export default function Friends() {
       {fullscreenNotification && (
         <div id="reminder-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.92)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10001 }}>
           <div className="card" style={{ maxWidth: '400px', padding: '32px', textAlign: 'center' }}>
-            <div style={{ fontSize: '42px', marginBottom: '12px' }}>🔔</div>
+            <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }}>Notifications & Reminders</div>
             <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px' }}>Message Alert</h3>
             <p className="muted" style={{ fontSize: '13.5px', lineHeight: '1.5', marginBottom: '24px' }}>{fullscreenNotification}</p>
             <button type="button" className="btn-primary" onClick={() => setFullscreenNotification('')}>Acknowledge</button>
@@ -1011,14 +1011,14 @@ export default function Friends() {
               {!isDebtor && balanceInfo.balance > 0 && (
                 <>
                   <button type="button" className="btn btn-ghost btn-sm" id="send-reminder-btn" onClick={handleSendReminder} disabled={isReminderLoading}>
-                    {isReminderLoading ? 'Sending...' : '⚡ Send Reminder'}
+                    {isReminderLoading ? 'Sending...' : 'Send Reminder'}
                   </button>
                   <button type="button" className="btn btn-ghost btn-sm" id="generate-qr-btn" onClick={() => qrDialogRef.current?.showModal()}>
-                    📱 Generate UPI QR
+                    Generate UPI QR
                   </button>
                 </>
               )}
-              <button type="button" className="btn btn-primary btn-sm" id="settle-up-btn" onClick={handleSettleUpOpen}>🤝 Settle Up</button>
+              <button type="button" className="btn btn-primary btn-sm" id="settle-up-btn" onClick={handleSettleUpOpen}>Settle Up</button>
               <button type="button" className="btn btn-danger btn-sm" id="leave-partner-btn" onClick={handleLeavePartnershipTrigger}>Disconnect</button>
             </div>
           </div>
@@ -1121,7 +1121,7 @@ export default function Friends() {
                   </div>
                   {fixedWarn && (
                     <div id="split-fixed-warn" style={{ gridColumn: 'span 2', fontSize: '12px', color: 'var(--red)', fontWeight: 'bold' }}>
-                      ⚠️ Sum of shares must equal the total bill amount.
+                      Sum of shares must equal the total bill amount.
                     </div>
                   )}
                 </div>
@@ -1309,7 +1309,7 @@ export default function Friends() {
                     <div className="feed-meta">Total: ₹{t.total_amount} | Split: {t.split_type} | Repeat: {t.frequency === 'daily' ? 'Daily' : `Day ${t.day_of_month} Monthly`}</div>
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <button type="button" className="btn-ghost btn-sm" style={{ padding: '4px 8px', width: 'auto', fontWeight: 'bold' }} onClick={() => handleLogTemplate(t)}>⚡ Log</button>
+                    <button type="button" className="btn-ghost btn-sm" style={{ padding: '4px 8px', width: 'auto', fontWeight: 'bold' }} onClick={() => handleLogTemplate(t)}>Log</button>
                     <button type="button" className="btn-danger btn-sm" style={{ padding: '4px 8px', width: 'auto' }} onClick={() => handleDeleteTemplate(t.id)}>Delete</button>
                   </div>
                 </div>
@@ -1534,7 +1534,7 @@ export default function Friends() {
                     style={{ width: 'auto', height: 'auto', padding: '8px 16px' }}
                     onClick={() => {
                       navigator.clipboard.writeText(state.user.upiId);
-                      window.toast('UPI ID copied to clipboard! 📋');
+                      window.toast('UPI ID copied to clipboard.');
                     }}
                   >
                     Copy

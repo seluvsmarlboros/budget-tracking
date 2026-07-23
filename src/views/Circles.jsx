@@ -200,7 +200,7 @@ export default function Circles() {
 
     const circle = createCircle(newCircleName, newCircleIcon, memberObjs);
     if (circle) {
-      if (window.toast) window.toast(`🎉 Created Circle "${circle.name}"!`);
+      if (window.toast) window.toast(`Created Circle "${circle.name}"!`);
       setNewCircleName('');
       setNewMemberInputs(['']);
       setShowCreateModal(false);
@@ -212,7 +212,7 @@ export default function Circles() {
     if (!joinCodeInput.trim()) return;
     const circle = joinCircle(joinCodeInput);
     if (circle) {
-      if (window.toast) window.toast(`🚀 Joined ${circle.name}!`);
+      if (window.toast) window.toast(`Joined ${circle.name}!`);
       setJoinCodeInput('');
       setShowJoinModal(false);
     }
@@ -241,7 +241,7 @@ export default function Circles() {
       splits
     });
 
-    if (window.toast) window.toast(`💸 Logged "${txnTitle}" in ${activeCircle.name}!`);
+    if (window.toast) window.toast(`Logged "${txnTitle}" in ${activeCircle.name}!`);
     setTxnTitle('');
     setTxnAmount('');
     setShowAddTxnModal(false);
@@ -252,7 +252,7 @@ export default function Circles() {
     if (!newMemberName.trim() || !activeCircle) return;
     const success = addCircleMember(activeCircle.id, newMemberName, isGhostToggle);
     if (success) {
-      if (window.toast) window.toast(`👤 Added ${newMemberName} to ${activeCircle.name}`);
+      if (window.toast) window.toast(`Added ${newMemberName} to ${activeCircle.name}`);
       setNewMemberName('');
       setShowAddMemberModal(false);
     } else {
@@ -282,7 +282,7 @@ export default function Circles() {
     });
 
     if (window.toast) {
-      window.toast(isPaying ? `💸 Logged ${sym}${amt} payment to ${partnerName}!` : `🤝 Recorded ${sym}${amt} repayment received from ${partnerName}!`);
+      window.toast(isPaying ? `Logged ${sym}${amt} payment to ${partnerName}!` : `Recorded ${sym}${amt} repayment received from ${partnerName}!`);
     }
     setShowSettleModal(false);
     setSettleAmount('');
@@ -295,12 +295,12 @@ export default function Circles() {
       const partnerMember = activeCircle.members?.find(m => m.name === partnerName);
       if (partnerMember && partnerMember.id && !partnerMember.isGhost) {
         await SupabaseService.sendReminderNotification(activeCircle.id, partnerMember.id, parseFloat(settleAmount || 0), userName);
-        window.toast(`🔔 Friendly reminder notification sent to ${partnerName}!`);
+        window.toast(`Reminder notification sent to ${partnerName}!`);
       } else {
-        window.toast(`🔔 Reminder logged for ${partnerName}! (Share via UPI link below)`);
+        window.toast(`Reminder logged for ${partnerName}! (Share via UPI link below)`);
       }
     } catch (e) {
-      window.toast(`🔔 Reminder notification logged for ${partnerName}!`);
+      window.toast(`Reminder notification logged for ${partnerName}!`);
     }
   };
 
@@ -309,7 +309,7 @@ export default function Circles() {
       {/* Hero Greeting & New Circle Action */}
       <section className="circles-hero-section">
         <div className="hero-greeting-box">
-          <h1 className="hero-title">Hey {userName} 👋</h1>
+          <h1 className="hero-title">Hey {userName}</h1>
           <p className="hero-subtext">Here's what's happening in your circles.</p>
         </div>
 
@@ -368,13 +368,13 @@ export default function Circles() {
                     {activeCircleMenu === circle.id && (
                       <div className="circle-overflow-menu" onClick={e => e.stopPropagation()}>
                         <button onClick={() => { setActiveCircle(circle.id); setShowAddMemberModal(true); setActiveCircleMenu(null); }}>
-                          ➕ Add Member
+                          Add Member
                         </button>
                         <button onClick={() => { setActiveCircle(circle.id); setShowMagicSettleModal(true); setActiveCircleMenu(null); }}>
-                          ✨ Magic Settle
+                          Magic Settle
                         </button>
                         <button onClick={() => { navigator.clipboard?.writeText(circle.inviteCode); window.toast(`Copied Code: ${circle.inviteCode}`); setActiveCircleMenu(null); }}>
-                          📋 Copy Invite Code ({circle.inviteCode})
+                          Copy Invite Code ({circle.inviteCode})
                         </button>
                       </div>
                     )}
@@ -439,7 +439,7 @@ export default function Circles() {
                           setShowSettleModal(true);
                         }}
                       >
-                        {netBalance === 0 ? '✅ Settled' : isPositive ? '🤝 Collect' : '💸 Repay Debt'}
+                        {netBalance === 0 ? 'Settled' : isPositive ? 'Collect' : 'Repay Debt'}
                       </button>
                     </div>
                   </div>
@@ -531,9 +531,9 @@ export default function Circles() {
               <div className="field">
                 <label>Category Icon</label>
                 <div className="icon-selector">
-                  <button type="button" className={`icon-opt ${newCircleIcon === 'building' ? 'selected' : ''}`} onClick={() => setNewCircleIcon('building')}>🏢 Apartment</button>
-                  <button type="button" className={`icon-opt ${newCircleIcon === 'beach' ? 'selected' : ''}`} onClick={() => setNewCircleIcon('beach')}>🌴 Trip</button>
-                  <button type="button" className={`icon-opt ${newCircleIcon === 'coffee' ? 'selected' : ''}`} onClick={() => setNewCircleIcon('coffee')}>☕ Canteen</button>
+                  <button type="button" className={`icon-opt ${newCircleIcon === 'building' ? 'selected' : ''}`} onClick={() => setNewCircleIcon('building')}>Apartment</button>
+                  <button type="button" className={`icon-opt ${newCircleIcon === 'beach' ? 'selected' : ''}`} onClick={() => setNewCircleIcon('beach')}>Trip</button>
+                  <button type="button" className={`icon-opt ${newCircleIcon === 'coffee' ? 'selected' : ''}`} onClick={() => setNewCircleIcon('coffee')}>Canteen</button>
                 </div>
               </div>
 
@@ -608,25 +608,22 @@ export default function Circles() {
 
             {/* Quick Actions in Detail */}
             <div className="detail-actions">
-              <button className="action-pill highlight-green" onClick={() => {
-                const magicTransfers = calculateMagicSettle(activeCircle);
-                const myTransfer = magicTransfers.find(t => t.from.toLowerCase() === userName.toLowerCase());
-                const targetPayee = myTransfer ? myTransfer.to : (activeCircle.members.find(m => m.name !== userName)?.name || '');
-                const targetAmt = myTransfer ? myTransfer.amount.toString() : Math.abs(calculateCircleNetBalance(activeCircle, userName)).toString();
-                setSettlePayee(targetPayee);
-                setSettleAmount(targetAmt);
+              <button className="btn-action-pill" onClick={() => {
+                const isPos = calculateCircleNetBalance(activeCircle, userName) >= 0;
+                setSettleDirection(isPos ? 'receive' : 'pay');
+                setShowCircleDetail(false);
                 setShowSettleModal(true);
               }}>
-                🤝 Repay Debt
+                Settle Up
               </button>
-              <button className="action-pill" onClick={() => setShowAddTxnModal(true)}>
-                ➕ Log Expense
+              <button className="btn-action-pill primary" onClick={() => { setShowCircleDetail(false); setShowAddTxnModal(true); }}>
+                + Log Expense
               </button>
-              <button className="action-pill highlight" onClick={() => setShowMagicSettleModal(true)}>
-                ✨ Magic Settle
+              <button className="btn-action-pill" onClick={() => { setShowCircleDetail(false); setShowMagicSettleModal(true); }}>
+                Magic Settle
               </button>
-              <button className="action-pill" onClick={() => setShowAddMemberModal(true)}>
-                👤 Add Member
+              <button className="btn-action-pill" onClick={() => { setShowCircleDetail(false); setShowAddMemberModal(true); }}>
+                + Add Member
               </button>
             </div>
 
@@ -669,7 +666,7 @@ export default function Circles() {
         <div className="modal-overlay" onClick={() => setShowMagicSettleModal(false)}>
           <div className="modal-sheet" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>✨ Magic Settle — {activeCircle.name}</h3>
+              <h3>Magic Settle — {activeCircle.name}</h3>
               <button className="close-btn" onClick={() => setShowMagicSettleModal(false)}>✕</button>
             </div>
             <div className="magic-settle-content">
@@ -677,7 +674,7 @@ export default function Circles() {
                 Our min-cash-flow algorithm calculates the fewest number of transactions needed to settle all debts.
               </p>
               {calculateMagicSettle(activeCircle).length === 0 ? (
-                <div className="settled-notice">🎉 Everyone in {activeCircle.name} is fully settled up! No transfers needed.</div>
+                <div className="settled-notice">Everyone in {activeCircle.name} is fully settled up! No transfers needed.</div>
               ) : (
                 calculateMagicSettle(activeCircle).map((step, idx) => (
                   <div key={idx} className="magic-step-card">
@@ -710,7 +707,7 @@ export default function Circles() {
         <div className="modal-overlay" onClick={() => setShowSettleModal(false)}>
           <div className="modal-sheet" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{settleDirection === 'receive' ? '🤝 Record Received Repayment' : '💸 Repay Debt'} — {activeCircle.name}</h3>
+              <h3>{settleDirection === 'receive' ? 'Record Received Repayment' : 'Repay Debt'} — {activeCircle.name}</h3>
               <button className="close-btn" onClick={() => setShowSettleModal(false)}>✕</button>
             </div>
 
@@ -721,14 +718,14 @@ export default function Circles() {
                 className={`pill small ${settleDirection === 'pay' ? 'active' : ''}`}
                 onClick={() => setSettleDirection('pay')}
               >
-                💸 I Paid (Repaid Debt)
+                I Paid (Repaid Debt)
               </button>
               <button
                 type="button"
                 className={`pill small ${settleDirection === 'receive' ? 'active' : ''}`}
                 onClick={() => setSettleDirection('receive')}
               >
-                📥 I Received (Collected)
+                I Received (Collected)
               </button>
             </div>
 
@@ -770,14 +767,14 @@ export default function Circles() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    🚀 {settleDirection === 'pay' ? 'Pay via Instant UPI App' : 'Generate UPI Request Link'}
+                    {settleDirection === 'pay' ? 'Pay via Instant UPI App' : 'Generate UPI Request Link'}
                   </a>
                 </div>
               )}
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                 <button type="submit" className="btn-primary" style={{ flex: 1 }}>
-                  {settleDirection === 'pay' ? 'Confirm Payment & Log' : 'Record Received Repayment ✓'}
+                  {settleDirection === 'pay' ? 'Confirm Payment & Log' : 'Record Received Repayment'}
                 </button>
                 {settleDirection === 'receive' && (
                   <button
@@ -786,7 +783,7 @@ export default function Circles() {
                     onClick={handleSendReminder}
                     style={{ flexShrink: 0, height: '42px', color: 'var(--accent)', borderColor: 'var(--accent)' }}
                   >
-                    Send Nudge 🔔
+                    Send Nudge
                   </button>
                 )}
               </div>

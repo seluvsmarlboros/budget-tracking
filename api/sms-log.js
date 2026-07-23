@@ -119,7 +119,7 @@ export default async function handler(req, res) {
     }
 
     res.setHeader('Content-Type', 'text/plain');
-    return res.status(200).send(`Logged ₹${parsed.amount} for ${parsed.description}! 💸`);
+    return res.status(200).send(`Logged ₹${parsed.amount} for ${parsed.description}!`);
   } catch (err) {
     console.error('[sms-log] Exception:', err);
     return res.status(500).json({ error: `Function Exception: ${err.message}` });

@@ -22,4 +22,5 @@
 | 18: Add live **iOS Shortcut Webhook URL** card with Copy URL & Test Webhook ⚡ buttons | [x] |
 | 19: Rehaul & verify settlement sign math so paying debt reduces debt to 0 | [x] |
 | 20: Convert Vercel serverless API functions (`api/*.js`) to ES Modules syntax to fix `FUNCTION_INVOCATION_FAILED` | [x] |
-| 21: Build verification & push changes to GitHub `main` (`abdaaed`) | [x] |
+| 21: Rehaul Settle Modal in `Circles.jsx` to support dual directions: **💸 I Paid (Repaid Debt)** vs **📥 I Received (Collected)** + **Send Nudge 🔔** feature | [x] |
+| 22: Build verification & push changes to GitHub `main` (`26cc823`) | [x] |

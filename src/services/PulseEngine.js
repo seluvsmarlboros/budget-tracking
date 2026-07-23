@@ -48,7 +48,7 @@ export function generatePulseCards(state) {
     cards.push({
       id: 'pulse_burn',
       type: 'burn_rate',
-      icon: '🔥',
+      icon: '',
       title: 'Heads up — burning fast',
       body: `You've spent ${sym}${Math.round(periodExpenses).toLocaleString('en-IN')} (${Math.round(pctBudgetSpent * 100)}% of budget) in just ${Math.round(pctTimeElapsed * 100)}% of the ${period}. Slow down or you'll run dry early.`,
       action: { label: 'Review Budget', target: '#home' }
@@ -76,7 +76,7 @@ export function generatePulseCards(state) {
     cards.push({
       id: 'pulse_vampire',
       type: 'vampire',
-      icon: '🧛',
+      icon: '',
       title: 'Recurring charge spotted',
       body: `${sym}${parseFloat(amount).toLocaleString('en-IN')} has hit your ${category} ${txns.length}× in the last 30 days. Could be a subscription draining you silently — worth a check.`,
       action: { label: 'View Activity', target: '#activity' }
@@ -93,7 +93,7 @@ export function generatePulseCards(state) {
       cards.push({
         id: `pulse_circle_owe_${circle.id}`,
         type: 'circle_owe',
-        icon: '🔴',
+        icon: '',
         title: `You owe ${sym}${Math.abs(Math.round(circleNet))} in ${circle.name}`,
         body: `Use Magic Settle to clear your share with minimum transfers across ${circle.members?.length || 0} group members.`,
         action: { label: `Settle ${circle.name}`, target: '#partner' }
@@ -102,7 +102,7 @@ export function generatePulseCards(state) {
       cards.push({
         id: `pulse_circle_owed_${circle.id}`,
         type: 'circle_owed',
-        icon: '🟢',
+        icon: '',
         title: `You are owed ${sym}${Math.round(circleNet)} in ${circle.name}`,
         body: `Group members have outstanding splits in ${circle.name}. Run Magic Settle to trigger one-click settlements.`,
         action: { label: `View ${circle.name}`, target: '#partner' }
@@ -117,7 +117,7 @@ export function generatePulseCards(state) {
     cards.push({
       id: `pulse_friend_${name}`,
       type: 'friend_receivable',
-      icon: '💸',
+      icon: '',
       title: `${name} owes you ${sym}${Math.round(amount).toLocaleString('en-IN')}`,
       body: `That's real money sitting uncollected. Nudge ${name} to settle — use the QR in Circles to make it frictionless.`,
       action: { label: `Remind ${name}`, target: '#partner' }
@@ -139,7 +139,7 @@ export function generatePulseCards(state) {
     cards.push({
       id: `pulse_spike_${spike.id || spike.title}`,
       type: 'spike_warning',
-      icon: '⚡',
+      icon: '',
       title: `${spike.title} ${label}`,
       body: `${sym}${Math.round(spike.amount).toLocaleString('en-IN')} is due ${label}. Make sure your balance can cover it — freeze discretionary spend today.`,
       action: { label: 'Plan for It', target: '#home' }
@@ -159,7 +159,7 @@ export function generatePulseCards(state) {
     cards.push({
       id: `pulse_savings_${goal.name}`,
       type: 'savings_nudge',
-      icon: '💰',
+      icon: '',
       title: `You're crushing it — save for the ${goal.name}`,
       body: `You have a ${sym}${Math.round(surplus).toLocaleString('en-IN')} surplus this ${period}. Moving even ${sym}${suggestAmt.toLocaleString('en-IN')} toward "${goal.name}" gets you ${Math.round((suggestAmt / needed) * 100)}% closer.`,
       action: { label: 'Move to Savings', target: '#home' }

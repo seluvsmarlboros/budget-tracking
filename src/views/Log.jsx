@@ -59,7 +59,7 @@ export default function Log() {
         if (parsed.description) setDescription(parsed.description);
         if (parsed.date) setDate(parsed.date);
         if (parsed.type) setType(parsed.type);
-        window.toast(`Autofilled ₹${parsed.amount || ''} from clipboard! 📋`);
+        window.toast(`Autofilled ₹${parsed.amount || ''} from clipboard!`);
       } else {
         window.toast('No transaction details discovered in copied text.');
       }
@@ -73,7 +73,7 @@ export default function Log() {
     const file = e.target.files[0];
     if (!file) return;
 
-    let originalText = 'Scan Receipt 🧾';
+    let originalText = 'Scan Receipt';
     try {
       const parsed = await scanReceipt(file, (status) => {
         window.toast(status);
@@ -81,7 +81,7 @@ export default function Log() {
       if (parsed) {
         if (parsed.amount) {
           setAmount(parsed.amount.toString());
-          window.toast(`Autofilled: ₹${parsed.amount}! 🧾`);
+          window.toast(`Autofilled: ₹${parsed.amount}!`);
         } else {
           window.toast('Scan complete. No numeric totals found.');
         }

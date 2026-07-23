@@ -102,7 +102,7 @@ export default function Activity() {
     if (!name) return;
 
     if (addFriend(name)) {
-      window.toast(`Added Friend: ${name} 👥`);
+      window.toast(`Added Friend: ${name}`);
       setFriendName('');
       if (friendDialogRef.current) friendDialogRef.current.close();
     } else {
@@ -125,7 +125,7 @@ export default function Activity() {
     if (!settleFriend || isNaN(amt) || amt <= 0) return;
 
     settleUp(settleFriend, amt, 'UPI');
-    window.toast(`Repayment logged with ${settleFriend} 🤝`);
+    window.toast(`Repayment logged with ${settleFriend}`);
     if (settleDialogRef.current) settleDialogRef.current.close();
   };
 
@@ -169,7 +169,7 @@ export default function Activity() {
     }
 
     addGroupSplit(amt, desc, groupMembers);
-    window.toast('Group split logged! 🍕');
+    window.toast('Group split logged!');
     if (groupDialogRef.current) groupDialogRef.current.close();
   };
 
@@ -222,7 +222,7 @@ export default function Activity() {
   const handleSettleAllEqualized = () => {
     try {
       executeEqualize(equalizedTransactions);
-      window.toast('All minimized transfers recorded! 🤝');
+      window.toast('All minimized transfers recorded!');
       if (equalizeDialogRef.current) equalizeDialogRef.current.close();
     } catch (err) {
       window.toast(`Failed to equalize debts: ${err.message}`);
@@ -320,8 +320,8 @@ export default function Activity() {
           </div>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button type="button" className="btn btn-ghost btn-sm" id="btn-add-friend-activity" onClick={() => friendDialogRef.current?.showModal()}>+ Friend</button>
-            <button type="button" className="btn btn-ghost btn-sm" id="btn-group-split" onClick={handleOpenGroupSplit}>🍕 Group Bill</button>
-            <button type="button" className="btn btn-ghost btn-sm" id="btn-equalize" onClick={handleEqualize}>⚖️ Equalize</button>
+            <button type="button" className="btn btn-ghost btn-sm" id="btn-group-split" onClick={handleOpenGroupSplit}>Group Bill</button>
+            <button type="button" className="btn btn-ghost btn-sm" id="btn-equalize" onClick={handleEqualize}>Equalize</button>
           </div>
         </div>
 
@@ -618,11 +618,11 @@ export default function Activity() {
 
         <div id="equalize-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '200px', overflowY: 'auto', background: 'rgba(0,0,0,0.1)', padding: '12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
           {equalizedTransactions.length === 0 ? (
-            <p className="empty-state" style={{ textAlign: 'center', padding: '16px 0', margin: 0 }}>All debts are already settled! 🥳</p>
+            <p className="empty-state" style={{ textAlign: 'center', padding: '16px 0', margin: 0 }}>All debts are already settled!</p>
           ) : (
-            equalizedTransactions.map((t, idx) => (
-              <div className="equalize-item" key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', borderBottom: idx !== equalizedTransactions.length - 1 ? '1px dashed var(--border)' : 'none', padding: '6px 0' }}>
-                <span>👉 <strong>{t.from}</strong> pays <strong>{t.to}</strong></span>
+            equalizedTransactions.map((t, i) => (
+              <div key={i} className="equalize-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px' }}>
+                <span><strong>{t.from}</strong> pays <strong>{t.to}</strong></span>
                 <strong style={{ color: 'var(--accent)' }}>{cur(t.amount)}</strong>
               </div>
             ))

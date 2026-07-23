@@ -140,7 +140,7 @@ export default function Settings() {
       if (user.id) {
         await SupabaseService.savePushSubscription(sub);
       }
-      window.toast('Web Push Notifications Activated Successfully! 🔔');
+      window.toast('Web Push Notifications Activated Successfully!');
     } catch (err) {
       console.error(err);
       window.toast(`Push activation error: ${err.message}`);
@@ -198,7 +198,7 @@ export default function Settings() {
       targetGoal,
       cutbackCategory
     });
-    window.toast('Profile settings saved! 💾');
+    window.toast('Profile settings saved.');
   };
 
   const handleAiSubmit = (e) => {
@@ -208,7 +208,7 @@ export default function Settings() {
       apiKey: aiKey,
       model: aiModel
     });
-    window.toast('AI configurations saved! 🤖');
+    window.toast('AI configurations saved.');
   };
 
   const handleWidgetToggle = (widgetKey, checked) => {
@@ -253,7 +253,7 @@ export default function Settings() {
     if (!gName || isNaN(gTarget) || gTarget <= 0) return;
 
     addSavingsGoal({ name: gName, target: gTarget, saved: gSaved });
-    window.toast(`Goal "${gName}" initialized! 🎯`);
+    window.toast(`Goal "${gName}" initialized.`);
     setNewGoalName('');
     setNewGoalTarget('');
     setNewGoalSaved('');
@@ -272,7 +272,7 @@ export default function Settings() {
     const val = parseFloat(fundsAmount);
     if (!isNaN(val) && val > 0 && selectedGoalIdx !== null) {
       addSavingsAmount(selectedGoalIdx, val);
-      window.toast('Saved successfully! 🏦');
+      window.toast('Saved successfully.');
       addFundsDialogRef.current?.close();
     }
   };
@@ -335,7 +335,7 @@ export default function Settings() {
       try {
         const parsed = JSON.parse(event.target.result);
         if (importData(parsed)) {
-          window.toast('Data restored successfully! 🚀');
+          window.toast('Data restored successfully.');
         } else {
           window.toast('Invalid backup file');
         }
@@ -772,7 +772,7 @@ export default function Settings() {
                   color: pushStatus === 'granted' ? 'var(--green)' : 'var(--red)',
                   border: '1px solid var(--border)', fontSize: '11px', padding: '3px 8px', borderRadius: '12px'
                 }}>
-                  {pushStatus === 'granted' ? '🔔 Push Granted' : '🔕 Push Disabled'}
+                  {pushStatus === 'granted' ? 'Push Granted' : 'Push Disabled'}
                 </span>
               </div>
 
@@ -783,7 +783,7 @@ export default function Settings() {
                   onClick={handleActivatePush}
                   style={{ height: '36px', fontSize: '12.5px', padding: '0 16px', fontWeight: 600 }}
                 >
-                  {pushStatus === 'granted' ? 'Re-sync Push Notifications 🔔' : 'Enable Push Notifications 🔔'}
+                  {pushStatus === 'granted' ? 'Re-sync Push Notifications' : 'Enable Push Notifications'}
                 </button>
               </div>
 
@@ -812,7 +812,7 @@ export default function Settings() {
                     id="btn-copy-webhook"
                     onClick={async () => {
                       await navigator.clipboard.writeText(currentWebhookUrl);
-                      window.toast('Copied webhook URL! 📋');
+                      window.toast('Copied webhook URL.');
                     }}
                     style={{ flexShrink: 0, height: '34px', width: 'auto' }}
                   >
@@ -824,7 +824,7 @@ export default function Settings() {
                     onClick={handleTestWebhook}
                     style={{ flexShrink: 0, height: '34px', width: 'auto', color: 'var(--accent)' }}
                   >
-                    Test Webhook ⚡
+                    Test Webhook
                   </button>
                 </div>
               </div>

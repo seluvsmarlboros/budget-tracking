@@ -45,7 +45,7 @@ export default function Onboarding() {
       console.log('Onboarding auth status change:', event);
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
         setIsAuthenticated(true);
-        window.toast('Authenticated successfully! 🎉');
+        window.toast('Authenticated successfully!');
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
       }
@@ -68,7 +68,7 @@ export default function Onboarding() {
       await SupabaseService.sendMagicLink(mail, mail.split('@')[0]);
       setAuthMessage(`Magic link sent! Check your inbox, or enter the 6-digit code below.`);
       setShowOtpForm(true);
-      window.toast('Verification code sent! 📧');
+      window.toast('Verification code sent!');
     } catch (err) {
       window.toast(`Error sending link: ${err.message}`);
     } finally {
@@ -84,7 +84,7 @@ export default function Onboarding() {
     setIsOtpLoading(true);
     try {
       await SupabaseService.verifyOTP(email, token);
-      window.toast('Verification successful! 🔑');
+      window.toast('Verification successful!');
       setIsAuthenticated(true);
     } catch (err) {
       window.toast(`Verification failed: ${err.message}`);
@@ -229,7 +229,7 @@ export default function Onboarding() {
           onClick={() => setIsOffline(true)}
           style={{ padding: '8px 16px', background: 'rgba(255, 255, 255, 0.02)' }}
         >
-          Skip Login & Use Offline Mode 🔌
+          Skip Login & Use Offline Mode
         </button>
       </div>
     </div>

@@ -460,7 +460,7 @@ export const StateProvider = ({ children }) => {
                 try {
                   const txn = JSON.parse(payload.new.message);
                   addTransaction(txn);
-                  window.toast(`Auto-tracked: ${txn.description} (${state.user.currency}${txn.amount}) 💸`);
+                  window.toast(`Auto-tracked: ${txn.description} (${state.user.currency}${txn.amount})`);
                 } catch (e) {
                   console.error('Failed to parse auto-track notification:', e);
                 }

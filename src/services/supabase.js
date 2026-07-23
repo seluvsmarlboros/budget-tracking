@@ -270,7 +270,7 @@ export const SupabaseService = {
       .insert({
         user_id: partnerId,
         type: "reminder",
-        message: `🔔 Friendly reminder from ${senderName}: You owe them ₹${amount.toFixed(2)}.`
+        message: `Friendly reminder from ${senderName}: You owe them ₹${amount.toFixed(2)}.`
       });
 
     if (error) throw error;

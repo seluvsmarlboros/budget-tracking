@@ -70,13 +70,13 @@ export default async function handler(req, res) {
       notificationBody = message || notificationBody;
       
       if (type === 'reminder') {
-        notificationTitle = 'UniSpend Budget Reminder 🔔';
+        notificationTitle = 'UniSpend Budget Reminder';
         notificationUrl = './index.html?tab=partner';
       } else if (type === 'partner_joined') {
-        notificationTitle = 'UniSpend Partnership 🤝';
+        notificationTitle = 'UniSpend Partnership';
         notificationUrl = './index.html?tab=partner';
       } else if (type === 'settled') {
-        notificationTitle = 'UniSpend Settlement 💳';
+        notificationTitle = 'UniSpend Settlement';
         notificationUrl = './index.html?tab=partner';
       }
     } 

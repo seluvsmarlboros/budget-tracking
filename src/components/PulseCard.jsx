@@ -19,21 +19,71 @@ export default function PulseCard({ card, index, onDismiss }) {
     }
   };
 
-  // Map card type → accent color override (for icon background)
   const typeColor = {
-    burn_rate: 'rgba(248, 113, 113, 0.15)',     // red tint
-    vampire: 'rgba(167, 139, 250, 0.15)',        // purple tint
-    friend_receivable: 'rgba(74, 222, 128, 0.12)', // mint tint
-    spike_warning: 'rgba(251, 146, 60, 0.15)',   // orange tint
-    savings_nudge: 'rgba(74, 222, 128, 0.15)',   // mint tint
+    burn_rate: 'rgba(248, 113, 113, 0.15)',
+    vampire: 'rgba(167, 139, 250, 0.15)',
+    circle_owe: 'rgba(248, 113, 113, 0.15)',
+    circle_owed: 'rgba(74, 222, 128, 0.12)',
+    friend_receivable: 'rgba(74, 222, 128, 0.12)',
+    spike_warning: 'rgba(251, 146, 60, 0.15)',
+    savings_nudge: 'rgba(74, 222, 128, 0.15)',
   };
 
   const typeBorder = {
     burn_rate: 'rgba(248, 113, 113, 0.4)',
     vampire: 'rgba(167, 139, 250, 0.4)',
+    circle_owe: 'rgba(248, 113, 113, 0.4)',
+    circle_owed: 'rgba(74, 222, 128, 0.5)',
     friend_receivable: 'rgba(74, 222, 128, 0.5)',
     spike_warning: 'rgba(251, 146, 60, 0.4)',
     savings_nudge: 'rgba(74, 222, 128, 0.5)',
+  };
+
+  const renderIcon = (type) => {
+    switch (type) {
+      case 'burn_rate':
+        return (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+          </svg>
+        );
+      case 'vampire':
+        return (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        );
+      case 'circle_owe':
+        return (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="7" y1="7" x2="17" y2="17"/>
+            <polyline points="17 7 17 17 7 17"/>
+          </svg>
+        );
+      case 'circle_owed':
+      case 'friend_receivable':
+        return (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="7" y1="17" x2="17" y2="7"/>
+            <polyline points="7 7 17 7 17 17"/>
+          </svg>
+        );
+      case 'spike_warning':
+        return (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+        );
+      case 'savings_nudge':
+      default:
+        return (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="6"/>
+            <circle cx="12" cy="12" r="2"/>
+          </svg>
+        );
+    }
   };
 
   const cardStyle = {
@@ -55,7 +105,7 @@ export default function PulseCard({ card, index, onDismiss }) {
           className="pulse-card-icon"
           style={{ background: typeColor[card.type] || 'var(--accent-light)' }}
         >
-          <span role="img" aria-label={card.type}>{card.icon}</span>
+          {renderIcon(card.type)}
         </div>
 
         {/* Content */}
@@ -69,7 +119,7 @@ export default function PulseCard({ card, index, onDismiss }) {
               onClick={handleAction}
               type="button"
             >
-              {card.action.label} →
+              {card.action.label} &rarr;
             </button>
           )}
         </div>

@@ -237,7 +237,7 @@ export default function Overview() {
         message: result.message,
         actions: result.actions
       });
-      window.toast('AI command executed! 📲');
+      window.toast('AI command executed!');
     } catch (err) {
       setAiResponse({
         type: 'error',
@@ -616,7 +616,7 @@ export default function Overview() {
               onClick={async () => {
                 const urlText = `https://${window.location.host}/api/sms-log?userId=${state.user.id || 'local'}`;
                 await navigator.clipboard.writeText(urlText);
-                window.toast('Copied webhook URL! 📋');
+                window.toast('Copied webhook URL!');
               }}
             >
               Copy URL
@@ -626,7 +626,7 @@ export default function Overview() {
           <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', padding: '14px', borderRadius: 'var(--radius)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--accent)', letterSpacing: '0.5px' }}>Step 2: Get Pre-saved Shortcut</span>
             <p className="muted" style={{ margin: 0, fontSize: '12px', lineHeight: '1.4' }}>When adding the Shortcut to your iPhone, it will ask for your webhook URL. Simply paste the link you copied in Step 1!</p>
-            <a href="https://www.icloud.com/shortcuts/6430011c73ef4eb692df7780c534b32e" target="_blank" rel="noreferrer" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', fontSize: '13px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '36px' }}>Get iOS Shortcut 🔗</a>
+            <a href="https://www.icloud.com/shortcuts/6430011c73ef4eb692df7780c534b32e" target="_blank" rel="noreferrer" className="btn-primary" style={{ textDecoration: 'none', textAlign: 'center', fontSize: '13px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '36px' }}>Get iOS Shortcut</a>
           </div>
         </div>
 
