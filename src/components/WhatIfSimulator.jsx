@@ -2,16 +2,20 @@ import React, { useState, useMemo } from 'react';
 import { useStateContext } from '../contexts/StateContext';
 
 export default function WhatIfSimulator() {
-  const { state, updateSettings } = useStateContext();
-  const { user, transactions = [], wallet = {} } = state;
+  const { state } = useStateContext();
+  const { user, transactions = [] } = state;
   const sym = user?.currency || '₹';
 
-  // Interactive slider states
-  const [foodCutback, setFoodCutback] = useState(0); // 0 to 75%
-  const [skipMicroRuns, setSkipMicroRuns] = useState(0); // 0 to 10 runs/week
-  const [plannedPurchase, setPlannedPurchase] = useState(0); // 0 to 10000
+  const [activeTab, setActiveTab] = useState('afford'); // 'afford' | 'goal'
+  
+  // Tab 1: Can I afford this state
+  const [purchaseAmount, setPurchaseAmount] = useState('');
+  
+  // Tab 2: Savings Goal Planner state
+  const [goalAmount, setGoalAmount] = useState('');
+  const [dailyCutback, setDailyCutback] = useState(150); // default cutback ₹150/day
 
-  // Historical calculation
+  // Date and Budget Math (Identical to Overview.jsx)
   const now = new Date();
   const period = user.budgetPeriod || 'month';
   let periodStart;
@@ -26,257 +30,340 @@ export default function WhatIfSimulator() {
   const currentDay = now.getDate();
   const remainingDays = Math.max(1, daysInMonth - currentDay + 1);
 
-  // Filter expenses in current period
   const periodExpenses = useMemo(() => {
-    return transactions.filter(t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= periodStart);
+    return transactions
+      .filter(t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= periodStart)
+      .reduce((s, t) => s + t.amount, 0);
   }, [transactions, periodStart]);
 
-  const totalPeriodSpent = periodExpenses.reduce((s, t) => s + t.amount, 0);
-  const periodIncome = transactions
-    .filter(t => t.type === 'income' && new Date(t.date + 'T00:00:00') >= periodStart)
-    .reduce((s, t) => s + t.amount, 0);
+  const periodIncome = useMemo(() => {
+    return transactions
+      .filter(t => t.type === 'income' && new Date(t.date + 'T00:00:00') >= periodStart)
+      .reduce((s, t) => s + t.amount, 0);
+  }, [transactions, periodStart]);
 
   const baseBudget = user.weeklyPocketMoney || 5000;
-  const availableCash = Math.max(0, baseBudget + periodIncome - totalPeriodSpent);
+  const availableCash = Math.max(0, baseBudget + periodIncome - periodExpenses);
 
-  // Category specific spent
-  const foodSpent = periodExpenses
-    .filter(t => (t.category || '').toLowerCase().includes('food') || (t.description || '').toLowerCase().includes('swiggy') || (t.description || '').toLowerCase().includes('zomato'))
-    .reduce((s, t) => s + t.amount, 0);
+  // Tab 1 Math: Purchase Impact
+  const cost = parseFloat(purchaseAmount) || 0;
+  const currentDailyLimit = Math.round(availableCash / remainingDays);
+  const remainingCashAfterPurchase = availableCash - cost;
+  const afterPurchaseDailyLimit = Math.round(remainingCashAfterPurchase / remainingDays);
 
-  const elapsedDays = Math.max(1, currentDay);
-  const avgDailyFood = foodSpent / elapsedDays;
-  const avgDailyTotal = totalPeriodSpent / elapsedDays;
+  let verdictType = 'safe'; // 'safe' | 'tight' | 'over'
+  let verdictTitle = '';
+  let verdictDesc = '';
 
-  // Simulation Math
-  const dailyFoodSavings = (avgDailyFood * (foodCutback / 100));
-  const dailyMicroSavings = (skipMicroRuns * 80) / 7; // ~80 per micro run
-  const dailyPurchaseCost = plannedPurchase / remainingDays;
-
-  const simulatedDailySpend = Math.max(10, avgDailyTotal - dailyFoodSavings - dailyMicroSavings + dailyPurchaseCost);
-  const baselineDailySpend = Math.max(10, avgDailyTotal);
-
-  const baselineRunwayDays = Math.min(remainingDays, Math.floor(availableCash / baselineDailySpend));
-  const simulatedRunwayDays = Math.min(remainingDays, Math.floor(availableCash / simulatedDailySpend));
-
-  const daysGained = Math.max(0, simulatedRunwayDays - baselineRunwayDays);
-  const netSavingsAtEnd = Math.max(0, availableCash - (simulatedDailySpend * remainingDays));
-
-  // Build SVG Points for Chart
-  const svgWidth = 400;
-  const svgHeight = 120;
-  const maxVal = Math.max(100, availableCash);
-
-  const baselinePoints = [];
-  const simulatedPoints = [];
-
-  for (let i = 0; i <= remainingDays; i++) {
-    const x = (i / remainingDays) * svgWidth;
-    
-    const baseRemaining = Math.max(0, availableCash - (baselineDailySpend * i));
-    const baseY = svgHeight - ((baseRemaining / maxVal) * (svgHeight - 20) + 10);
-    baselinePoints.push(`${x},${baseY}`);
-
-    const simRemaining = Math.max(0, availableCash - (simulatedDailySpend * i));
-    const simY = svgHeight - ((simRemaining / maxVal) * (svgHeight - 20) + 10);
-    simulatedPoints.push(`${x},${simY}`);
+  if (cost > availableCash) {
+    verdictType = 'over';
+    const deficit = cost - availableCash;
+    verdictTitle = 'Exceeds Available Cash';
+    verdictDesc = `This purchase exceeds your remaining balance by ${sym}${deficit.toLocaleString()}.`;
+  } else if (afterPurchaseDailyLimit < 100) {
+    verdictType = 'tight';
+    verdictTitle = 'Tight Budget Ahead';
+    verdictDesc = `Leaves you with a tight daily limit of ${sym}${Math.max(0, afterPurchaseDailyLimit)}/day for the next ${remainingDays} days.`;
+  } else {
+    verdictType = 'safe';
+    verdictTitle = 'Safe Purchase!';
+    verdictDesc = `You will still have a comfortable ${sym}${afterPurchaseDailyLimit}/day for the remaining ${remainingDays} days.`;
   }
 
-  const applyTargetAsBudget = () => {
-    const newSuggestedBudget = Math.round((simulatedDailySpend * 30));
-    updateSettings({ weeklyPocketMoney: newSuggestedBudget });
-    if (window.toast) window.toast(`Updated budget allowance to ${sym}${newSuggestedBudget}!`);
-  };
+  // Tab 2 Math: Savings Goal Target
+  const targetGoalVal = parseFloat(goalAmount) || 0;
+  const daysToGoal = dailyCutback > 0 ? Math.ceil(targetGoalVal / dailyCutback) : 0;
+  const goalTargetDate = useMemo(() => {
+    if (!daysToGoal) return '';
+    const d = new Date();
+    d.setDate(d.getDate() + daysToGoal);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }, [daysToGoal]);
+
+  const cur = (amt) => sym + Math.abs(amt).toLocaleString('en-IN', { maximumFractionDigits: 0 });
 
   return (
-    <div style={{
-      background: 'linear-gradient(135deg, rgba(20, 18, 15, 0.9), rgba(12, 10, 8, 0.95))',
-      border: '1px solid rgba(197, 160, 89, 0.3)',
-      borderRadius: '20px',
-      padding: '20px',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-      color: '#f5f0e8',
-      marginBottom: '24px'
-    }}>
+    <div className="card pulse-card" style={{ padding: '20px', marginBottom: '24px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #c5a059)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Interactive "What-If" Financial Simulator</h3>
-          </div>
-          <p style={{ margin: '4px 0 0 0', fontSize: '12px', opacity: 0.6 }}>
-            Pure mathematical trajectory model • Simulate savings & planned purchases
-          </p>
+          <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+            What-If Simulator
+          </h3>
+          <h2 style={{ margin: '2px 0 0 0', fontSize: '17px', fontWeight: 700, color: 'var(--text)' }}>
+            Financial Scenario Planner
+          </h2>
         </div>
 
-        {daysGained > 0 && (
-          <span style={{
-            background: 'rgba(76, 175, 80, 0.15)',
-            color: '#4caf50',
-            border: '1px solid rgba(76, 175, 80, 0.3)',
-            padding: '4px 10px',
-            borderRadius: '99px',
-            fontSize: '12px',
-            fontWeight: 700
+        {/* Tab Switcher */}
+        <div style={{
+          display: 'flex',
+          background: 'rgba(255, 255, 255, 0.04)',
+          border: '1px solid var(--border)',
+          borderRadius: '99px',
+          padding: '3px'
+        }}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('afford')}
+            style={{
+              background: activeTab === 'afford' ? 'var(--accent-gradient)' : 'transparent',
+              color: activeTab === 'afford' ? '#0d1a15' : 'var(--text-secondary)',
+              border: 'none',
+              borderRadius: '99px',
+              padding: '6px 14px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Can I Afford This?
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('goal')}
+            style={{
+              background: activeTab === 'goal' ? 'var(--accent-gradient)' : 'transparent',
+              color: activeTab === 'goal' ? '#0d1a15' : 'var(--text-secondary)',
+              border: 'none',
+              borderRadius: '99px',
+              padding: '6px 14px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Savings Goal Planner
+          </button>
+        </div>
+      </div>
+
+      {/* TAB 1: CAN I AFFORD THIS */}
+      {activeTab === 'afford' && (
+        <div>
+          {/* Quick Amount Selection Chips */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '8px' }}>
+              Enter or select planned expense:
+            </label>
+            
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+              {[500, 1000, 2500, 5000].map(amt => (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => setPurchaseAmount(amt.toString())}
+                  style={{
+                    background: purchaseAmount === amt.toString() ? 'rgba(197, 160, 89, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                    border: purchaseAmount === amt.toString() ? '1px solid var(--accent)' : '1px solid var(--border)',
+                    color: purchaseAmount === amt.toString() ? 'var(--accent)' : 'var(--text)',
+                    borderRadius: '8px',
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {sym}{amt.toLocaleString()}
+                </button>
+              ))}
+            </div>
+
+            {/* Input Field */}
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', fontWeight: 700, fontSize: '15px' }}>
+                {sym}
+              </span>
+              <input
+                type="number"
+                placeholder="Enter custom purchase amount..."
+                value={purchaseAmount}
+                onChange={(e) => setPurchaseAmount(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  padding: '12px 14px 12px 32px',
+                  color: 'var(--text)',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Results Summary Card */}
+          <div style={{
+            background: verdictType === 'safe'
+              ? 'rgba(74, 222, 128, 0.06)'
+              : verdictType === 'tight'
+              ? 'rgba(255, 152, 0, 0.06)'
+              : 'rgba(239, 83, 80, 0.08)',
+            border: verdictType === 'safe'
+              ? '1px solid rgba(74, 222, 128, 0.25)'
+              : verdictType === 'tight'
+              ? '1px solid rgba(255, 152, 0, 0.25)'
+              : '1px solid rgba(239, 83, 80, 0.3)',
+            borderRadius: '14px',
+            padding: '16px'
           }}>
-            +{daysGained} Days Extra Runway! 🎉
-          </span>
-        )}
-      </div>
+            {/* Verdict Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: verdictType === 'safe' ? '#4ADE80' : verdictType === 'tight' ? '#ff9800' : '#ef5350'
+                }} />
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: verdictType === 'safe' ? '#4ADE80' : verdictType === 'tight' ? '#ff9800' : '#ef5350'
+                }}>
+                  {verdictTitle}
+                </span>
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{remainingDays} days remaining</span>
+            </div>
 
-      {/* Trajectory Graph (SVG) */}
-      <div style={{
-        background: 'rgba(0, 0, 0, 0.4)',
-        border: '1px solid rgba(255, 255, 255, 0.06)',
-        borderRadius: '14px',
-        padding: '12px 16px',
-        marginBottom: '20px',
-        position: 'relative'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>
-          <span>Today ({sym}{availableCash.toLocaleString()})</span>
-          <span>End of Month ({remainingDays}d remaining)</span>
-        </div>
+            {/* Before / After Comparison Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '12px',
+              padding: '12px',
+              background: 'rgba(0, 0, 0, 0.2)',
+              borderRadius: '10px',
+              marginBottom: '10px'
+            }}>
+              <div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current Daily Limit</div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)', marginTop: '2px' }}>
+                  {cur(currentDailyLimit)} <span style={{ fontSize: '11px', fontWeight: 400 }}>/day</span>
+                </div>
+              </div>
 
-        <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} style={{ width: '100%', height: '110px', overflow: 'visible' }}>
-          {/* Grid lines */}
-          <line x1="0" y1={svgHeight - 10} x2={svgWidth} y2={svgHeight - 10} stroke="rgba(255,255,255,0.1)" strokeDasharray="3 3" />
-          
-          {/* Baseline Curve (Red/Orange) */}
-          <polyline
-            fill="none"
-            stroke="rgba(239, 83, 80, 0.7)"
-            strokeWidth="2.5"
-            strokeDasharray="4 4"
-            points={baselinePoints.join(' ')}
-          />
+              <div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>After Purchase Limit</div>
+                <div style={{
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  color: verdictType === 'safe' ? '#4ADE80' : verdictType === 'tight' ? '#ff9800' : '#ef5350',
+                  marginTop: '2px'
+                }}>
+                  {cur(Math.max(0, afterPurchaseDailyLimit))} <span style={{ fontSize: '11px', fontWeight: 400 }}>/day</span>
+                </div>
+              </div>
+            </div>
 
-          {/* Simulated Curve (Gold/Green) */}
-          <polyline
-            fill="none"
-            stroke="var(--accent, #c5a059)"
-            strokeWidth="3"
-            points={simulatedPoints.join(' ')}
-          />
-        </svg>
-
-        {/* Legend */}
-        <div style={{ display: 'flex', gap: '16px', fontSize: '12px', marginTop: '8px', justifyContent: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(239, 83, 80, 0.9)' }}>
-            <span style={{ width: '12px', height: '3px', background: '#ef5350', borderRadius: '2px', display: 'inline-block' }} />
-            Baseline Pace ({sym}{Math.round(baselineDailySpend)}/day)
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent, #c5a059)' }}>
-            <span style={{ width: '12px', height: '3px', background: 'var(--accent, #c5a059)', borderRadius: '2px', display: 'inline-block' }} />
-            Simulated Target ({sym}{Math.round(simulatedDailySpend)}/day)
-          </div>
-        </div>
-      </div>
-
-      {/* Sliders Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-        {/* Slider 1: Food Delivery Cutback */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>
-            <span>Cut Food Delivery Spending</span>
-            <span style={{ color: 'var(--accent, #c5a059)' }}>{foodCutback}%</span>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="75"
-            step="5"
-            value={foodCutback}
-            onChange={(e) => setFoodCutback(Number(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--accent, #c5a059)', cursor: 'pointer' }}
-          />
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
-            Saves ~{sym}{Math.round(dailyFoodSavings * remainingDays)} this month
+            <p style={{ margin: 0, fontSize: '12.5px', lineHeight: '1.45', color: 'var(--text-secondary)' }}>
+              {verdictDesc}
+            </p>
           </div>
         </div>
+      )}
 
-        {/* Slider 2: Skip Micro Canteen Runs */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>
-            <span>Skip Canteen Runs / Week</span>
-            <span style={{ color: 'var(--accent, #c5a059)' }}>{skipMicroRuns} runs</span>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="10"
-            step="1"
-            value={skipMicroRuns}
-            onChange={(e) => setSkipMicroRuns(Number(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--accent, #c5a059)', cursor: 'pointer' }}
-          />
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
-            Saves ~{sym}{Math.round(dailyMicroSavings * remainingDays)} this month
-          </div>
-        </div>
-
-        {/* Slider 3: Planned One-Off Purchase */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>
-            <span>Test Major Purchase</span>
-            <span style={{ color: plannedPurchase > 0 ? '#ef5350' : 'rgba(255,255,255,0.5)' }}>{sym}{plannedPurchase}</span>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="10000"
-            step="250"
-            value={plannedPurchase}
-            onChange={(e) => setPlannedPurchase(Number(e.target.value))}
-            style={{ width: '100%', accentColor: '#ef5350', cursor: 'pointer' }}
-          />
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
-            {plannedPurchase > 0 ? `Impact: +${sym}${Math.round(dailyPurchaseCost)}/day cost` : 'No upcoming purchase'}
-          </div>
-        </div>
-      </div>
-
-      {/* Action Bar */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '12px',
-        background: 'rgba(197, 160, 89, 0.08)',
-        border: '1px solid rgba(197, 160, 89, 0.2)',
-        borderRadius: '12px',
-        padding: '12px 16px'
-      }}>
+      {/* TAB 2: SAVINGS GOAL PLANNER */}
+      {activeTab === 'goal' && (
         <div>
-          <div style={{ fontSize: '13px', fontWeight: 600 }}>
-            Simulated End Balance: <span style={{ color: 'var(--accent, #c5a059)' }}>{sym}{Math.round(netSavingsAtEnd).toLocaleString()}</span>
+          {/* Target Amount Input */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '6px' }}>
+              Target goal amount (e.g. Headphones, Trip, Gadget):
+            </label>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', fontWeight: 700, fontSize: '15px' }}>
+                {sym}
+              </span>
+              <input
+                type="number"
+                placeholder="Enter goal amount (e.g. 5000)..."
+                value={goalAmount}
+                onChange={(e) => setGoalAmount(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  padding: '12px 14px 12px 32px',
+                  color: 'var(--text)',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
           </div>
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
-            Safe daily target limit: {sym}{Math.round(simulatedDailySpend)}/day
+
+          {/* Cutback Chips */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, display: 'block', marginBottom: '8px' }}>
+              Select daily cutback strategy:
+            </label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {[
+                { label: 'Cut Delivery (-₹150/day)', val: 150 },
+                { label: 'Skip Canteen (-₹60/day)', val: 60 },
+                { label: 'Aggressive (-₹300/day)', val: 300 }
+              ].map(chip => (
+                <button
+                  key={chip.val}
+                  type="button"
+                  onClick={() => setDailyCutback(chip.val)}
+                  style={{
+                    background: dailyCutback === chip.val ? 'rgba(197, 160, 89, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                    border: dailyCutback === chip.val ? '1px solid var(--accent)' : '1px solid var(--border)',
+                    color: dailyCutback === chip.val ? 'var(--accent)' : 'var(--text)',
+                    borderRadius: '8px',
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Goal Projection Card */}
+          <div style={{
+            background: 'rgba(197, 160, 89, 0.06)',
+            border: '1px solid rgba(197, 160, 89, 0.25)',
+            borderRadius: '14px',
+            padding: '16px',
+            textAlign: 'center'
+          }}>
+            {targetGoalVal > 0 && daysToGoal > 0 ? (
+              <>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--accent)', fontWeight: 700 }}>
+                  🎯 Projected Goal Target
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text)', margin: '6px 0 4px 0' }}>
+                  {daysToGoal} Days <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-muted)' }}>(by {goalTargetDate})</span>
+                </div>
+                <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                  By saving {cur(dailyCutback)}/day, you will reach your {cur(targetGoalVal)} goal comfortably!
+                </p>
+              </>
+            ) : (
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                Enter a goal amount above to calculate your savings timeline!
+              </div>
+            )}
           </div>
         </div>
-
-        <button
-          onClick={applyTargetAsBudget}
-          style={{
-            background: 'var(--accent-gradient, linear-gradient(135deg, #c5a059, #dfb76c))',
-            color: '#0d1a15',
-            border: 'none',
-            borderRadius: '10px',
-            padding: '10px 18px',
-            fontSize: '13px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(197, 160, 89, 0.3)'
-          }}
-        >
-          Set Simulated Budget Limit Target 🎯
-        </button>
-      </div>
+      )}
     </div>
   );
 }
