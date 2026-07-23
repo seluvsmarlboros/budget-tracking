@@ -9,7 +9,13 @@ export default function Friends() {
   const [profile, setProfile] = useState(null);
   
   // Navigation State within Friends View
-  const [authState, setAuthState] = useState('auth'); // auth, unlinked, dashboard
+  // Optimization: Pre-load authState from localStorage to avoid "flashing" login form
+  const [authState, setAuthState] = useState(() => localStorage.getItem('unispend_auth_state') || 'auth'); 
+  
+  const updateAuthState = (val) => {
+    setAuthState(val);
+    localStorage.setItem('unispend_auth_state', val);
+  };
   
   // Auth Form State
   const [authName, setAuthName] = useState('');
@@ -82,7 +88,7 @@ export default function Friends() {
     try {
       const user = await SupabaseService.getCurrentUser();
       if (!user) {
-        setAuthState('auth');
+        updateAuthState('auth');
         setIsAuthLoading(false);
         return;
       }
@@ -99,7 +105,7 @@ export default function Friends() {
           const isUserA = updatedP.user_a && (typeof updatedP.user_a === 'object' ? updatedP.user_a.id === user.id : updatedP.user_a === user.id);
           const partnerProf = isUserA ? updatedP.user_b : updatedP.user_a;
           setPartnerProfile(partnerProf);
-          setAuthState('dashboard');
+          updateAuthState('dashboard');
           setupRealtimeSubscription(updatedP.id, user.id);
           try {
             await refreshDashboardData(updatedP, partnerProf, user.id);
@@ -116,20 +122,25 @@ export default function Friends() {
       // Load unlinked directory screen
       const partnerships = await SupabaseService.checkPartnerships();
       setActivePartnerships(partnerships);
-      setAuthState('unlinked');
+      updateAuthState('unlinked');
       setupUnlinkedSubscription(user.id);
 
-      // Resolve directory balances
+      // Resolve directory balances in parallel to avoid sequential bottleneck
       const balancesMap = {};
-      for (const p of partnerships) {
+      const balancePromises = partnerships.map(async (p) => {
         try {
           const bal = await SupabaseService.getNetBalance(p.id);
-          balancesMap[p.id] = bal;
+          return { id: p.id, bal };
         } catch (err) {
           console.error("Failed to load net balance for partnership:", p.id, err);
-          balancesMap[p.id] = { balance: 0, rawBalance: 0 };
+          return { id: p.id, bal: { balance: 0, rawBalance: 0 } };
         }
-      }
+      });
+      
+      const resolvedBalances = await Promise.all(balancePromises);
+      resolvedBalances.forEach(res => {
+        balancesMap[res.id] = res.bal;
+      });
       setDirectoryBalances(balancesMap);
 
       const invite = await SupabaseService.checkPendingInvite();
@@ -137,7 +148,7 @@ export default function Friends() {
 
     } catch (err) {
       console.error(err);
-      setAuthState('auth');
+      updateAuthState('auth');
     } finally {
       setIsAuthLoading(false);
     }
@@ -363,7 +374,7 @@ export default function Friends() {
       setProfile(null);
       setPartnerProfile(null);
       setCurrentUserId(null);
-      setAuthState('auth');
+      updateAuthState('auth');
       window.toast('Signed out successfully.');
     } catch (err) {
       window.toast(`Sign out failed: ${err.message}`);
