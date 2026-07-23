@@ -1,5 +1,5 @@
 /* Vercel Serverless Function: api/sms-log.js */
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 // Parse SMS using same logic as client
 function parseUPIAndSMS(text) {
@@ -62,7 +62,7 @@ const supabaseUrl = process.env.SUPABASE_URL || 'https://rzqwybcxxduvlntkittv.su
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || 'sb_publishable_svAhbKhIH8dBnwFvs_IcfQ_tnZ05pPQ';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // CORS configuration
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -77,42 +77,51 @@ module.exports = async (req, res) => {
     return;
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  try {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const { userId } = req.query;
+    if (!userId || userId === 'local' || userId.length < 20) {
+      return res.status(400).json({ error: 'Valid authenticated userId UUID is required. Please sign in to UniSpend to generate your personalized webhook link.' });
+    }
+
+    let payload = req.body || {};
+    if (typeof payload === 'string') {
+      try { payload = JSON.parse(payload); } catch {}
+    }
+
+    const text = payload.text || payload.body || (typeof req.body === 'string' ? req.body : null);
+    if (!text) {
+      return res.status(400).json({ error: 'SMS text body is empty' });
+    }
+
+    console.log(`[sms-log] Processing SMS for user ${userId}:`, text);
+    const parsed = parseUPIAndSMS(text);
+    if (!parsed || !parsed.amount) {
+      return res.status(422).json({ error: 'Failed to extract transaction details or amount from text' });
+    }
+
+    // Insert a notification record of type 'pending_transaction'
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        message: JSON.stringify(parsed),
+        type: 'pending_transaction',
+        is_read: false
+      });
+
+    if (error) {
+      console.error('[sms-log] Supabase error:', error);
+      return res.status(500).json({ error: `Database write failed: ${error.message}` });
+    }
+
+    res.setHeader('Content-Type', 'text/plain');
+    return res.status(200).send(`Logged ₹${parsed.amount} for ${parsed.description}! 💸`);
+  } catch (err) {
+    console.error('[sms-log] Exception:', err);
+    return res.status(500).json({ error: `Function Exception: ${err.message}` });
   }
-
-  const { userId } = req.query;
-  if (!userId || userId === 'local' || userId.length < 20) {
-    return res.status(400).json({ error: 'Valid authenticated userId UUID is required. Please sign in to UniSpend to generate your personalized webhook link.' });
-  }
-
-  const payload = req.body || {};
-  const text = payload.text || payload.body;
-  if (!text) {
-    return res.status(400).json({ error: 'SMS text body is empty' });
-  }
-
-  console.log(`[sms-log] Processing SMS for user ${userId}:`, text);
-  const parsed = parseUPIAndSMS(text);
-  if (!parsed || !parsed.amount) {
-    return res.status(422).json({ error: 'Failed to extract transaction details or amount from text' });
-  }
-
-  // Insert a notification record of type 'pending_transaction'
-  const { data, error } = await supabase
-    .from('notifications')
-    .insert({
-      user_id: userId,
-      message: JSON.stringify(parsed),
-      type: 'pending_transaction',
-      is_read: false
-    });
-
-  if (error) {
-    console.error('[sms-log] Supabase error:', error);
-    return res.status(500).json({ error: `Database write failed: ${error.message}` });
-  }
-
-  res.setHeader('Content-Type', 'text/plain');
-  return res.status(200).send(`Logged ₹${parsed.amount} for ${parsed.description}! 💸`);
-};
+}
