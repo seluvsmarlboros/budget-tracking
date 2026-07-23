@@ -104,9 +104,20 @@ export default function Overview() {
   const budgetProgressPct = adjustedBudget > 0 ? Math.min((totalConsumed / adjustedBudget) * 100, 100) : 0;
 
   // 4. BURN RATE & RUNOUT FORECAST
+  const fixedCategories = ['rent', 'utilities', 'bills', 'emi', 'subscription', 'fees', 'insurance', 'tuition'];
+  
+  const fixedExpenses = transactions
+    .filter(t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= periodStart && fixedCategories.some(c => t.category?.toLowerCase().includes(c) || t.description?.toLowerCase().includes(c)))
+    .reduce((s, t) => s + t.amount, 0);
+
+  const discretionaryExpenses = periodExpenses - fixedExpenses;
+  const discretionaryBudget = adjustedBudget - fixedExpenses;
+
   const msElapsed = now - periodStart;
   const daysElapsed = Math.max(1, Math.ceil(msElapsed / (1000 * 60 * 60 * 24)));
-  const dailyBurnRate = periodExpenses / daysElapsed;
+  
+  // Daily burn rate is ONLY calculated on discretionary spending so early rent doesn't skew it
+  const dailyBurnRate = discretionaryExpenses / daysElapsed;
   
   const totalDaysInPeriod = period === 'month' 
     ? new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
@@ -120,19 +131,21 @@ export default function Overview() {
   let burnStatus = 'Healthy';
   let forecastHtml = '';
 
+  const discretionaryLeft = discretionaryBudget - discretionaryExpenses;
+
   if (left <= 0) {
     burnStatus = 'Critical';
     forecastHtml = `You have already <strong>exhausted</strong> your budget for this ${period}! You are operating on a deficit of <strong>${cur(left)}</strong>. Avoid all non-essential purchases.`;
-  } else if (periodExpenses === 0) {
+  } else if (discretionaryExpenses === 0) {
     burnStatus = 'Perfect';
-    forecastHtml = `No expenses logged this ${period} yet! Your entire budget of <strong>${cur(adjustedBudget)}</strong> is fully intact.`;
+    forecastHtml = `No discretionary expenses logged this ${period} yet! Your remaining discretionary budget of <strong>${cur(discretionaryLeft)}</strong> is safe.`;
   } else {
-    const daysLeftOfFunds = left / dailyBurnRate;
+    const daysLeftOfFunds = discretionaryLeft / dailyBurnRate;
     
     if (daysLeftOfFunds >= daysRemaining) {
       burnStatus = 'Healthy';
-      const endSavings = left - dailyBurnRate * daysRemaining;
-      forecastHtml = `At your current spending rate of <strong>${cur(dailyBurnRate)}/day</strong>, your funds are projected to last the entire ${period}. You will have about <strong>${cur(endSavings)}</strong> left.`;
+      const endSavings = discretionaryLeft - dailyBurnRate * daysRemaining;
+      forecastHtml = `At your current discretionary spending rate of <strong>${cur(dailyBurnRate)}/day</strong>, your funds will easily last the entire ${period}. You will have about <strong>${cur(endSavings)}</strong> leftover.`;
     } else {
       burnStatus = 'Warning';
       
@@ -141,7 +154,7 @@ export default function Overview() {
       const runoutDayName = runoutDate.toLocaleDateString(undefined, { weekday: 'long' });
       const runoutDateString = runoutDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       
-      forecastHtml = `At your current spending rate of <strong>${cur(dailyBurnRate)}/day</strong>, you are projected to exhaust your budget by <strong>${runoutDayName} (${runoutDateString})</strong>, which is <strong>${Math.ceil(daysRemaining - daysLeftOfFunds)} ${Math.ceil(daysRemaining - daysLeftOfFunds) === 1 ? 'day' : 'days'}</strong> before the period ends.`;
+      forecastHtml = `At your discretionary spending rate of <strong>${cur(dailyBurnRate)}/day</strong>, you will exhaust your budget by <strong>${runoutDayName} (${runoutDateString})</strong>, which is <strong>${Math.ceil(daysRemaining - daysLeftOfFunds)} ${Math.ceil(daysRemaining - daysLeftOfFunds) === 1 ? 'day' : 'days'}</strong> early.`;
     }
   }
 
@@ -197,16 +210,34 @@ export default function Overview() {
     setVisiblePulseCards(prev => prev.filter(c => c.id !== id));
   };
 
-  // 8. HEALTH SCORE (0–100)
-  const streakScore = Math.min((user.streak || 0), 14) / 14 * 35;
-  const budgetScore = adjustedBudget > 0
-    ? Math.max(0, (1 - periodExpenses / adjustedBudget)) * 40
-    : 40;
+  // 8. HEALTH SCORE (0–100) - Real Financial Indicators
+  const elapsedPct = daysElapsed / totalDaysInPeriod;
+  const consumedPct = adjustedBudget > 0 ? periodExpenses / adjustedBudget : 0;
+  
+  // A. Budget Pacing (40 pts): Spend rate vs Time elapsed
+  let pacingScore = 40;
+  if (consumedPct > elapsedPct) {
+    pacingScore = Math.max(0, 40 - ((consumedPct - elapsedPct) * 100));
+  }
+
+  // B. Cashflow/Liquidity (30 pts): Penalize high debt vs available cash
+  let liquidityScore = 30;
+  if (left > 0) {
+    const debtRatio = netFriendDebt / left;
+    liquidityScore = Math.max(0, 30 - (debtRatio * 30));
+  } else if (netFriendDebt > 0) {
+    liquidityScore = 0; // Overdraft + Debt = 0 liquidity
+  }
+
+  // C. Savings Velocity & Engagement (30 pts)
   const savingsPct = savingsGoals.length > 0
     ? savingsGoals.reduce((acc, g) => acc + Math.min(1, (g.saved || 0) / Math.max(1, g.target || 1)), 0) / savingsGoals.length
-    : 0;
-  const savingsScore = savingsPct * 25;
-  const healthScore = Math.round(Math.min(100, streakScore + budgetScore + savingsScore));
+    : 0.5; // Default to half if no goals to avoid punishing new users
+  
+  const savingsScore = savingsPct * 20;
+  const streakBonus = Math.min((user.streak || 0), 10); // up to 10 points
+  
+  const healthScore = Math.round(Math.min(100, pacingScore + liquidityScore + savingsScore + streakBonus));
   const healthColor = healthScore >= 80 ? '#4ADE80' : healthScore >= 50 ? '#FB923C' : '#F87171';
 
 
@@ -546,16 +577,16 @@ export default function Overview() {
               </svg>
               <div className="health-gauge-legend">
                 <div className="health-gauge-row">
-                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Streak</span>
-                  <span style={{ color: 'var(--text)', fontSize: '11px', fontWeight: 600 }}>{user.streak || 0} {(user.streak || 0) === 1 ? 'day' : 'days'}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Pacing</span>
+                  <span style={{ color: pacingScore > 20 ? 'var(--green)' : 'var(--red)', fontSize: '11px', fontWeight: 600 }}>{Math.round(pacingScore)}/40</span>
                 </div>
                 <div className="health-gauge-row">
-                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Budget</span>
-                  <span style={{ color: budgetScore > 20 ? 'var(--green)' : 'var(--red)', fontSize: '11px', fontWeight: 600 }}>{Math.round(budgetScore)}/40</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Liquidity</span>
+                  <span style={{ color: liquidityScore > 15 ? 'var(--green)' : 'var(--red)', fontSize: '11px', fontWeight: 600 }}>{Math.round(liquidityScore)}/30</span>
                 </div>
                 <div className="health-gauge-row">
                   <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Savings</span>
-                  <span style={{ color: 'var(--text)', fontSize: '11px', fontWeight: 600 }}>{Math.round(savingsScore)}/25</span>
+                  <span style={{ color: 'var(--text)', fontSize: '11px', fontWeight: 600 }}>{Math.round(savingsScore)}/20</span>
                 </div>
               </div>
             </div>

@@ -365,9 +365,19 @@ export async function askForBudgetAdvice(state) {
     .filter(t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= periodStart)
     .reduce((s, t) => s + t.amount, 0);
 
+  const fixedCategories = ['rent', 'utilities', 'bills', 'emi', 'subscription', 'fees', 'insurance', 'tuition'];
+  
+  const fixedExpenses = transactions
+    .filter(t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= periodStart && fixedCategories.some(c => t.category?.toLowerCase().includes(c) || t.description?.toLowerCase().includes(c)))
+    .reduce((s, t) => s + t.amount, 0);
+
+  const discretionaryExpenses = periodExpenses - fixedExpenses;
+
   const msElapsed = now - periodStart;
   const daysElapsed = Math.max(1, Math.ceil(msElapsed / (1000 * 60 * 60 * 24)));
-  const dailyBurnRate = periodExpenses / daysElapsed;
+  
+  // The daily burn rate is ONLY calculated on discretionary spending
+  const dailyBurnRate = discretionaryExpenses / daysElapsed;
   
   const totalDaysInPeriod = period === 'month' 
     ? new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
@@ -378,36 +388,59 @@ export async function askForBudgetAdvice(state) {
   const msRemaining = periodEnd - now;
   const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
   
-  const left = (limit + periodIncome) - periodExpenses;
-  const daysLeftOfFunds = dailyBurnRate > 0 ? (left / dailyBurnRate) : 999;
+  const adjustedBudget = limit + periodIncome;
+  const discretionaryBudget = adjustedBudget - fixedExpenses;
+  const left = adjustedBudget - periodExpenses;
+  const discretionaryLeft = discretionaryBudget - discretionaryExpenses;
+  const daysLeftOfFunds = dailyBurnRate > 0 ? (discretionaryLeft / dailyBurnRate) : 999;
   
   let runoutProjected = '';
   if (left <= 0) {
     runoutProjected = `already run out of funds (Deficit of ${sym}${Math.abs(left).toFixed(2)})`;
   } else if (daysLeftOfFunds < daysRemaining) {
     const runoutDate = new Date(now.getTime() + daysLeftOfFunds * 24 * 60 * 60 * 1000);
-    const runoutDayName = runoutDate.toLocaleDateString(undefined, { weekday: 'long' });
     const runoutDateString = runoutDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    runoutProjected = `projected to exhaust funds by ${runoutDayName} (${runoutDateString}), which is ${Math.ceil(daysRemaining - daysLeftOfFunds)} days before the period ends. Action required to save money.`;
+    runoutProjected = `projected to exhaust budget by ${runoutDateString}, which is ${Math.ceil(daysRemaining - daysLeftOfFunds)} days early`;
   } else {
-    runoutProjected = `healthy spend velocity. Funds are projected to last the entire period.`;
+    runoutProjected = `healthy spend velocity. Funds will last the entire period.`;
   }
+
+  // Calculate category breakdowns
+  const categoryTotals = {};
+  transactions
+    .filter(t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= periodStart)
+    .forEach(t => {
+      const cat = t.category || 'Other';
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + t.amount;
+    });
+
+  const topCategories = Object.entries(categoryTotals)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 3)
+    .map(([cat, amt]) => `- ${cat}: ${sym}${amt}`)
+    .join('\\n');
   
   const today = new Date().toISOString().split('T')[0];
   const recentTransactions = transactions.slice(0, 10).map(t => 
     `- ${t.date}: spent ${sym}${t.amount} on ${t.description} [Category: ${t.category || 'Other'}]`
-  ).join('\n');
+  ).join('\\n');
 
   const upcomingSpikes = spikes.slice(0, 3).map(s => 
     `- ${s.title}: ${sym}${s.amount} due ${s.date}`
-  ).join('\n');
+  ).join('\\n');
 
   const prompt = `
 I have a base ${period}ly budget limit of ${sym}${limit}.
-During this current ${period}, I have also received ${sym}${periodIncome} in extra income (making my total available budget pool ${sym}${limit + periodIncome}).
+During this current ${period}, I have also received ${sym}${periodIncome} in extra income (making my total available budget pool ${sym}${adjustedBudget}).
 Today's date is: ${today}.
 I have spent ${sym}${periodExpenses} so far, meaning I have ${sym}${left.toFixed(2)} left.
-Based on current elapsed time, my daily burn rate is ${sym}${dailyBurnRate.toFixed(2)}/day, and my runout status is: ${runoutProjected}.
+
+To accurately analyze my pacing, my FIXED expenses (rent, bills, etc) are ${sym}${fixedExpenses}, meaning my DISCRETIONARY budget is ${sym}${discretionaryBudget.toFixed(2)}.
+I have spent ${sym}${discretionaryExpenses.toFixed(2)} on discretionary items so far.
+Based on current elapsed time, my discretionary daily burn rate is ${sym}${dailyBurnRate.toFixed(2)}/day, and my runout status is: ${runoutProjected}.
+
+My top spending categories this period:
+${topCategories || 'None'}
 
 My current saving/spending goal is: "${user.targetGoal}".
 I have targeted cutting back specifically on the category: "${user.cutbackCategory || 'Canteen'}".
@@ -418,10 +451,15 @@ ${recentTransactions || 'None'}
 Here are my upcoming large expenses (spikes):
 ${upcomingSpikes || 'None'}
 
-Please give me exactly ONE short, actionable, conversational tip (max 2 sentences) advising me on how to adjust my spending velocity to stay on track. If my status shows a Warning (projected to run out early) or Critical (already out), offer specific suggestions on how I can save money to defer or extend my runout projection (e.g. by cooking at home to save ₹200). Reference my recent purchases or upcoming spikes if relevant. Speak directly to me.
+Please give me exactly ONE short, actionable, conversational tip (max 2 sentences) advising me on how to adjust my spending velocity to stay on track. 
+CRITICAL REQUIREMENTS:
+1. Speak directly to me (e.g. "You spent...").
+2. Reference specific categories where I am spending heavily (e.g. "I see you spent ₹3,000 on Food...").
+3. Give an ACTIONABLE tip to extend my runout projection (e.g. "Pause food delivery this weekend to save ₹500").
+4. Do NOT give generic advice like "Watch your spending". Give specific context based on my top categories, recent transactions, or upcoming spikes.
 `;
 
-  const systemInstructions = "You are a direct, pragmatic, and friendly college financial advisor. You give extremely short, contextual savings advice (maximum 2 sentences) based on the user's spending habits and target goals. Keep it concise, motivational, and tailored to students.";
+  const systemInstructions = "You are a highly analytical, pragmatic, and direct financial advisor. You provide deeply contextual and extremely actionable savings advice (max 2 sentences) by analyzing the user's top spending categories and runout projections. Avoid fluff and generic platitudes.";
 
   let url, headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${effectiveKey}` }, body;
 
