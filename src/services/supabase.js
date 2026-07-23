@@ -417,5 +417,45 @@ export const SupabaseService = {
       throw new Error(`Supabase unsubscribe error: ${error.message}`);
     }
     return true;
+  },
+
+  // ─── Real-Time Circle Synchronized Rooms ──────────────────────────────
+  activeChannels: {},
+
+  subscribeCircleRoom(inviteCode, onPayload) {
+    if (!inviteCode) return null;
+    const channelName = `circle-room:${inviteCode.toUpperCase()}`;
+
+    if (this.activeChannels[channelName]) {
+      return this.activeChannels[channelName];
+    }
+
+    const channel = supabase.channel(channelName, {
+      config: { broadcast: { self: true } }
+    })
+    .on('broadcast', { event: 'circle_update' }, payload => {
+      if (onPayload) onPayload(payload.payload);
+    })
+    .subscribe();
+
+    this.activeChannels[channelName] = channel;
+    return channel;
+  },
+
+  async broadcastCircleUpdate(inviteCode, updateData) {
+    const channelName = `circle-room:${inviteCode.toUpperCase()}`;
+    let channel = this.activeChannels[channelName];
+
+    if (!channel) {
+      channel = this.subscribeCircleRoom(inviteCode);
+    }
+
+    if (channel) {
+      await channel.send({
+        type: 'broadcast',
+        event: 'circle_update',
+        payload: updateData
+      });
+    }
   }
 };

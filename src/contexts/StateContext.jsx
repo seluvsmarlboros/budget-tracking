@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { supabase } from '../services/supabase';
+import { supabase, SupabaseService } from '../services/supabase';
 
 const StateContext = createContext(null);
 
@@ -440,6 +440,46 @@ export const StateProvider = ({ children }) => {
       }).catch(err => console.error('[PWA] SW registration failed:', err));
     }
   }, [state.user.id]);
+
+  // 4. Real-time Synchronized Circles Room Listener
+  useEffect(() => {
+    const list = state.circles?.list || [];
+    list.forEach(c => {
+      if (c.inviteCode) {
+        SupabaseService.subscribeCircleRoom(c.inviteCode, (payload) => {
+          if (!payload || !payload.type) return;
+          
+          setState(prev => {
+            const updated = structuredClone(prev);
+            const targetCircle = (updated.circles?.list || []).find(circle => circle.inviteCode.toUpperCase() === c.inviteCode.toUpperCase());
+            if (!targetCircle) return prev;
+
+            let changed = false;
+
+            if (payload.type === 'ADD_TRANSACTION' && payload.transaction) {
+              const exists = (targetCircle.transactions || []).some(t => t.id === payload.transaction.id);
+              if (!exists) {
+                targetCircle.transactions.unshift(payload.transaction);
+                changed = true;
+              }
+            } else if (payload.type === 'MEMBER_JOINED' && payload.member) {
+              const memberExists = (targetCircle.members || []).some(m => m.name.toLowerCase() === payload.member.name.toLowerCase());
+              if (!memberExists) {
+                targetCircle.members.push(payload.member);
+                changed = true;
+              }
+            }
+
+            if (changed) {
+              saveState(updated);
+              return updated;
+            }
+            return prev;
+          });
+        });
+      }
+    });
+  }, [JSON.stringify((state.circles?.list || []).map(c => c.inviteCode))]);
 
   // 3. Streak & Realtime Auto-Track Listener
   useEffect(() => {
@@ -1113,7 +1153,15 @@ export const StateProvider = ({ children }) => {
     const updated = structuredClone(state);
     if (!updated.circles) updated.circles = { activeCircleId: null, list: [] };
 
+    const myName = state.user.name || 'Arjun';
     let found = updated.circles.list.find(c => c.inviteCode === code);
+    
+    const newMemberObj = {
+      id: 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      name: myName,
+      isGhost: false
+    };
+
     if (!found) {
       found = {
         id: 'circle_joined_' + Date.now(),
@@ -1121,16 +1169,27 @@ export const StateProvider = ({ children }) => {
         icon: 'users',
         inviteCode: code,
         createdAt: new Date().toISOString().split('T')[0],
-        members: [
-          { id: 'u_me', name: state.user.name || 'Arjun', isGhost: false },
-          { id: 'u_host', name: 'Circle Host', isGhost: false }
-        ],
+        members: [newMemberObj],
         transactions: []
       };
       updated.circles.list.unshift(found);
+    } else {
+      const exists = found.members.some(m => m.name.toLowerCase() === myName.toLowerCase());
+      if (!exists) {
+        found.members.push(newMemberObj);
+      }
     }
+
     updated.circles.activeCircleId = found.id;
     saveState(updated);
+
+    // Broadcast member join event over Supabase Realtime channel
+    SupabaseService.broadcastCircleUpdate(code, {
+      type: 'MEMBER_JOINED',
+      inviteCode: code,
+      member: newMemberObj
+    }).catch(() => {});
+
     return found;
   };
 
@@ -1217,6 +1276,15 @@ export const StateProvider = ({ children }) => {
     }
 
     saveState(updated);
+
+    if (circle.inviteCode) {
+      SupabaseService.broadcastCircleUpdate(circle.inviteCode, {
+        type: 'ADD_TRANSACTION',
+        inviteCode: circle.inviteCode,
+        transaction: newTxn
+      }).catch(() => {});
+    }
+
     return true;
   };
 

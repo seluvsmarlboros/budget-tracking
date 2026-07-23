@@ -544,29 +544,19 @@ export default function Circles() {
                 </div>
               </div>
 
-              <div className="field">
-                <label>Add Members (Ghost / Friends)</label>
-                {newMemberInputs.map((val, idx) => (
-                  <input
-                    key={idx}
-                    type="text"
-                    placeholder={`Member ${idx + 1} Name`}
-                    value={val}
-                    onChange={e => {
-                      const updated = [...newMemberInputs];
-                      updated[idx] = e.target.value;
-                      setNewMemberInputs(updated);
-                    }}
-                    style={{ marginBottom: '8px' }}
-                  />
-                ))}
-                <button
-                  type="button"
-                  className="btn-link"
-                  onClick={() => setNewMemberInputs([...newMemberInputs, ''])}
-                >
-                  + Add another member
-                </button>
+              <div className="field" style={{ background: 'rgba(74, 222, 128, 0.05)', padding: '14px', borderRadius: '12px', border: '1px solid rgba(74, 222, 128, 0.15)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', fontWeight: 600, color: '#4ADE80' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="8.5" cy="7" r="4"/>
+                    <line x1="20" y1="8" x2="20" y2="14"/>
+                    <line x1="23" y1="11" x2="17" y2="11"/>
+                  </svg>
+                  <span>Real-Time Room Sync</span>
+                </div>
+                <p style={{ margin: '6px 0 0 0', fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                  Creating this Circle generates a unique 6-character Invite Code. Other devices join instantly in real-time when they enter your code.
+                </p>
               </div>
 
               <button type="submit" className="btn-primary">Create Circle</button>
@@ -636,12 +626,12 @@ export default function Circles() {
 
             {/* Member List */}
             <div className="members-list-section">
-              <h4>Members ({activeCircle.members?.length})</h4>
+              <h4>Joined Members ({activeCircle.members?.length})</h4>
               <div className="members-chips">
                 {activeCircle.members?.map(m => (
-                  <div key={m.id} className="member-chip">
+                  <div key={m.id} className="member-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ADE80', boxShadow: '0 0 6px #4ADE80' }}></span>
                     <span>{m.name}</span>
-                    {m.isGhost && <span className="ghost-tag">Ghost</span>}
                   </div>
                 ))}
               </div>
@@ -873,39 +863,38 @@ export default function Circles() {
         </div>
       )}
 
-      {/* 5. Add Circle Member Modal */}
+      {/* 5. Add Circle Member / Share Code Modal */}
       {showAddMemberModal && activeCircle && (
         <div className="modal-overlay" onClick={() => setShowAddMemberModal(false)}>
           <div className="modal-sheet" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Add Member to {activeCircle.name}</h3>
+              <h3>Invite Member to {activeCircle.name}</h3>
               <button className="close-btn" onClick={() => setShowAddMemberModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleAddMemberSubmit} className="modal-form">
-              <div className="field">
-                <label>Member Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Rahul, Sneha"
-                  value={newMemberName}
-                  onChange={e => setNewMemberName(e.target.value)}
-                  required
-                />
+            
+            <div className="modal-form" style={{ gap: '16px' }}>
+              <div className="field" style={{ textAlign: 'center', background: 'rgba(74, 222, 128, 0.06)', padding: '20px', borderRadius: '16px', border: '1px stroke rgba(74, 222, 128, 0.2)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>Room Invite Code</span>
+                <div style={{ fontFamily: 'var(--font-title)', fontSize: '32px', fontWeight: 800, color: '#4ADE80', letterSpacing: '4px', margin: '8px 0' }}>
+                  {activeCircle.inviteCode}
+                </div>
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>
+                  Share this code with your friends. Entering this code on their device puts them into your synchronized room instantly!
+                </p>
               </div>
 
-              <div className="field-checkbox">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={isGhostToggle}
-                    onChange={e => setIsGhostToggle(e.target.checked)}
-                  />
-                  <span>Track as local Ghost Member (no account required)</span>
-                </label>
-              </div>
-
-              <button type="submit" className="btn-primary">Add Member</button>
-            </form>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  navigator.clipboard?.writeText(activeCircle.inviteCode);
+                  if (window.toast) window.toast(`Copied Invite Code: ${activeCircle.inviteCode}`);
+                  setShowAddMemberModal(false);
+                }}
+              >
+                Copy Invite Code ({activeCircle.inviteCode})
+              </button>
+            </div>
           </div>
         </div>
       )}
