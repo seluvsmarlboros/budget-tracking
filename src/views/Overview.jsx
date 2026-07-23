@@ -95,8 +95,10 @@ export default function Overview() {
     }
   });
 
-  const left = adjustedBudget - periodExpenses - netFriendDebt;
-  const totalConsumed = periodExpenses + netFriendDebt;
+  // Fix: netFriendDebt should not be subtracted from available cash unless it's a realized expense.
+  // The balance should represent available liquidity.
+  const left = adjustedBudget - periodExpenses;
+  const totalConsumed = periodExpenses;
   const budgetProgressPct = adjustedBudget > 0 ? Math.min((totalConsumed / adjustedBudget) * 100, 100) : 0;
 
   // 4. BURN RATE & RUNOUT FORECAST

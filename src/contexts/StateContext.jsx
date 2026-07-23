@@ -124,6 +124,15 @@ export const StateProvider = ({ children }) => {
           parsed.user.pulseLastScanned = 0;
           migrated = true;
         }
+        // Fix: Ensure friends state exists
+        if (!parsed.friends) {
+          parsed.friends = { list: [], balances: {}, history: [] };
+          migrated = true;
+        }
+        if (!parsed.friends.balances) {
+          parsed.friends.balances = {};
+          migrated = true;
+        }
         if (!parsed.ai) {
           parsed.ai = {
             provider: 'groq',

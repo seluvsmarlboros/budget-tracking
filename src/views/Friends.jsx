@@ -14,7 +14,7 @@ export default function Friends() {
   // Auth Form State
   const [authName, setAuthName] = useState('');
   const [authEmail, setAuthEmail] = useState('');
-  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true); // Default to true to prevent flash
   const [authMsg, setAuthMsg] = useState('');
   
   // Unlinked State
@@ -78,10 +78,12 @@ export default function Friends() {
 
   // 1. AUTH STATE CHECK
   const checkAuthState = async () => {
+    setIsAuthLoading(true);
     try {
       const user = await SupabaseService.getCurrentUser();
       if (!user) {
         setAuthState('auth');
+        setIsAuthLoading(false);
         return;
       }
 
@@ -136,6 +138,8 @@ export default function Friends() {
     } catch (err) {
       console.error(err);
       setAuthState('auth');
+    } finally {
+      setIsAuthLoading(false);
     }
   };
 
