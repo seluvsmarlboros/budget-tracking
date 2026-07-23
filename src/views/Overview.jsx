@@ -177,28 +177,17 @@ export default function Overview() {
     }
   }, [txnHash, user.targetGoal, period, user.cutbackCategory]);
 
-  // 7. PULSE ENGINE — 12h cache check, re-scan on new transactions
+  // 7. PULSE ENGINE — Always generate fresh cards from live state so settled bills disappear instantly
   useEffect(() => {
-    const TWELVE_HOURS = 12 * 60 * 60 * 1000;
-    const lastScanned = user.pulseLastScanned || 0;
-    const stale = Date.now() - lastScanned > TWELVE_HOURS;
-    const noCachedCards = !user.pulseCards || user.pulseCards.length === 0;
-
-    if (stale || noCachedCards) {
-      try {
-        const fresh = generatePulseCards(state);
-        updatePulseCache(fresh);
-        // Load from sessionStorage dismissed set
-        const dismissed = JSON.parse(sessionStorage.getItem('pulse_dismissed') || '[]');
-        setVisiblePulseCards(fresh.filter(c => !dismissed.includes(c.id)));
-      } catch (e) {
-        console.warn('Pulse scan failed:', e);
-      }
-    } else {
+    try {
+      const fresh = generatePulseCards(state);
+      updatePulseCache(fresh);
       const dismissed = JSON.parse(sessionStorage.getItem('pulse_dismissed') || '[]');
-      setVisiblePulseCards((user.pulseCards || []).filter(c => !dismissed.includes(c.id)));
+      setVisiblePulseCards(fresh.filter(c => !dismissed.includes(c.id)));
+    } catch (e) {
+      console.warn('Pulse scan failed:', e);
     }
-  }, [txnHash]);
+  }, [txnHash, JSON.stringify(friendBalances), JSON.stringify(circlesList), JSON.stringify(spikes)]);
 
   const handlePulseDismiss = (id) => {
     const dismissed = JSON.parse(sessionStorage.getItem('pulse_dismissed') || '[]');

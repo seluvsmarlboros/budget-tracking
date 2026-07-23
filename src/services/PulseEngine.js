@@ -55,8 +55,8 @@ export function generatePulseCards(state) {
     });
   }
 
-  // ── 2. VAMPIRE CHARGES ───────────────────────────────────────────────────
-  // Trigger: ≥2 transactions with same amount in same category within 30 days
+  // ── 2. VAMPIRE / RECURRING CHARGES ─────────────────────────────────────
+  // Trigger: ≥2 transactions with same description & amount within 30 days
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 864e5);
   const recentExpenses = transactions.filter(
     t => t.type === 'expense' && new Date(t.date + 'T00:00:00') >= thirtyDaysAgo
@@ -64,7 +64,8 @@ export function generatePulseCards(state) {
 
   const vampireMap = {};
   recentExpenses.forEach(t => {
-    const key = `${t.category}|${t.amount}`;
+    const merchant = (t.description || t.category || 'Subscription').trim();
+    const key = `${merchant}|${t.amount}`;
     vampireMap[key] = (vampireMap[key] || []);
     vampireMap[key].push(t);
   });
@@ -72,24 +73,25 @@ export function generatePulseCards(state) {
   const vampireHits = Object.entries(vampireMap).filter(([, txns]) => txns.length >= 2);
   if (vampireHits.length > 0 && cards.length < 4) {
     const [key, txns] = vampireHits[0];
-    const [category, amount] = key.split('|');
+    const [merchant, amount] = key.split('|');
+    const latestDate = txns[0]?.date || 'recently';
     cards.push({
-      id: 'pulse_vampire',
+      id: `pulse_vampire_${merchant.replace(/\s+/g, '_')}_${amount}`,
       type: 'vampire',
       icon: '',
-      title: 'Recurring charge spotted',
-      body: `${sym}${parseFloat(amount).toLocaleString('en-IN')} has hit your ${category} ${txns.length}× in the last 30 days. Could be a subscription draining you silently — worth a check.`,
+      title: `Recurring charge: ${merchant} (${sym}${parseFloat(amount).toLocaleString('en-IN')})`,
+      body: `${merchant} was charged ${txns.length}× for ${sym}${parseFloat(amount).toLocaleString('en-IN')} in the last 30 days (latest on ${latestDate}).`,
       action: { label: 'View Activity', target: '#activity' }
     });
   }
 
-  // ── 3. CIRCLE & FRIEND RECEIVABLE ───────────────────────────────────────
-  // Trigger: any circle net balance < -100 or > 100
+  // ── 3. CIRCLE & FRIEND RECEIVABLE / PAYABLE ──────────────────────────────
+  // Trigger: any circle net balance < -10 or > 10 (disappears immediately upon settlement)
   const circlesList = state?.circles?.list || [];
   circlesList.forEach(circle => {
     const circleNet = calculateCircleNetBalance(circle, user?.name || 'Arjun');
 
-    if (circleNet < -100 && cards.length < 4) {
+    if (circleNet < -10 && cards.length < 4) {
       cards.push({
         id: `pulse_circle_owe_${circle.id}`,
         type: 'circle_owe',
@@ -98,7 +100,7 @@ export function generatePulseCards(state) {
         body: `Use Magic Settle to clear your share with minimum transfers across ${circle.members?.length || 0} group members.`,
         action: { label: `Settle ${circle.name}`, target: '#partner' }
       });
-    } else if (circleNet > 100 && cards.length < 4) {
+    } else if (circleNet > 10 && cards.length < 4) {
       cards.push({
         id: `pulse_circle_owed_${circle.id}`,
         type: 'circle_owed',
@@ -111,18 +113,27 @@ export function generatePulseCards(state) {
   });
 
   const friendBalances = friends?.balances || {};
-  const bigDebts = Object.entries(friendBalances).filter(([, b]) => b > 500);
-  if (bigDebts.length > 0 && cards.length < 4) {
-    const [name, amount] = bigDebts[0];
-    cards.push({
-      id: `pulse_friend_${name}`,
-      type: 'friend_receivable',
-      icon: '',
-      title: `${name} owes you ${sym}${Math.round(amount).toLocaleString('en-IN')}`,
-      body: `That's real money sitting uncollected. Nudge ${name} to settle — use the QR in Circles to make it frictionless.`,
-      action: { label: `Remind ${name}`, target: '#partner' }
-    });
-  }
+  Object.entries(friendBalances).forEach(([name, amount]) => {
+    if (amount > 10 && cards.length < 4) {
+      cards.push({
+        id: `pulse_friend_owed_${name}`,
+        type: 'friend_receivable',
+        icon: '',
+        title: `${name} owes you ${sym}${Math.round(amount).toLocaleString('en-IN')}`,
+        body: `That's real money sitting uncollected. Remind ${name} to settle up or log a payment once received.`,
+        action: { label: `Settle ${name}`, target: '#partner' }
+      });
+    } else if (amount < -10 && cards.length < 4) {
+      cards.push({
+        id: `pulse_friend_owe_${name}`,
+        type: 'circle_owe',
+        icon: '',
+        title: `You owe ${name} ${sym}${Math.abs(Math.round(amount)).toLocaleString('en-IN')}`,
+        body: `You have an unsettled balance payable to ${name}. Pay back to clear your debt.`,
+        action: { label: `Settle ${name}`, target: '#partner' }
+      });
+    }
+  });
 
   // ── 4. SPIKE WARNING ─────────────────────────────────────────────────────
   // Trigger: any spike date within 5 days
