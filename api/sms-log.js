@@ -145,12 +145,7 @@ export default async function handler(req, res) {
           ? JSON.parse(profile.push_subscription)
           : profile.push_subscription;
 
-        const notificationPayload = JSON.stringify({
-          title: 'UniSpend Auto-Track',
-          body: `Auto-tracked: ₹${parsed.amount} for ${parsed.description}`,
-          url: './index.html#activity'
-        });
-
+        const notificationPayload = JSON.stringify(parsed);
         await webpush.sendNotification(sub, notificationPayload);
         pushResult = 'Web Push notification sent!';
       }

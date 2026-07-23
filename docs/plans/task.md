@@ -30,4 +30,5 @@
 | 26: Fix raw JSON push notification payload formatting in `api/send-reminder.js`, fix white action button CSS class in Circle Detail modal, and redesign Circle transaction history feed | [x] |
 | 27: Integrated direct Web Push VAPID notification dispatch into `api/sms-log.js` so webhooks and webhook tests fire WebPush alerts 100% reliably | [x] |
 | 28: Trigger native OS notification banners in `StateContext.jsx` for foreground realtime events & auto-sync Push Subscriptions during Test Webhook | [x] |
-| 29: Remove unsupported `actions` key in Service Worker (`sw.js`) to fix Safari (iOS/macOS) WebPush silent notification rejection (`1446aae`) | [x] |
+| 29: Remove unsupported `actions` key in Service Worker (`sw.js`) to fix Safari (iOS/macOS) WebPush silent notification rejection | [x] |
+| 30: Force Service Worker cache update via `reg.update()` and add instant local notification verification on Re-sync tap (`1e8e6a9`) | [x] |

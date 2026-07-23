@@ -1,5 +1,5 @@
 // Service Worker for UniSpend PWA & Push Notifications
-const CACHE_NAME = 'unispend-cache-v4';
+const CACHE_NAME = 'unispend-cache-v5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -34,12 +34,10 @@ self.addEventListener('activate', (e) => {
 
 // Fetch Event: Stale-while-revalidate strategy for quick loading and background updates
 self.addEventListener('fetch', (e) => {
-  // Only handle GET requests for http/https
   if (e.request.method !== 'GET' || !e.request.url.startsWith('http')) {
     return;
   }
 
-  // Bypass cache for API calls to Supabase or internal /api serverless endpoints
   if (e.request.url.includes('/api/') || e.request.url.includes('.supabase.co')) {
     return;
   }
@@ -63,43 +61,50 @@ self.addEventListener('fetch', (e) => {
 
 // Push Event: Listen for incoming web push notifications
 self.addEventListener('push', (e) => {
-  let data = { title: 'UniSpend Auto-Track', body: 'New notification received' };
+  let title = 'UniSpend Auto-Track';
+  let body = 'Transaction auto-tracked';
+  let url = './index.html#activity';
+
   if (e.data) {
     try {
-      data = e.data.json();
+      const parsed = e.data.json();
+      if (parsed.amount) {
+        title = 'UniSpend Auto-Track';
+        body = `Auto-tracked: ₹${parsed.amount} for ${parsed.description || 'UPI Payment'}`;
+      } else if (parsed.body) {
+        title = parsed.title || 'UniSpend Auto-Track';
+        body = parsed.body;
+        url = parsed.url || url;
+      }
     } catch (err) {
-      data = { title: 'UniSpend Auto-Track', body: e.data.text() };
+      const text = e.data.text();
+      if (text && text.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed.amount) {
+            title = 'UniSpend Auto-Track';
+            body = `Auto-tracked: ₹${parsed.amount} for ${parsed.description || 'UPI Payment'}`;
+          }
+        } catch (e2) {}
+      } else if (text) {
+        body = text;
+      }
     }
   }
 
-  // Defensive formatting fallback if payload text is raw JSON
-  if (typeof data.body === 'string' && data.body.trim().startsWith('{')) {
-    try {
-      const parsedBody = JSON.parse(data.body);
-      if (parsedBody.amount) {
-        data.title = 'UniSpend Auto-Track';
-        data.body = `Auto-tracked: ₹${parsedBody.amount} for ${parsedBody.description || 'UPI Payment'}`;
-      }
-    } catch (err) {}
-  }
-
-  // Compatible options for iOS Safari & Android Chrome
   const options = {
-    body: data.body || 'Transaction auto-tracked successfully',
+    body: body,
     icon: './assets/icon-192.png',
     badge: './assets/icon-192.png',
     vibrate: [100, 50, 100],
     data: {
-      url: data.url || './index.html#activity'
+      url: url
     }
   };
 
   e.waitUntil(
-    self.registration.showNotification(data.title || 'UniSpend Auto-Track', options).catch((err) => {
+    self.registration.showNotification(title, options).catch((err) => {
       console.error('[SW] Notification dispatch fallback:', err);
-      return self.registration.showNotification(data.title || 'UniSpend Auto-Track', {
-        body: data.body || 'Transaction logged'
-      });
     })
   );
 });
@@ -112,13 +117,11 @@ self.addEventListener('notificationclick', (e) => {
 
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // If window client is open, focus on it
       for (const client of windowClients) {
         if (client.url.includes('index.html') && 'focus' in client) {
           return client.focus();
         }
       }
-      // If no window is open, open a new PWA standalone viewport
       if (self.clients.openWindow) {
         return self.clients.openWindow(targetUrl);
       }
