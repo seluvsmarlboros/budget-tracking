@@ -282,20 +282,6 @@ export default function Overview() {
   return (
     <section id="view-home" className="view active">
 
-      {/* ── PULSE RAIL ─── Proactive insight cards ── */}
-      {visiblePulseCards.length > 0 && (
-        <div className="pulse-rail">
-          {visiblePulseCards.map((card, i) => (
-            <PulseCard
-              key={card.id}
-              card={card}
-              index={i}
-              onDismiss={handlePulseDismiss}
-            />
-          ))}
-        </div>
-      )}
-
       {/* Over Budget Warning Banner */}
       {left < 0 && (
         <div id="over-budget-warning" className="card warning-card" style={{ display: 'flex', borderColor: 'var(--red)', background: 'rgba(200, 94, 58, 0.08)', marginBottom: '24px' }}>
@@ -332,7 +318,7 @@ export default function Overview() {
         {/* LEFT COLUMN: Hero balance, AI, and Activities */}
         <div className="overview-column">
           
-          {/* 1. HERO BALANCE SECTION CARD */}
+          {/* 1. HERO BALANCE SECTION CARD — Main Focus */}
           <div className="hero-balance-section">
             <span className="hero-greeting">{greet}, {user.name || 'Student'}</span>
             <h1 className="hero-amount">{cur(left)}</h1>
@@ -353,6 +339,20 @@ export default function Overview() {
               </div>
             </div>
           </div>
+
+          {/* ── PULSE RAIL ─── Proactive Insight & Notification Banner Cards (Positioned below Hero Balance) ── */}
+          {visiblePulseCards.length > 0 && (
+            <div className="pulse-rail" style={{ marginTop: '8px', marginBottom: '24px' }}>
+              {visiblePulseCards.map((card, i) => (
+                <PulseCard
+                  key={card.id}
+                  card={card}
+                  index={i}
+                  onDismiss={handlePulseDismiss}
+                />
+              ))}
+            </div>
+          )}
 
           {/* AI Command capsule */}
           {widgetSettings.showAiBar !== false && (
