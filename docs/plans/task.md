@@ -28,4 +28,5 @@
 | 24: Rehaul `Settings.jsx` layout: Responsive Profile Hero Banner, Horizontal Scroll Navigation Tabs, Liquid Glass Panels, and Modal Sheet Overlays | [x] |
 | 25: Fix debt settlement cashflow mirroring across Circles, Friends, and Peer IOUs so collecting debt instantly updates main available cash balance | [x] |
 | 26: Fix raw JSON push notification payload formatting in `api/send-reminder.js`, fix white action button CSS class in Circle Detail modal, and redesign Circle transaction history feed | [x] |
-| 27: Integrated direct Web Push VAPID notification dispatch into `api/sms-log.js` so webhooks and webhook tests fire WebPush alerts 100% reliably (`9341459`) | [x] |
+| 27: Integrated direct Web Push VAPID notification dispatch into `api/sms-log.js` so webhooks and webhook tests fire WebPush alerts 100% reliably | [x] |
+| 28: Trigger native OS notification banners in `StateContext.jsx` for foreground realtime events & auto-sync Push Subscriptions during Test Webhook (`a52c4e0`) | [x] |

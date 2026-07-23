@@ -1,5 +1,5 @@
 // Service Worker for UniSpend PWA & Push Notifications
-const CACHE_NAME = 'unispend-cache-v3';
+const CACHE_NAME = 'unispend-cache-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -63,12 +63,12 @@ self.addEventListener('fetch', (e) => {
 
 // Push Event: Listen for incoming web push notifications
 self.addEventListener('push', (e) => {
-  let data = { title: 'UniSpend Alert', body: 'New notification received' };
+  let data = { title: 'UniSpend Auto-Track', body: 'New notification received' };
   if (e.data) {
     try {
       data = e.data.json();
     } catch (err) {
-      data = { title: 'UniSpend Alert', body: e.data.text() };
+      data = { title: 'UniSpend Auto-Track', body: e.data.text() };
     }
   }
 
@@ -83,22 +83,24 @@ self.addEventListener('push', (e) => {
     } catch (err) {}
   }
 
+  // Compatible options for iOS Safari & Android Chrome
   const options = {
-    body: data.body,
+    body: data.body || 'Transaction auto-tracked successfully',
     icon: './assets/icon-192.png',
     badge: './assets/icon-192.png',
     vibrate: [100, 50, 100],
     data: {
-      url: data.url || '/'
-    },
-    // Required properties for premium feel and iOS capabilities
-    actions: [
-      { action: 'open', title: 'Open App' }
-    ]
+      url: data.url || './index.html#activity'
+    }
   };
 
   e.waitUntil(
-    self.registration.showNotification(data.title, options)
+    self.registration.showNotification(data.title || 'UniSpend Auto-Track', options).catch((err) => {
+      console.error('[SW] Notification dispatch fallback:', err);
+      return self.registration.showNotification(data.title || 'UniSpend Auto-Track', {
+        body: data.body || 'Transaction logged'
+      });
+    })
   );
 });
 
@@ -106,13 +108,13 @@ self.addEventListener('push', (e) => {
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
 
-  const targetUrl = new URL(e.notification.data?.url || './index.html', self.location.origin).href;
+  const targetUrl = new URL(e.notification.data?.url || './index.html#activity', self.location.origin).href;
 
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       // If window client is open, focus on it
       for (const client of windowClients) {
-        if (client.url === targetUrl && 'focus' in client) {
+        if (client.url.includes('index.html') && 'focus' in client) {
           return client.focus();
         }
       }
