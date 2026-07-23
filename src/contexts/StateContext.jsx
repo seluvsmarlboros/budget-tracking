@@ -1346,17 +1346,57 @@ export const StateProvider = ({ children }) => {
     saveState(updated);
   };
 
+  const deleteCircle = (circleId) => {
+    const updated = structuredClone(state);
+    if (!updated.circles || !updated.circles.list) return false;
+    updated.circles.list = updated.circles.list.filter(c => c.id !== circleId);
+    if (updated.circles.activeCircleId === circleId) {
+      updated.circles.activeCircleId = updated.circles.list[0]?.id || null;
+    }
+    saveState(updated);
+    return true;
+  };
+
+  const editCircle = (circleId, name, icon) => {
+    const updated = structuredClone(state);
+    const circle = (updated.circles?.list || []).find(c => c.id === circleId);
+    if (!circle) return false;
+    if (name && name.trim()) circle.name = name.trim();
+    if (icon) circle.icon = icon;
+    saveState(updated);
+    return true;
+  };
+
+  const removeCircleMember = (circleId, memberName) => {
+    const updated = structuredClone(state);
+    const circle = (updated.circles?.list || []).find(c => c.id === circleId);
+    if (!circle) return false;
+    circle.members = (circle.members || []).filter(m => m.name.toLowerCase() !== memberName.toLowerCase());
+    saveState(updated);
+    return true;
+  };
+
   return (
     <StateContext.Provider value={{
       state,
-      completeOnboarding,
       resetState,
+      completeOnboarding,
       addTransaction,
+      deleteTransaction,
+      addSplitIOU,
+      addCircleTransaction,
+      createCircle,
+      joinCircle,
+      addCircleMember,
+      removeCircleMember,
+      editCircle,
+      deleteCircle,
+      mergeGhostMember,
+      setActiveCircle,
       addCommuteLog,
       addMaintenanceLog,
       addFriend,
       settleUp,
-      addSplitIOU,
       addGroupSplit,
       addSpike,
       deleteSpike,
@@ -1373,13 +1413,7 @@ export const StateProvider = ({ children }) => {
       importData,
       syncSupabaseBalances,
       syncPartnerHistory,
-      executeEqualize,
-      createCircle,
-      joinCircle,
-      addCircleTransaction,
-      addCircleMember,
-      mergeGhostMember,
-      setActiveCircle
+      executeEqualize
     }}>
       {children}
     </StateContext.Provider>

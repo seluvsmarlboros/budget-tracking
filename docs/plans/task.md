@@ -44,4 +44,12 @@
 | 40: Integrate full What-If Simulator & Financial Radar into `Insights.jsx` and `Overview.jsx` | [x] |
 | 41: Mount Command Palette globally in `App.jsx` | [x] |
 | 42: Create Playwright E2E test suite (`e2e/finance-ai.spec.js`) and verify build | [x] |
+| 43: Add `deleteCircle`, `editCircle`, `removeCircleMember` functions in `StateContext.jsx` | [x] |
+| 44: Rehaul 3-dots menu in `Circles.jsx` with SVG icon button, outside-click listener, Edit/Manage/Delete actions | [x] |
+| 45: Build Flexible Splitting Engine in `Circles.jsx` (Participant checklist, Equal / Exact ₹ / Percentage split modes) | [x] |
+| 46: Rehaul Member Management (Initial roommate inputs in Create Circle, Manage Members modal) | [x] |
+| 47: Upgrade Settle Modal with 1-tap UPI launcher and QR Code overlay, plus liquid glass UI styling | [x] |
+| 48: Create Playwright E2E test suite (`e2e/circles-rehaul.spec.js`) and verify clean build | [x] |
+
+
 
