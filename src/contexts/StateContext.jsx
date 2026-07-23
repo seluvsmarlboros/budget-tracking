@@ -466,25 +466,6 @@ export const StateProvider = ({ children }) => {
                   if (txn && txn.amount) {
                     addTransaction(txn);
                     window.toast(`Auto-tracked: ${txn.description} (${state.user.currency}${txn.amount})`);
-
-                    // Trigger native system notification banner even when app is in foreground
-                    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-                      try {
-                        new Notification('UniSpend Auto-Track', {
-                          body: `Auto-tracked: ${state.user.currency}${txn.amount} for ${txn.description}`,
-                          icon: './assets/icon-192.png'
-                        });
-                      } catch (nErr) {
-                        if ('serviceWorker' in navigator) {
-                          navigator.serviceWorker.ready.then(reg => {
-                            reg.showNotification('UniSpend Auto-Track', {
-                              body: `Auto-tracked: ${state.user.currency}${txn.amount} for ${txn.description}`,
-                              icon: './assets/icon-192.png'
-                            });
-                          }).catch(() => {});
-                        }
-                      }
-                    }
                   }
                 } catch (e) {
                   console.error('Failed to parse auto-track notification:', e);

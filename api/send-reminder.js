@@ -47,8 +47,14 @@ export default async function handler(req, res) {
     let notificationUrl = './index.html';
 
     // 1. Detect if it's a Supabase Database Webhook trigger
-    if (payload && payload.record && payload.table === 'notifications') {
+    // 1. Supabase Webhook payload format
+    if (payload && payload.record) {
       const { user_id, message, type } = payload.record;
+      
+      // Ignore pending_transaction (api/sms-log already sent direct push)
+      if (type === 'pending_transaction') {
+        return res.status(200).json({ message: 'Pending transaction push already dispatched by api/sms-log' });
+      }
       
       const { data: profile, error } = await supabase
         .from('profiles')

@@ -1,5 +1,5 @@
 // Service Worker for UniSpend PWA & Push Notifications
-const CACHE_NAME = 'unispend-cache-v5';
+const CACHE_NAME = 'unispend-cache-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -92,11 +92,14 @@ self.addEventListener('push', (e) => {
     }
   }
 
+  // Deduplicated notification options
   const options = {
     body: body,
     icon: './assets/icon-192.png',
     badge: './assets/icon-192.png',
     vibrate: [100, 50, 100],
+    tag: 'autotrack-' + (body || 'default').replace(/\s+/g, '-'),
+    renotify: false,
     data: {
       url: url
     }

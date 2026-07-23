@@ -31,4 +31,5 @@
 | 27: Integrated direct Web Push VAPID notification dispatch into `api/sms-log.js` so webhooks and webhook tests fire WebPush alerts 100% reliably | [x] |
 | 28: Trigger native OS notification banners in `StateContext.jsx` for foreground realtime events & auto-sync Push Subscriptions during Test Webhook | [x] |
 | 29: Remove unsupported `actions` key in Service Worker (`sw.js`) to fix Safari (iOS/macOS) WebPush silent notification rejection | [x] |
-| 30: Force Service Worker cache update via `reg.update()` and add instant local notification verification on Re-sync tap (`1e8e6a9`) | [x] |
+| 30: Force Service Worker cache update via `reg.update()` and add instant local notification verification on Re-sync tap | [x] |
+| 31: Restored pure JSON payload in `api/sms-log.js` and updated Service Worker (`unispend-cache-v5`) to extract `amount` & `description` directly (`bf83754`) | [x] |
