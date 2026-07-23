@@ -409,6 +409,7 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then((reg) => {
+        reg.update().catch(() => {});
         console.log('[PWA] Service Worker registered scope:', reg.scope);
         if (state.user.id && 'PushManager' in window && reg.pushManager) {
           reg.pushManager.getSubscription().then(async (sub) => {

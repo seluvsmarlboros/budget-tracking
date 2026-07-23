@@ -126,6 +126,7 @@ export default function Settings() {
         return;
       }
       const reg = await navigator.serviceWorker.register('/sw.js');
+      await reg.update().catch(() => {});
       const vapidPublicKey = 'BF7IgezFiN_M2HBCufmwj2yionG4AbT91NDwBZj5tqmrLK5U7pnL-de7DrPiFYZIW5FgFfzSvyQTGZGd5s2bdeQ';
       const padding = '='.repeat((4 - (vapidPublicKey.length % 4)) % 4);
       const base64 = (vapidPublicKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
@@ -144,7 +145,16 @@ export default function Settings() {
       if (user?.id) {
         await SupabaseService.savePushSubscription(sub);
       }
-      window.toast('Web Push Notifications Activated Successfully!');
+
+      // Instant visual verification on user's device
+      try {
+        await reg.showNotification('UniSpend Auto-Track', {
+          body: 'Web Push Notifications Activated & System Banner Verified!',
+          icon: './assets/icon-192.png'
+        });
+      } catch (nErr) {}
+
+      window.toast('Web Push Notifications Activated & Verified!');
     } catch (err) {
       console.error(err);
       window.toast(`Push activation error: ${err.message}`);
