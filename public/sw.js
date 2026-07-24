@@ -112,16 +112,20 @@ self.addEventListener('push', (e) => {
   );
 });
 
-// Notification Click Event: Focus or open the PWA when notification is clicked
+// Notification Click Event: Focus or open the PWA and navigate to targetUrl
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
 
-  const targetUrl = new URL(e.notification.data?.url || './index.html#activity', self.location.origin).href;
+  const rawUrl = e.notification.data?.url || './index.html#activity';
+  const targetUrl = new URL(rawUrl, self.location.origin).href;
 
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (const client of windowClients) {
-        if (client.url.includes('index.html') && 'focus' in client) {
+        if ('focus' in client) {
+          if ('navigate' in client) {
+            client.navigate(targetUrl);
+          }
           return client.focus();
         }
       }
@@ -131,3 +135,4 @@ self.addEventListener('notificationclick', (e) => {
     })
   );
 });
+

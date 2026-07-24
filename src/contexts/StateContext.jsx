@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase, SupabaseService } from '../services/supabase';
+import { NotificationService } from '../services/NotificationService';
 
 const StateContext = createContext(null);
 
@@ -506,6 +506,11 @@ export const StateProvider = ({ children }) => {
                   if (txn && txn.amount) {
                     addTransaction(txn);
                     window.toast(`Auto-tracked: ${txn.description} (${state.user.currency}${txn.amount})`);
+                    NotificationService.sendNotification(
+                      'UniSpend Auto-Track',
+                      `Auto-tracked: ${state.user.currency}${txn.amount} for ${txn.description || 'UPI Payment'}`,
+                      '#activity'
+                    );
                   }
                 } catch (e) {
                   console.error('Failed to parse auto-track notification:', e);

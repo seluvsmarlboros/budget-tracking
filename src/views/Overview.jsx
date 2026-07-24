@@ -510,19 +510,7 @@ export default function Overview() {
             </div>
           )}
 
-          {/* 4. FINANCIAL PULSE RAIL & FINANCIAL PULSE CARD */}
-          {visiblePulseCards.length > 0 && (
-            <div className="pulse-rail">
-              {visiblePulseCards.map((card, i) => (
-                <PulseCard
-                  key={card.id}
-                  card={card}
-                  index={i}
-                  onDismiss={handlePulseDismiss}
-                />
-              ))}
-            </div>
-          )}
+          {/* 4. FINANCIAL PULSE CARD */}
 
           <div className="card pulse-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Financial Pulse</h3>

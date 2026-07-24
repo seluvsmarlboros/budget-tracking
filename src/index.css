@@ -78,6 +78,13 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
+/* Prevent iOS Safari auto-zoom on input focus */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Subtle grain texture overlay */
 body::after {
   content: '';
