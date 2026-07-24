@@ -228,8 +228,9 @@ export default function CommandPalette({ isOpen, onClose }) {
               gap: '12px'
             }}>
               <div>
-                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--accent, #c5a059)', fontWeight: 700 }}>
-                  ⚡ Instant AI Action
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--accent, #c5a059)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  Instant AI Action
                 </div>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff', marginTop: '2px' }}>
                   {parsedAction.rawAction.action === 'add_transaction' && `Add ${parsedAction.rawAction.type || 'expense'}: ${state?.user?.currency || '₹'}${parsedAction.rawAction.amount} (${parsedAction.rawAction.description || parsedAction.rawAction.category})`}

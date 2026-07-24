@@ -359,7 +359,7 @@ export default function WhatIfSimulator() {
             {targetGoalVal > 0 && daysToGoal > 0 ? (
               <>
                 <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--accent)', fontWeight: 700 }}>
-                  🎯 Projected Goal Target
+                  Projected Goal Target
                 </div>
                 <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text)', margin: '6px 0 4px 0' }}>
                   {daysToGoal} Days <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-muted)' }}>(by {goalTargetDate})</span>
