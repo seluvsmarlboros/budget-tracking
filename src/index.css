@@ -442,13 +442,46 @@ body.light .bnav-fab-btn {
   }
 }
 
+/* Circles Responsive Bento Layout Grid */
+.circles-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .circles-grid-layout {
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+  }
+}
+
 @media (max-width: 767px) {
   .top-nav {
     display: none !important;
   }
 
   .bottom-nav {
-    display: flex;
+    display: flex !important;
+  }
+
+  .circles-action-toolbar {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .circles-action-toolbar button {
+    width: 100% !important;
+    justify-content: center !important;
+    font-size: 12px !important;
+    padding: 8px 10px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 8px !important;
   }
 }
 
@@ -456,6 +489,7 @@ body.light .bnav-fab-btn {
 .view {
   display: none;
   animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  padding-bottom: 120px !important;
 }
 
 .view.active {

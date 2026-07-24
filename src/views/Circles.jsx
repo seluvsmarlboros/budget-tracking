@@ -315,7 +315,7 @@ export default function Circles() {
       </div>
 
       {/* 2. MAIN BENTO GRID LAYOUT */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '20px' }} className="circles-grid-layout">
+      <div className="circles-grid-layout">
         
         {/* LEFT COLUMN: ACTIVE WORKSPACE & ACTIVITY */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -325,11 +325,11 @@ export default function Circles() {
             <div className="card" style={{ padding: '24px', border: '1px solid var(--border-highlight)' }}>
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
                   {getCircleIconSVG(activeCircle.icon)}
                   <div>
                     <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800 }}>{activeCircle.name}</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
                       <span className="muted" style={{ fontSize: '12px' }}>{activeCircle.members?.length || 0} Members</span>
                       <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
                       <button
@@ -346,7 +346,8 @@ export default function Circles() {
                           borderRadius: '6px',
                           fontSize: '11px',
                           fontWeight: 700,
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         Code: {activeCircle.inviteCode} 📋
@@ -356,7 +357,7 @@ export default function Circles() {
                 </div>
 
                 {/* Net balance pill */}
-                <div style={{ textAlign: 'right' }}>
+                <div>
                   <span className="muted" style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 600, display: 'block' }}>Your Net Balance</span>
                   <strong style={{ fontSize: '20px', fontWeight: 800, color: activeNetBalance === 0 ? 'var(--text-muted)' : activeNetBalance > 0 ? '#4ade80' : '#ef4444' }}>
                     {activeNetBalance === 0 ? `${sym}0 (Settled)` : activeNetBalance > 0 ? `+${sym}${activeNetBalance}` : `-${sym}${Math.abs(activeNetBalance)}`}
@@ -391,39 +392,83 @@ export default function Circles() {
               </div>
 
               {/* Action Toolbar */}
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+              <div className="circles-action-toolbar" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
                 <button
                   type="button"
-                  className="btn btn-secondary"
                   onClick={() => setShowSettleModal(true)}
-                  style={{ padding: '6px 14px', fontSize: '12px' }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-main)',
+                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
                 >
                   Settle Up
                 </button>
 
                 <button
                   type="button"
-                  className="btn btn-secondary"
                   onClick={() => setShowMagicSettleModal(true)}
-                  style={{ padding: '6px 14px', fontSize: '12px' }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-main)',
+                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
                 >
                   ⚡ Magic Settle Matrix
                 </button>
 
                 <button
                   type="button"
-                  className="btn btn-secondary"
                   onClick={() => setShowManageMembersModal(true)}
-                  style={{ padding: '6px 14px', fontSize: '12px' }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-main)',
+                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
                 >
                   👥 Manage Members
                 </button>
 
                 <button
                   type="button"
-                  className="btn btn-secondary"
                   onClick={() => setShowEditCircleModal(true)}
-                  style={{ padding: '6px 14px', fontSize: '12px' }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-main)',
+                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
                 >
                   ⚙️ Settings
                 </button>
@@ -456,33 +501,34 @@ export default function Circles() {
                         display: 'flex',
                         justify: 'space-between',
                         alignItems: 'center',
-                        padding: '12px 16px',
+                        padding: '12px 14px',
                         background: 'rgba(255,255,255,0.02)',
                         borderRadius: '10px',
-                        border: '1px solid var(--border)'
+                        border: '1px solid var(--border)',
+                        gap: '12px'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
                         <div style={{
                           width: '36px', height: '36px', borderRadius: '8px',
                           background: t.isSettlement ? 'rgba(74, 222, 128, 0.12)' : 'rgba(255,255,255,0.05)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           color: t.isSettlement ? 'var(--emerald)' : 'var(--text-main)',
-                          fontSize: '14px', fontWeight: 700
+                          fontSize: '14px', fontWeight: 700, flexShrink: 0
                         }}>
                           {t.isSettlement ? '✓' : (t.category?.[0] || 'S')}
                         </div>
-                        <div>
-                          <strong style={{ display: 'block', fontSize: '14px' }}>{t.title}</strong>
-                          <span className="muted" style={{ fontSize: '12px' }}>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <strong style={{ display: 'block', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</strong>
+                          <span className="muted" style={{ fontSize: '11.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>
                             Paid by <strong>{t.paidBy}</strong> • {t.date}
                           </span>
                         </div>
                       </div>
 
-                      <div style={{ textAlign: 'right' }}>
-                        <strong style={{ fontSize: '14px', display: 'block' }}>{sym}{t.totalAmount}</strong>
-                        <span className="muted" style={{ fontSize: '11px' }}>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <strong style={{ fontSize: '13.5px', display: 'block', whiteSpace: 'nowrap' }}>{sym}{t.totalAmount}</strong>
+                        <span className="muted" style={{ fontSize: '11px', whiteSpace: 'nowrap' }}>
                           {isUserPaid ? `You lent ${sym}${t.totalAmount - myShare}` : `Your share: ${sym}${myShare}`}
                         </span>
                       </div>
