@@ -122,7 +122,7 @@ export default function App() {
   }
 
   // Show onboarding view if user is not yet onboarded
-  if (!state.user.onboarded) {
+  if (!state?.user?.onboarded) {
     return <Onboarding />;
   }
 

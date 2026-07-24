@@ -439,11 +439,11 @@ export const StateProvider = ({ children }) => {
         }
       }).catch(err => console.error('[PWA] SW registration failed:', err));
     }
-  }, [state.user.id]);
+  }, [state?.user?.id]);
 
   // 4. Real-time Synchronized Circles Room Listener
   useEffect(() => {
-    const list = state.circles?.list || [];
+    const list = state?.circles?.list || [];
     list.forEach(c => {
       if (c.inviteCode) {
         SupabaseService.subscribeCircleRoom(c.inviteCode, (payload) => {
@@ -479,18 +479,18 @@ export const StateProvider = ({ children }) => {
         });
       }
     });
-  }, [JSON.stringify((state.circles?.list || []).map(c => c.inviteCode))]);
+  }, [JSON.stringify((state?.circles?.list || []).map(c => c.inviteCode))]);
 
   // 3. Streak & Realtime Auto-Track Listener
   useEffect(() => {
-    if (state.user.onboarded) {
+    if (state?.user?.onboarded) {
       const updated = updateStreak(state);
-      if (updated.user.streak !== state.user.streak || updated.user.lastActiveDate !== state.user.lastActiveDate) {
+      if (updated?.user?.streak !== state?.user?.streak || updated?.user?.lastActiveDate !== state?.user?.lastActiveDate) {
         saveState(updated);
       }
 
       // Realtime listener for auto-track webhooks (pending_transaction notifications)
-      if (state.user.id && !notificationSub.current) {
+      if (state?.user?.id && !notificationSub.current) {
         notificationSub.current = supabase
           .channel(`user-notifications:${state.user.id}`)
           .on(
@@ -505,10 +505,10 @@ export const StateProvider = ({ children }) => {
                   }
                   if (txn && txn.amount) {
                     addTransaction(txn);
-                    window.toast(`Auto-tracked: ${txn.description} (${state.user.currency}${txn.amount})`);
+                    window.toast(`Auto-tracked: ${txn.description} (${state?.user?.currency || '₹'}${txn.amount})`);
                     NotificationService.sendNotification(
                       'UniSpend Auto-Track',
-                      `Auto-tracked: ${state.user.currency}${txn.amount} for ${txn.description || 'UPI Payment'}`,
+                      `Auto-tracked: ${state?.user?.currency || '₹'}${txn.amount} for ${txn.description || 'UPI Payment'}`,
                       '#activity'
                     );
                   }
@@ -528,7 +528,7 @@ export const StateProvider = ({ children }) => {
         notificationSub.current = null;
       }
     };
-  }, [state.user.onboarded, state.user.id]);
+  }, [state?.user?.onboarded, state?.user?.id]);
 
   const resetState = () => {
     localStorage.removeItem(STATE_KEY);
