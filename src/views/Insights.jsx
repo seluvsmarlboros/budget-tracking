@@ -13,8 +13,8 @@ const FOREST_PALETTE = [
 ];
 
 export default function Insights() {
-  const { state } = useStateContext();
-  const { transactions, user, commute } = state;
+  const { state, updateCategoryLimit } = useStateContext();
+  const { transactions, user, commute, categoryLimits = {}, categories = [] } = state;
   const sym = user.currency || '₹';
 
   const cur = (amount) => {
@@ -197,6 +197,112 @@ export default function Insights() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* CATEGORY BUDGETS & SOFT CAPS WIDGET */}
+      <div className="card" style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+          <div>
+            <h3 style={{ margin: 0 }}>Category Budgets & Soft Caps</h3>
+            <span className="muted" style={{ fontSize: '12px' }}>Set monthly spending caps per category with automatic visual alerts</span>
+          </div>
+          <span className="badge badge-mint" style={{ fontSize: '11px', padding: '4px 10px' }}>Real-time Soft Caps</span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+          {categories.map(cat => {
+            const spent = byCategory[cat] || 0;
+            const cap = categoryLimits[cat] !== undefined ? categoryLimits[cat] : 1500;
+            const pct = cap > 0 ? Math.min(100, Math.round((spent / cap) * 100)) : 0;
+            
+            let statusText = 'Cruising';
+            let statusBg = 'rgba(74, 222, 128, 0.15)';
+            let statusColor = '#4ade80';
+            let barColor = 'var(--emerald, #4ade80)';
+
+            if (spent > cap && cap > 0) {
+              statusText = 'Cap Exceeded!';
+              statusBg = 'rgba(239, 68, 68, 0.15)';
+              statusColor = '#ef4444';
+              barColor = '#ef4444';
+            } else if (pct >= 80) {
+              statusText = `Approaching (${pct}%)`;
+              statusBg = 'rgba(245, 158, 11, 0.15)';
+              statusColor = '#f59e0b';
+              barColor = '#f59e0b';
+            }
+
+            return (
+              <div
+                key={cat}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid var(--border, rgba(255,255,255,0.08))',
+                  borderRadius: '12px',
+                  padding: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 600, fontSize: '14px' }}>{cat}</span>
+                  <span
+                    style={{
+                      background: statusBg,
+                      color: statusColor,
+                      padding: '2px 8px',
+                      borderRadius: '99px',
+                      fontSize: '11px',
+                      fontWeight: 700
+                    }}
+                  >
+                    {statusText}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '13px' }}>
+                  <span>
+                    Spent: <strong style={{ color: 'var(--text-main)' }}>{cur(spent)}</strong>
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span className="muted" style={{ fontSize: '11px' }}>Cap: {sym}</span>
+                    <input
+                      type="number"
+                      defaultValue={cap}
+                      onBlur={(e) => updateCategoryLimit(cat, e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') updateCategoryLimit(cat, e.target.value); }}
+                      style={{
+                        width: '70px',
+                        background: 'rgba(0,0,0,0.3)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '6px',
+                        color: 'var(--text-main)',
+                        padding: '2px 6px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        textAlign: 'right'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div style={{ height: '6px', width: '100%', background: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${pct}%`,
+                      background: barColor,
+                      borderRadius: '99px',
+                      transition: 'width 0.3s ease'
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="field-row">

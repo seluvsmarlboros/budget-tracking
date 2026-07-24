@@ -194,6 +194,7 @@ const emptyState = {
     pulseLastScanned: 0
   },
   categories: [...DEFAULT_CATEGORIES],
+  categoryLimits: { Food: 2500, Canteen: 1200, Travel: 1000, Hangout: 800, Printouts: 300, Stationery: 500, Books: 1000, Other: 500 },
   transactions: [],
   commute: { type: 'metro', dailyCost: 60, passCost: 0, logs: [], maintenance: [], attendanceDays: [] },
   friends: { list: [], balances: {}, history: [] },
@@ -1398,6 +1399,14 @@ export const StateProvider = ({ children }) => {
     return true;
   };
 
+  const updateCategoryLimit = (category, limitAmount) => {
+    const updated = clone(state);
+    if (!updated.categoryLimits) updated.categoryLimits = {};
+    updated.categoryLimits[category] = Math.max(0, parseFloat(limitAmount) || 0);
+    saveState(updated);
+    return true;
+  };
+
   return (
     <StateContext.Provider value={{
       state,
@@ -1427,6 +1436,7 @@ export const StateProvider = ({ children }) => {
       deleteSavingsGoal,
       addCategory,
       deleteCategory,
+      updateCategoryLimit,
       updateSettings,
       updateAiSettings,
       updatePulseCache,
