@@ -354,28 +354,6 @@ export default function Overview() {
           <div className="hero-balance-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
               <span className="hero-greeting">{greet}, {user.name || 'Student'}</span>
-              <button
-                type="button"
-                className="cmd-k-btn"
-                onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-                style={{
-                  background: 'rgba(197, 160, 89, 0.12)',
-                  border: '1px solid rgba(197, 160, 89, 0.3)',
-                  color: 'var(--accent, #c5a059)',
-                  padding: '5px 12px',
-                  borderRadius: '99px',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                  Cmd + K Spotlight
-                </span>
-              </button>
             </div>
 
             <h1 className="hero-amount">{cur(left)}</h1>
