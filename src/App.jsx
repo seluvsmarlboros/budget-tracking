@@ -59,6 +59,9 @@ export class ErrorBoundary extends Component {
 export default function App() {
   const { state } = useStateContext();
   const [currentHash, setCurrentHash] = useState(() => (location.hash.replace('#', '') || 'home'));
+  const [showSplash, setShowSplash] = useState(true);
+  const [toasts, setToasts] = useState([]);
+  const [isCmdPaletteOpen, setIsCmdPaletteOpen] = useState(false);
 
   // Toast notifier binding
   const triggerToast = (msg) => {
