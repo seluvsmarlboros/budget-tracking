@@ -385,34 +385,37 @@ export default function Overview() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              gap: '24px',
+              width: '100%',
               background: 'rgba(255, 255, 255, 0.04)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '12px',
-              padding: '10px 14px',
-              marginTop: '14px',
-              marginBottom: '12px'
+              padding: '12px 16px',
+              marginTop: '16px',
+              marginBottom: '14px',
+              boxSizing: 'border-box'
             }}>
-              <div>
-                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                   Safe-To-Spend Today
                 </div>
-                <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--accent, #c5a059)' }}>
+                <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--accent, #c5a059)', marginTop: '2px' }}>
                   {cur(daysRemaining > 0 ? Math.max(0, Math.round(left / daysRemaining)) : 0)} <span style={{ fontSize: '12px', fontWeight: 400, color: 'rgba(255,255,255,0.5)' }}>/ day</span>
                 </div>
               </div>
 
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                   Spend Velocity
                 </div>
                 <div style={{
                   fontSize: '12px',
                   fontWeight: 700,
                   color: burnStatus === 'Healthy' || burnStatus === 'Perfect' ? '#4caf50' : burnStatus === 'Warning' ? '#ff9800' : '#ef5350',
-                  marginTop: '2px',
+                  marginTop: '4px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: '5px',
                   justifyContent: 'flex-end'
                 }}>
                   <span style={{
