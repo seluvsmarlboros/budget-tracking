@@ -347,8 +347,8 @@ export default function Overview() {
       {/* 2. OVERVIEW LAYOUT GRID */}
       <div className="overview-grid">
         
-        {/* MAIN COLUMN */}
-        <div className="overview-column" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* MAIN / LEFT COLUMN */}
+        <div className="overview-col-main" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* 1. HERO BALANCE SECTION CARD — Main Focus */}
           <div className="hero-balance-section">
@@ -509,8 +509,15 @@ export default function Overview() {
             </div>
           )}
 
-          {/* 4. FINANCIAL PULSE CARD */}
+          {/* 4. WHAT-IF FINANCIAL SIMULATOR */}
+          <WhatIfSimulator />
 
+        </div>
+
+        {/* SIDE / RIGHT COLUMN */}
+        <div className="overview-col-side" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+          {/* FINANCIAL PULSE CARD */}
           <div className="card pulse-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Financial Pulse</h3>
             
@@ -553,7 +560,51 @@ export default function Overview() {
             <p className="pulse-forecast-summary" dangerouslySetInnerHTML={{ __html: forecastHtml }} />
           </div>
 
-          {/* Student Savings Goals & Spikes (Auxiliary cards) */}
+          {/* FINANCIAL HEALTH GAUGE */}
+          <div className="card pulse-card health-gauge-card" style={{ padding: '20px' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Financial Health</h3>
+            <div className="health-gauge-wrap">
+              <svg viewBox="0 0 120 80" className="health-gauge-svg">
+                {/* Track arc */}
+                <path
+                  d="M 15 75 A 50 50 0 1 1 105 75"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.06)"
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                />
+                {/* Fill arc — 220° sweep, dash = circumference × pct */}
+                <path
+                  d="M 15 75 A 50 50 0 1 1 105 75"
+                  fill="none"
+                  stroke={healthColor}
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(healthScore / 100) * 192} 192`}
+                  style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.4,0,0.2,1), stroke 0.4s ease', filter: `drop-shadow(0 0 6px ${healthColor}55)` }}
+                />
+                {/* Score text */}
+                <text x="60" y="58" textAnchor="middle" fill={healthColor} fontFamily="'Outfit', sans-serif" fontWeight="700" fontSize="22">{healthScore}</text>
+                <text x="60" y="72" textAnchor="middle" fill="#6B7C75" fontFamily="'Inter', sans-serif" fontSize="9">/ 100</text>
+              </svg>
+              <div className="health-gauge-legend">
+                <div className="health-gauge-row">
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Pacing</span>
+                  <span style={{ color: pacingScore > 20 ? 'var(--green)' : 'var(--red)', fontSize: '11px', fontWeight: 600 }}>{Math.round(pacingScore)}/40</span>
+                </div>
+                <div className="health-gauge-row">
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Liquidity</span>
+                  <span style={{ color: liquidityScore > 15 ? 'var(--green)' : 'var(--red)', fontSize: '11px', fontWeight: 600 }}>{Math.round(liquidityScore)}/30</span>
+                </div>
+                <div className="health-gauge-row">
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Savings</span>
+                  <span style={{ color: 'var(--text)', fontSize: '11px', fontWeight: 600 }}>{Math.round(savingsScore)}/20</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Student Savings Goals & Spikes */}
           {savingsGoals.length > 0 && (
             <div className="card pulse-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <h3 style={{ margin: 0, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Savings Progress</h3>
@@ -599,53 +650,6 @@ export default function Overview() {
               </div>
             </div>
           )}
-
-          {/* 5. FINANCIAL HEALTH GAUGE */}
-          <div className="card pulse-card health-gauge-card" style={{ padding: '20px' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Financial Health</h3>
-            <div className="health-gauge-wrap">
-              <svg viewBox="0 0 120 80" className="health-gauge-svg">
-                {/* Track arc */}
-                <path
-                  d="M 15 75 A 50 50 0 1 1 105 75"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.06)"
-                  strokeWidth="10"
-                  strokeLinecap="round"
-                />
-                {/* Fill arc — 220° sweep, dash = circumference × pct */}
-                <path
-                  d="M 15 75 A 50 50 0 1 1 105 75"
-                  fill="none"
-                  stroke={healthColor}
-                  strokeWidth="10"
-                  strokeLinecap="round"
-                  strokeDasharray={`${(healthScore / 100) * 192} 192`}
-                  style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.4,0,0.2,1), stroke 0.4s ease', filter: `drop-shadow(0 0 6px ${healthColor}55)` }}
-                />
-                {/* Score text */}
-                <text x="60" y="58" textAnchor="middle" fill={healthColor} fontFamily="'Outfit', sans-serif" fontWeight="700" fontSize="22">{healthScore}</text>
-                <text x="60" y="72" textAnchor="middle" fill="#6B7C75" fontFamily="'Inter', sans-serif" fontSize="9">/ 100</text>
-              </svg>
-              <div className="health-gauge-legend">
-                <div className="health-gauge-row">
-                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Pacing</span>
-                  <span style={{ color: pacingScore > 20 ? 'var(--green)' : 'var(--red)', fontSize: '11px', fontWeight: 600 }}>{Math.round(pacingScore)}/40</span>
-                </div>
-                <div className="health-gauge-row">
-                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Liquidity</span>
-                  <span style={{ color: liquidityScore > 15 ? 'var(--green)' : 'var(--red)', fontSize: '11px', fontWeight: 600 }}>{Math.round(liquidityScore)}/30</span>
-                </div>
-                <div className="health-gauge-row">
-                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Savings</span>
-                  <span style={{ color: 'var(--text)', fontSize: '11px', fontWeight: 600 }}>{Math.round(savingsScore)}/20</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 6. WHAT-IF FINANCIAL SIMULATOR */}
-          <WhatIfSimulator />
 
           {/* AI Advisor Panel */}
           {user.targetGoal && (
