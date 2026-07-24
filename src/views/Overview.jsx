@@ -16,7 +16,7 @@ export default function Overview() {
   // Dialog refs
   const iosDialogRef = useRef(null);
   
-  const { user, transactions, spikes = [], friends, widgetSettings, ai, wallet } = state;
+  const { user = {}, transactions = [], spikes = [], friends = {}, widgetSettings = {}, ai = {}, wallet = {} } = state || {};
   const txnHash = transactions.reduce((h, t) => h + t.id + t.amount + t.category, '');
   const sym = user?.currency || '₹';
   const friendBalances = friends?.balances || {};
@@ -196,7 +196,6 @@ export default function Overview() {
   useEffect(() => {
     try {
       const fresh = generatePulseCards(state);
-      updatePulseCache(fresh);
       const dismissed = JSON.parse(sessionStorage.getItem('pulse_dismissed') || '[]');
       setVisiblePulseCards(fresh.filter(c => !dismissed.includes(c.id)));
     } catch (e) {
