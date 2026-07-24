@@ -58,10 +58,7 @@ export class ErrorBoundary extends Component {
 
 export default function App() {
   const { state } = useStateContext();
-  const [currentHash, setCurrentHash] = useState(() => (location.hash || '#home').replace('#', ''));
-  const [showSplash, setShowSplash] = useState(true);
-  const [toasts, setToasts] = useState([]);
-  const [isCmdPaletteOpen, setIsCmdPaletteOpen] = useState(false);
+  const [currentHash, setCurrentHash] = useState(() => (location.hash.replace('#', '') || 'home'));
 
   // Toast notifier binding
   const triggerToast = (msg) => {
@@ -86,7 +83,7 @@ export default function App() {
 
     // Handle hash change routing
     const handleHashChange = () => {
-      const hash = (location.hash || '#home').replace('#', '');
+      const hash = (location.hash.replace('#', '') || 'home');
       setCurrentHash(hash);
     };
     window.addEventListener('hashchange', handleHashChange);
@@ -146,7 +143,7 @@ export default function App() {
       case 'settings':
         return <Settings />;
       default:
-        return <Circles />;
+        return <Overview />;
     }
   };
 

@@ -324,7 +324,7 @@ export default function Circles() {
   };
 
   return (
-    <div className="circles-hub-view">
+    <div className="circles-hub-view view active">
       {/* Header & Main Controls */}
       <section className="circles-hero-section">
         <div>
