@@ -232,8 +232,8 @@ export default function CommandPalette({ isOpen, onClose }) {
                   ⚡ Instant AI Action
                 </div>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff', marginTop: '2px' }}>
-                  {parsedAction.rawAction.action === 'add_transaction' && `Add ${parsedAction.rawAction.type || 'expense'}: ${state.user.currency || '₹'}${parsedAction.rawAction.amount} (${parsedAction.rawAction.description || parsedAction.rawAction.category})`}
-                  {parsedAction.rawAction.action === 'add_split' && `Split with ${parsedAction.rawAction.friend}: ${state.user.currency || '₹'}${parsedAction.rawAction.amount} (${parsedAction.rawAction.description})`}
+                  {parsedAction.rawAction.action === 'add_transaction' && `Add ${parsedAction.rawAction.type || 'expense'}: ${state?.user?.currency || '₹'}${parsedAction.rawAction.amount} (${parsedAction.rawAction.description || parsedAction.rawAction.category})`}
+                  {parsedAction.rawAction.action === 'add_split' && `Split with ${parsedAction.rawAction.friend}: ${state?.user?.currency || '₹'}${parsedAction.rawAction.amount} (${parsedAction.rawAction.description})`}
                 </div>
                 <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginTop: '2px' }}>
                   {parsedAction.message}
@@ -317,7 +317,7 @@ export default function CommandPalette({ isOpen, onClose }) {
                     <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>{t.date} • {t.category}</div>
                   </div>
                   <div style={{ fontSize: '14px', fontWeight: 700, color: t.type === 'income' ? '#4caf50' : 'var(--accent, #c5a059)' }}>
-                    {t.type === 'income' ? '+' : '-'}{state.user.currency || '₹'}{t.amount}
+                    {t.type === 'income' ? '+' : '-'}{state?.user?.currency || '₹'}{t.amount}
                   </div>
                 </div>
               ))}

@@ -1,5 +1,5 @@
 // Service Worker for UniSpend PWA & Push Notifications
-const CACHE_NAME = 'unispend-cache-v6';
+const CACHE_NAME = 'unispend-cache-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -32,7 +32,7 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch Event: Stale-while-revalidate strategy for quick loading and background updates
+// Fetch Event: Network-first strategy for quick updates and offline fallback
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET' || !e.request.url.startsWith('http')) {
     return;
@@ -43,8 +43,8 @@ self.addEventListener('fetch', (e) => {
   }
 
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      const fetchPromise = fetch(e.request).then((networkResponse) => {
+    fetch(e.request)
+      .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -52,10 +52,8 @@ self.addEventListener('fetch', (e) => {
           });
         }
         return networkResponse;
-      }).catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
-    })
+      })
+      .catch(() => caches.match(e.request))
   );
 });
 
