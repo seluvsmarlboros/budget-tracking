@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useStateContext } from '../contexts/StateContext';
 import { SupabaseService } from '../services/supabase';
 
@@ -386,19 +387,21 @@ export default function Settings() {
       </div>
 
       {/* DANGER ZONE RESET CONFIRMATION MODAL */}
-      {showResetModal && (
+      {showResetModal && createPortal(
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.75)',
-          backdropFilter: 'blur(8px)',
+          width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 9999,
+          zIndex: 999999,
           padding: '20px'
         }}>
-          <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '24px', border: '1px solid rgba(239,68,68,0.4)' }}>
+          <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '24px', border: '1px solid rgba(239,68,68,0.4)', position: 'relative' }}>
             <h3 style={{ margin: '0 0 10px 0', color: '#ef4444' }}>Reset All App Data?</h3>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5', margin: '0 0 20px 0' }}>
               This action will permanently delete your local transactions, circle splits, custom categories, and saved profile settings from browser storage. This cannot be undone.
@@ -421,7 +424,8 @@ export default function Settings() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );

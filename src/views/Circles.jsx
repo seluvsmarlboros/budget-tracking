@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useStateContext, calculateCircleNetBalance, calculateMagicSettle } from '../contexts/StateContext';
 
 export default function Circles() {
@@ -573,9 +574,9 @@ export default function Circles() {
       </div>
 
       {/* CREATE CIRCLE MODAL */}
-      {showCreateModal && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
-          <div className="card" style={{ maxWidth: '440px', width: '100%', padding: '24px' }}>
+      {showCreateModal && createPortal(
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999, padding: '20px' }}>
+          <div className="card" style={{ maxWidth: '440px', width: '100%', padding: '24px', position: 'relative' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Create New Circle</h3>
             <form onSubmit={handleCreateCircleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
@@ -609,13 +610,14 @@ export default function Circles() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* JOIN CIRCLE MODAL */}
-      {showJoinModal && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '24px' }}>
+      {showJoinModal && createPortal(
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999, padding: '20px' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '24px', position: 'relative' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Join Circle with Code</h3>
             <form onSubmit={handleJoinCircleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
@@ -636,13 +638,14 @@ export default function Circles() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* SPLIT EXPENSE MODAL */}
-      {showAddTxnModal && activeCircle && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
-          <div className="card" style={{ maxWidth: '480px', width: '100%', padding: '24px' }}>
+      {showAddTxnModal && activeCircle && createPortal(
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999, padding: '20px' }}>
+          <div className="card" style={{ maxWidth: '480px', width: '100%', padding: '24px', position: 'relative' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Log Shared Expense</h3>
             <form onSubmit={handleAddTxnSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
@@ -690,13 +693,14 @@ export default function Circles() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* SETTLE UP MODAL */}
-      {showSettleModal && activeCircle && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
-          <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '24px' }}>
+      {showSettleModal && activeCircle && createPortal(
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999, padding: '20px' }}>
+          <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '24px', position: 'relative' }}>
             <h3 style={{ margin: '0 0 16px 0' }}>Settle Up Payment</h3>
             <form onSubmit={handleSettleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
@@ -730,7 +734,8 @@ export default function Circles() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </section>
