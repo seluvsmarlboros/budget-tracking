@@ -14,6 +14,23 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <title>UniSpend — Student Money Tracker</title>
+  <script>
+    window.onerror = function(msg, url, line, col, error) {
+      var errDiv = document.getElementById('unispend-fatal-error');
+      if (!errDiv) {
+        errDiv = document.createElement('div');
+        errDiv.id = 'unispend-fatal-error';
+        errDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;background:#0D1A15;color:#F87171;padding:24px;font-family:-apple-system,sans-serif;font-size:14px;overflow:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;';
+        document.body.appendChild(errDiv);
+      }
+      errDiv.innerHTML = '<h2 style="color:#F87171;margin-bottom:8px">UniSpend Startup Error</h2>' +
+        '<p style="color:#A3B3AC;max-width:320px;margin-bottom:16px">' + (msg || 'An error occurred during app startup.') + '</p>' +
+        '<button onclick="localStorage.clear();sessionStorage.clear();if(navigator.serviceWorker){navigator.serviceWorker.getRegistrations().then(r=>r.forEach(s=>s.unregister()))};location.reload();" style="padding:12px 24px;border-radius:99px;background:#4ADE80;color:#0D1A15;font-weight:bold;border:none;cursor:pointer">Reset Storage & Reload</button>';
+    };
+    window.onunhandledrejection = function(e) {
+      if (window.onerror) window.onerror(e.reason ? e.reason.message || String(e.reason) : 'Unhandled promise rejection');
+    };
+  </script>
 </head>
 <body>
   <div id="root"></div>

@@ -30,25 +30,38 @@ export class ErrorBoundary extends Component {
         <div style={{
           minHeight: '100vh', display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', gap: '16px',
-          background: 'var(--bg, #0e0c0b)', color: 'var(--text, #f5f0e8)',
-          padding: '24px', textAlign: 'center'
+          background: '#0D1A15', color: '#F0F4F2',
+          padding: '24px', textAlign: 'center', boxSizing: 'border-box'
         }}>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(197,160,89,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700 }}>Something went wrong</h2>
-          <p style={{ margin: 0, fontSize: '13px', opacity: 0.6, maxWidth: '280px' }}>
-            {this.state.error?.message || 'An unexpected error occurred.'}
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#F87171" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: '#F0F4F2' }}>Something went wrong</h2>
+          <p style={{ margin: 0, fontSize: '13px', color: '#A3B3AC', maxWidth: '320px', lineHeight: '1.5' }}>
+            {this.state.error?.message || 'An unexpected runtime error occurred.'}
           </p>
-          <button
-            onClick={() => { this.setState({ hasError: false, error: null }); window.location.hash = '#partner'; }}
-            style={{
-              marginTop: '8px', padding: '10px 24px', borderRadius: '99px',
-              background: 'var(--accent-gradient)',
-              color: '#0D1A15', fontWeight: 700, fontSize: '14px',
-              border: 'none', cursor: 'pointer'
-            }}
-          >
-            Reload App
-          </button>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '12px' }}>
+            <button
+              onClick={() => { this.setState({ hasError: false, error: null }); window.location.hash = '#home'; window.location.reload(); }}
+              style={{
+                padding: '12px 20px', borderRadius: '99px',
+                background: 'linear-gradient(135deg, #4ADE80 0%, #22C55E 100%)',
+                color: '#0D1A15', fontWeight: 700, fontSize: '14px',
+                border: 'none', cursor: 'pointer'
+              }}
+            >
+              Reload App
+            </button>
+            <button
+              onClick={() => { localStorage.clear(); sessionStorage.clear(); window.location.reload(); }}
+              style={{
+                padding: '12px 20px', borderRadius: '99px',
+                background: 'rgba(248, 113, 113, 0.15)',
+                color: '#F87171', fontWeight: 700, fontSize: '14px',
+                border: '1px solid rgba(248, 113, 113, 0.3)', cursor: 'pointer'
+              }}
+            >
+              Reset Data & Reload
+            </button>
+          </div>
         </div>
       );
     }

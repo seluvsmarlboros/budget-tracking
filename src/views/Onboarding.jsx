@@ -40,19 +40,20 @@ export default function Onboarding() {
     };
     checkUser();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const res = supabase?.auth?.onAuthStateChange(async (event, session) => {
       console.log('Onboarding auth status change:', event);
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
         setIsAuthenticated(true);
-        window.toast('Authenticated successfully!');
+        if (window.toast) window.toast('Authenticated successfully!');
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
       }
     });
 
     return () => {
-      subscription.unsubscribe();
+      if (res?.data?.subscription) {
+        res.data.subscription.unsubscribe();
+      }
     };
   }, []);
 

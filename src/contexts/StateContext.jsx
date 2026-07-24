@@ -1,5 +1,15 @@
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase, SupabaseService } from '../services/supabase';
 import { NotificationService } from '../services/NotificationService';
+
+const clone = (obj) => {
+  if (typeof structuredClone === 'function') {
+    try {
+      return structuredClone(obj);
+    } catch (e) {}
+  }
+  return JSON.parse(JSON.stringify(obj));
+};
 
 const StateContext = createContext(null);
 
@@ -338,10 +348,10 @@ export const StateProvider = ({ children }) => {
         return parsed;
       } catch (err) {
         console.error('UniSpend State: Error parsing or migrating state, resetting to emptyState:', err);
-        return structuredClone(emptyState);
+        return clone(emptyState);
       }
     }
-    return structuredClone(emptyState);
+    return clone(emptyState);
   });
 
   // Save changes back to LocalStorage
@@ -354,7 +364,7 @@ export const StateProvider = ({ children }) => {
     if (!currentState.user.onboarded) return currentState;
     const today = new Date().toISOString().split('T')[0];
     const last = currentState.user.lastActiveDate;
-    const updated = structuredClone(currentState);
+    const updated = clone(currentState);
 
     if (!last) {
       Object.assign(updated.user, { streak: 1, totalDaysActive: 1, lastActiveDate: today });
@@ -450,7 +460,7 @@ export const StateProvider = ({ children }) => {
           if (!payload || !payload.type) return;
           
           setState(prev => {
-            const updated = structuredClone(prev);
+            const updated = clone(prev);
             const targetCircle = (updated.circles?.list || []).find(circle => circle.inviteCode.toUpperCase() === c.inviteCode.toUpperCase());
             if (!targetCircle) return prev;
 
@@ -532,11 +542,11 @@ export const StateProvider = ({ children }) => {
 
   const resetState = () => {
     localStorage.removeItem(STATE_KEY);
-    saveState(structuredClone(emptyState));
+    saveState(clone(emptyState));
   };
 
   const completeOnboarding = (setup) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.user.name = setup.name;
     updated.user.currency = setup.currency;
     updated.user.weeklyPocketMoney = parseFloat(setup.weeklyPocketMoney);
@@ -640,7 +650,7 @@ export const StateProvider = ({ children }) => {
         return exists;
       }
     }
-    const updated = structuredClone(state);
+    const updated = clone(state);
     let category = txn.category || 'Other';
     if (txn.type === 'expense' && updated.rules && updated.rules.length > 0) {
       const descLower = (txn.description || '').toLowerCase();
@@ -662,14 +672,14 @@ export const StateProvider = ({ children }) => {
   };
 
   const deleteTransaction = (id) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.transactions = (updated.transactions || []).filter(t => t.id !== id);
     saveState(updated);
   };
 
 
   const addCommuteLog = (log, isCollegeDay) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const date = log.date || new Date().toISOString().split('T')[0];
     updated.commute.logs.unshift({ date, type: log.type, amount: parseFloat(log.amount), details: log.details });
     if (isCollegeDay && !updated.commute.attendanceDays.includes(date)) {
@@ -691,7 +701,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const addMaintenanceLog = (log) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const date = log.date || new Date().toISOString().split('T')[0];
     updated.commute.maintenance.unshift({ date, task: log.task, amount: parseFloat(log.amount) });
     updated.commute.logs.unshift({ date, type: 'repair', amount: parseFloat(log.amount), details: `Service: ${log.task}` });
@@ -713,7 +723,7 @@ export const StateProvider = ({ children }) => {
   const addFriend = (name) => {
     const n = name.trim();
     if (!n || state.friends.list.includes(n)) return false;
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.friends.list.push(n);
     updated.friends.balances[n] = 0;
     saveState(updated);
@@ -726,7 +736,7 @@ export const StateProvider = ({ children }) => {
     const today = new Date().toISOString().split('T')[0];
     const meReceive = direction ? direction === 'receive' : bal > 0;
 
-    const updated = structuredClone(state);
+    const updated = clone(state);
     if (meReceive) {
       updated.friends.balances[friend] = (updated.friends.balances[friend] || 0) - amt;
       const t = {
@@ -770,7 +780,7 @@ export const StateProvider = ({ children }) => {
     const friendPart = splitHalf ? amt / 2 : amt;
     const myShare = splitHalf ? amt / 2 : 0;
 
-    const updated = structuredClone(state);
+    const updated = clone(state);
     if (direction === 'lent') {
       updated.friends.balances[friend] = (updated.friends.balances[friend] || 0) + friendPart;
       if (myShare > 0) {
@@ -816,7 +826,7 @@ export const StateProvider = ({ children }) => {
     if (members.length <= 1) return;
     const share = amt / members.length;
 
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const t = {
       id: 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
       type: 'expense',
@@ -845,7 +855,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const addSpike = (s) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.spikes.push({
       id: 'spike_' + Date.now(),
       title: s.title,
@@ -858,13 +868,13 @@ export const StateProvider = ({ children }) => {
   };
 
   const deleteSpike = (id) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.spikes = updated.spikes.filter(s => s.id !== id);
     saveState(updated);
   };
 
   const addSavingsGoal = (g) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.wallet.savingsGoals.push({
       name: g.name,
       target: parseFloat(g.target),
@@ -875,7 +885,7 @@ export const StateProvider = ({ children }) => {
 
   const addSavingsAmount = (idx, amount) => {
     const amt = parseFloat(amount);
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const g = updated.wallet.savingsGoals[idx];
     if (!g) return;
     g.saved += amt;
@@ -894,7 +904,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const deleteSavingsGoal = (idx) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.wallet.savingsGoals.splice(idx, 1);
     saveState(updated);
   };
@@ -902,14 +912,14 @@ export const StateProvider = ({ children }) => {
   const addCategory = (name) => {
     const n = name.trim();
     if (!n || state.categories.includes(n)) return false;
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.categories.push(n);
     saveState(updated);
     return true;
   };
 
   const deleteCategory = (name) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     // 1. Remove from categories list
     updated.categories = updated.categories.filter(c => c !== name);
     // 2. Cascade update transactions
@@ -934,7 +944,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const updateSettings = (updates) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     if (updates.name !== undefined) updated.user.name = updates.name;
     if (updates.currency !== undefined) updated.user.currency = updates.currency;
     if (updates.weeklyPocketMoney !== undefined) updated.user.weeklyPocketMoney = parseFloat(updates.weeklyPocketMoney);
@@ -954,20 +964,20 @@ export const StateProvider = ({ children }) => {
   };
 
   const updateAiSettings = (updates) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.ai = { ...updated.ai, ...updates };
     saveState(updated);
   };
 
   const updatePulseCache = (cards) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.user.pulseCards = cards;
     updated.user.pulseLastScanned = Date.now();
     saveState(updated);
   };
 
   const addAutoCategoryRule = (keyword, category) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.rules.push({
       id: 'rule_' + Date.now(),
       keyword,
@@ -977,7 +987,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const deleteAutoCategoryRule = (id) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     updated.rules = updated.rules.filter(r => r.id !== id);
     saveState(updated);
   };
@@ -992,7 +1002,7 @@ export const StateProvider = ({ children }) => {
 
   // Sync Supabase partner details directly to State (net balances)
   const syncSupabaseBalances = (rawBalance, userA, userB) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const user = state.user;
     
     // Re-calculate friend balances based on partner state
@@ -1035,7 +1045,7 @@ export const StateProvider = ({ children }) => {
   // Sync Supabase partner bill history into local friends.history (deduped by remoteId)
   const syncPartnerHistory = (partnerName, entries) => {
     if (!partnerName || !entries || entries.length === 0) return;
-    const updated = structuredClone(state);
+    const updated = clone(state);
 
     // Ensure partner is in friends list
     if (!updated.friends.list.includes(partnerName)) {
@@ -1071,7 +1081,7 @@ export const StateProvider = ({ children }) => {
 
   const executeEqualize = (trans) => {
     if (!trans || trans.length === 0) return;
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const today = new Date().toISOString().split('T')[0];
     const myName = (state.user?.name || '').trim().toLowerCase();
 
@@ -1125,7 +1135,7 @@ export const StateProvider = ({ children }) => {
   const createCircle = (name, icon = 'building', initialMembers = []) => {
     const trimmed = name.trim();
     if (!trimmed) return null;
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     const myName = state.user.name || 'Arjun';
 
@@ -1162,7 +1172,7 @@ export const StateProvider = ({ children }) => {
   const joinCircle = (inviteCode) => {
     const code = inviteCode.trim().toUpperCase();
     if (!code) return false;
-    const updated = structuredClone(state);
+    const updated = clone(state);
     if (!updated.circles) updated.circles = { activeCircleId: null, list: [] };
 
     const myName = state.user.name || 'Arjun';
@@ -1206,7 +1216,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const addCircleTransaction = (circleId, txn) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const circle = (updated.circles?.list || []).find(c => c.id === circleId);
     if (!circle) return false;
 
@@ -1303,7 +1313,7 @@ export const StateProvider = ({ children }) => {
   const addCircleMember = (circleId, memberName, isGhost = true, upiId = '') => {
     const name = memberName.trim();
     if (!name) return false;
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const circle = (updated.circles?.list || []).find(c => c.id === circleId);
     if (!circle) return false;
 
@@ -1329,7 +1339,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const mergeGhostMember = (circleId, ghostName, realUserName) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const circle = (updated.circles?.list || []).find(c => c.id === circleId);
     if (!circle) return false;
 
@@ -1352,14 +1362,14 @@ export const StateProvider = ({ children }) => {
   };
 
   const setActiveCircle = (circleId) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     if (!updated.circles) updated.circles = { activeCircleId: null, list: [] };
     updated.circles.activeCircleId = circleId;
     saveState(updated);
   };
 
   const deleteCircle = (circleId) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     if (!updated.circles || !updated.circles.list) return false;
     updated.circles.list = updated.circles.list.filter(c => c.id !== circleId);
     if (updated.circles.activeCircleId === circleId) {
@@ -1370,7 +1380,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const editCircle = (circleId, name, icon) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const circle = (updated.circles?.list || []).find(c => c.id === circleId);
     if (!circle) return false;
     if (name && name.trim()) circle.name = name.trim();
@@ -1380,7 +1390,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const removeCircleMember = (circleId, memberName) => {
-    const updated = structuredClone(state);
+    const updated = clone(state);
     const circle = (updated.circles?.list || []).find(c => c.id === circleId);
     if (!circle) return false;
     circle.members = (circle.members || []).filter(m => m.name.toLowerCase() !== memberName.toLowerCase());

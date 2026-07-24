@@ -41,8 +41,13 @@ export const SupabaseService = {
   },
 
   async getCurrentUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    return user;
+    try {
+      const res = await supabase.auth.getUser();
+      return res?.data?.user || null;
+    } catch (e) {
+      console.warn('getCurrentUser failed:', e);
+      return null;
+    }
   },
 
   async getProfile(userId) {
